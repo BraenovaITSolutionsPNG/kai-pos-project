@@ -1,0 +1,53 @@
+⨯ ReferenceError: cn is not defined
+    at LandingPage (app\page.tsx:139:26)
+  137 |             <Link
+  138 |               href="/login"
+> 139 |               className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
+      |                          ^
+  140 |             >
+  141 |               Sign in
+  142 |             </Link> {
+  digest: '2525925232'
+}
+⨯ ReferenceError: cn is not defined
+    at LandingPage (app\page.tsx:139:26)
+  137 |             <Link
+  138 |               href="/login"
+> 139 |               className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
+      |                          ^
+  140 |             >
+  141 |               Sign in
+  142 |             </Link> {
+  digest: '2525925232'
+}
+⨯ ReferenceError: cn is not defined
+    at LandingPage (app\page.tsx:139:26)
+  137 |             <Link
+  138 |               href="/login"
+> 139 |               className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
+      |                          ^
+  140 |             >
+  141 |               Sign in
+  142 |             </Link> {
+  digest: '2525925232'
+}
+⨯ ReferenceError: cn is not defined
+    at LandingPage (app\page.tsx:139:26)
+  137 |             <Link
+  138 |               href="/login"
+> 139 |               className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
+      |                          ^
+  140 |             >
+  141 |               Sign in
+  142 |             </Link> {
+  digest: '1098412080'
+}
+[browser] Uncaught ReferenceError: cn is not defined
+    at LandingPage (app\page.tsx:139:26)
+  137 |             <Link
+  138 |               href="/login"
+> 139 |               className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
+      |                          ^
+  140 |             >
+  141 |               Sign in
+  142 |             </Link>
