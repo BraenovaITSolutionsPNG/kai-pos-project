@@ -267,3 +267,35 @@
  GET /subscription 200 in 168ms (next.js: 62ms, proxy.ts: 16ms, application-code: 90ms)
  GET /subscription 200 in 198ms (next.js: 83ms, proxy.ts: 8ms, application-code: 107ms)
  GET /subscription 200 in 148ms (next.js: 44ms, proxy.ts: 10ms, application-code: 94ms)
+ GET /subscription 200 in 171ms (next.js: 47ms, proxy.ts: 15ms, application-code: 108ms)
+ GET /subscription 200 in 330ms (next.js: 6ms, proxy.ts: 7ms, application-code: 316ms)
+ GET /subscription 200 in 169ms (next.js: 8ms, proxy.ts: 7ms, application-code: 153ms)
+ GET /subscription 200 in 143ms (next.js: 6ms, proxy.ts: 8ms, application-code: 129ms)
+ GET /login 200 in 245ms (next.js: 102ms, proxy.ts: 12ms, application-code: 131ms)
+ POST /subscription 200 in 334ms (next.js: 6ms, proxy.ts: 7ms, application-code: 321ms)
+  └─ ƒ logout() in 20ms lib/auth-actions.ts
+ GET /dashboard 200 in 275ms (next.js: 27ms, proxy.ts: 20ms, application-code: 228ms)
+ POST /login 200 in 436ms (next.js: 7ms, proxy.ts: 6ms, application-code: 423ms)
+  └─ ƒ login({}, {}) in 125ms lib/auth-actions.ts
+ GET /subscription 200 in 104ms (next.js: 7ms, proxy.ts: 8ms, application-code: 88ms)
+ GET /subscription 200 in 122ms (next.js: 27ms, proxy.ts: 17ms, application-code: 79ms)
+ GET /login 200 in 122ms (next.js: 12ms, proxy.ts: 14ms, application-code: 96ms)
+ POST /subscription 200 in 200ms (next.js: 9ms, proxy.ts: 10ms, application-code: 181ms)
+  └─ ƒ logout() in 23ms lib/auth-actions.ts
+ GET /dashboard 200 in 246ms (next.js: 13ms, proxy.ts: 12ms, application-code: 221ms)
+ POST /login 200 in 392ms (next.js: 5ms, proxy.ts: 7ms, application-code: 380ms)
+  └─ ƒ login({}, {}) in 113ms lib/auth-actions.ts
+ GET /login 200 in 87ms (next.js: 5ms, proxy.ts: 4ms, application-code: 78ms)
+ POST /dashboard 200 in 123ms (next.js: 4ms, proxy.ts: 5ms, application-code: 114ms)
+  └─ ƒ logout() in 10ms lib/auth-actions.ts
+ GET /login 200 in 15ms (next.js: 5ms, proxy.ts: 5ms, application-code: 5ms)
+ GET /login 200 in 30ms (next.js: 5ms, proxy.ts: 4ms, application-code: 21ms)
+ GET /dashboard 200 in 123ms (next.js: 13ms, proxy.ts: 8ms, application-code: 102ms)
+ POST /login 200 in 227ms (next.js: 4ms, proxy.ts: 4ms, application-code: 219ms)
+  └─ ƒ login({}, {}) in 69ms lib/auth-actions.ts
+ GET /admin 200 in 246ms (next.js: 89ms, proxy.ts: 8ms, application-code: 149ms)
+ GET /admin 200 in 153ms (next.js: 24ms, proxy.ts: 33ms, application-code: 96ms)
+ GET /admin/businesses 200 in 635ms (next.js: 498ms, proxy.ts: 6ms, application-code: 131ms)
+ GET /admin/subscriptions 200 in 190ms (next.js: 65ms, proxy.ts: 4ms, application-code: 121ms)
+ POST /api/db 200 in 103ms (next.js: 15ms, proxy.ts: 8ms, application-code: 80ms)
+ GET /admin/subscriptions 200 in 107ms (next.js: 6ms, proxy.ts: 8ms, application-code: 93ms)

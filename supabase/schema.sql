@@ -73,6 +73,20 @@ create table public.products (
   created_at timestamptz not null default now()
 );
 
+-- Table / floor-plan (Phase 2 consumes this; Phase 1 keeps it simple).
+create table public.tables (
+  id uuid primary key default gen_random_uuid(),
+  restaurant_id uuid references public.restaurants (id) on delete cascade not null,
+  label text not null,
+  status text not null default 'available'
+    check (status in ('available', 'occupied', 'reserved')),
+  capacity integer not null default 4,
+  position_x numeric not null default 0,
+  position_y numeric not null default 0,
+  created_at timestamptz not null default now(),
+  unique (restaurant_id, label)
+);
+
 -- Sales orders.
 create table public.orders (
   id uuid primary key default gen_random_uuid(),
@@ -118,20 +132,6 @@ create table public.payments (
   amount numeric(10, 2) not null check (amount >= 0),
   reference text,
   created_at timestamptz not null default now()
-);
-
--- Table / floor-plan (Phase 2 consumes this; Phase 1 keeps it simple).
-create table public.tables (
-  id uuid primary key default gen_random_uuid(),
-  restaurant_id uuid references public.restaurants (id) on delete cascade not null,
-  label text not null,
-  status text not null default 'available'
-    check (status in ('available', 'occupied', 'reserved')),
-  capacity integer not null default 4,
-  position_x numeric not null default 0,
-  position_y numeric not null default 0,
-  created_at timestamptz not null default now(),
-  unique (restaurant_id, label)
 );
 
 create index if not exists idx_orders_restaurant_created
