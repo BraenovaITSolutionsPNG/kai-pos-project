@@ -333,18 +333,21 @@ export const requirePlatformAdmin = cache(async () => {
 });
 
 export const getAdminOverview = cache(async (): Promise<AdminOverview> => {
+  if (!isMySqlMode()) return {} as AdminOverview;
   const { data } = await execAdminOverview();
   return data as AdminOverview;
 });
 
 export const getAdminBusinesses = cache(
   async (): Promise<AdminBusinessRow[]> => {
+    if (!isMySqlMode()) return [];
     const { data } = await execAdminBusinesses();
     return (data as AdminBusinessRow[]) ?? [];
   }
 );
 
 export const getAdminUsers = cache(async (): Promise<AdminUserRow[]> => {
+  if (!isMySqlMode()) return [];
   const { data } = await execAdminUsers();
   return (data as AdminUserRow[]) ?? [];
 });
@@ -381,6 +384,7 @@ export interface SubscriptionPaymentRow {
 
 export const getAdminSubscriptions = cache(
   async (): Promise<AdminSubscriptionRow[]> => {
+    if (!isMySqlMode()) return [];
     const { data } = await execAdminSubscriptions();
     return (data as AdminSubscriptionRow[]) ?? [];
   }
@@ -388,6 +392,7 @@ export const getAdminSubscriptions = cache(
 
 export const getAdminSubscriptionPayments = cache(
   async (subscriptionId: string): Promise<SubscriptionPaymentRow[]> => {
+    if (!isMySqlMode()) return [];
     const { data } = await execAdminSubscriptionPayments({
       subscription_id: subscriptionId,
     });
@@ -404,6 +409,7 @@ export interface NotificationRow {
 }
 
 export const getNotifications = cache(async (): Promise<NotificationRow[]> => {
+  if (!isMySqlMode()) return [];
   const { data } = await execGetNotifications();
   return (data as NotificationRow[]) ?? [];
 });
@@ -414,6 +420,7 @@ export interface SiteContentRow {
 }
 
 export const getSiteContent = cache(async (): Promise<SiteContentRow[]> => {
+  if (!isMySqlMode()) return [];
   const { data } = await execGetSiteContent();
   return (data as SiteContentRow[]) ?? [];
 });
@@ -431,6 +438,7 @@ export interface MySubscriptionRow {
 
 export const getMySubscription = cache(
   async (): Promise<MySubscriptionRow | null> => {
+    if (!isMySqlMode()) return null;
     const { data } = await execGetMySubscription();
     const rows = (data as MySubscriptionRow[]) ?? [];
     return rows[0] ?? null;
@@ -451,6 +459,7 @@ export interface MyPaymentRow {
 }
 
 export const getMyPayments = cache(async (): Promise<MyPaymentRow[]> => {
+  if (!isMySqlMode()) return [];
   const { data } = await execGetMyPayments();
   return (data as MyPaymentRow[]) ?? [];
 });
