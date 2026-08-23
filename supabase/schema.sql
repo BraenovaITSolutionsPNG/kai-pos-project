@@ -1,5 +1,5 @@
 -- ============================================================
--- KAI POS — Complete Schema (PNG restaurant POS platform)
+-- KAI POS â€” Complete Schema (PNG restaurant POS platform)
 -- Run this in the Supabase SQL editor.
 -- ============================================================
 
@@ -634,7 +634,7 @@ begin
   returning id into v_business_id;
 
   insert into public.restaurants (business_id, name, address, currency)
-  values (v_business_id, v_business_name || ' — Main', '', 'PGK')
+  values (v_business_id, v_business_name || ' â€” Main', '', 'PGK')
   returning id into v_restaurant_id;
 
   insert into public.staff (restaurant_id, user_id, role, is_active)
@@ -1100,9 +1100,9 @@ create table if not exists public.subscription_payments (
   proof_url text,
   status text not null default 'pending'
     check (status in ('pending', 'approved', 'rejected')),
-  created_by uuid references auth.users (id),
+  created_by uuid references auth.users (id) on delete set null,
   created_at timestamptz not null default now(),
-  reviewed_by uuid references auth.users (id),
+  reviewed_by uuid references auth.users (id) on delete set null,
   approved_at timestamptz
 );
 
@@ -1175,9 +1175,9 @@ create table if not exists public.subscription_payments (
   proof_url text,
   status text not null default 'pending'
     check (status in ('pending', 'approved', 'rejected')),
-  created_by uuid references auth.users (id),
+  created_by uuid references auth.users (id) on delete set null,
   created_at timestamptz not null default now(),
-  reviewed_by uuid references auth.users (id),
+  reviewed_by uuid references auth.users (id) on delete set null,
   approved_at timestamptz
 );
 
@@ -1657,7 +1657,7 @@ begin
   insert into public.notifications (user_id, message, link)
   values (
     (select owner_id from public.businesses where id = v_business_id),
-    'Your payment was approved. Your subscription is now active — welcome aboard!',
+    'Your payment was approved. Your subscription is now active â€” welcome aboard!',
     '/dashboard'
   );
 end;

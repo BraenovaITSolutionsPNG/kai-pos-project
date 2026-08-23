@@ -26,9 +26,9 @@ create table if not exists public.subscription_payments (
   proof_url text,
   status text not null default 'pending'
     check (status in ('pending', 'approved', 'rejected')),
-  created_by uuid references auth.users (id),
+  created_by uuid references auth.users (id) on delete set null,
   created_at timestamptz not null default now(),
-  reviewed_by uuid references auth.users (id),
+  reviewed_by uuid references auth.users (id) on delete set null,
   approved_at timestamptz
 );
 
