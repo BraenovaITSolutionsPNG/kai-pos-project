@@ -1161,6 +1161,81 @@ drop function if exists public.get_my_payments();
 drop function if exists public.get_admin_subscriptions();
 drop function if exists public.get_admin_subscription_payments(uuid);
 
+-- 2. Subscription payments table
+-- ------------------------------------------------------------------
+create table if not exists public.subscription_payments (
+  id uuid primary key default gen_random_uuid(),
+  subscription_id uuid not null references public.businesses (id) on delete cascade,
+  amount numeric(12, 2) not null default 0,
+  method text not null check (method in (
+    'bank_transfer', 'online_bank_transfer', 'mobile_banking',
+    'eftpos', 'visa_card', 'cash', 'other')),
+  bank text,
+  reference text,
+  proof_url text,
+  status text not null default 'pending'
+    check (status in ('pending', 'approved', 'rejected')),
+  created_by uuid references auth.users (id),
+  created_at timestamptz not null default now(),
+  reviewed_by uuid references auth.users (id),
+  approved_at timestamptz
+);
+
+alter table public.subscription_payments enable row level security;
+
+drop policy if exists "owners read own subscription payments"
+  on public.subscription_payments;
+create policy "owners read own subscription payments"
+  on public.subscription_payments
+  for select
+  using (
+    exists (
+      select 1 from public.businesses b
+      where b.id = subscription_payments.subscription_id
+        and b.owner_id = auth.uid()
+    )
+    or exists (
+      select 1 from public.users u
+      where u.id = auth.uid() and u.is_platform_admin = true
+    )
+  );
+
+create index if not exists idx_subscription_payments_sub
+  on public.subscription_payments (subscription_id);
+
+-- ------------------------------------------------------------------
+-- 3. Admin guard helper (used by every privileged RPC below)
+-- ------------------------------------------------------------------
+create or replace function public.assert_platform_admin()
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if not exists (
+    select 1 from public.users
+    where id = auth.uid() and is_platform_admin = true
+  ) then
+    raise exception 'Forbidden: platform admin only'
+      using errcode = '42501';
+  end if;
+end;
+$$;
+
+-- ------------------------------------------------------------------
+-- 4. Harden existing admin getters
+-- ------------------------------------------------------------------
+-- Changing from untyped `setof record` to typed `returns table` requires
+-- dropping the old overloads first.
+drop function if exists public.get_admin_businesses();
+drop function if exists public.get_admin_users();
+drop function if exists public.get_admin_overview();
+drop function if exists public.get_my_subscription();
+drop function if exists public.get_my_payments();
+drop function if exists public.get_admin_subscriptions();
+drop function if exists public.get_admin_subscription_payments(uuid);
+
 create or replace function public.get_admin_overview()
 returns jsonb
 language plpgsql
@@ -1578,6 +1653,13 @@ begin
       current_period_end = now() + case v_cycle
         when 'annual' then interval '1 year' else interval '1 month' end
   where id = v_business_id;
+
+  insert into public.notifications (user_id, message, link)
+  values (
+    (select owner_id from public.businesses where id = v_business_id),
+    'Your payment was approved. Your subscription is now active — welcome aboard!',
+    '/dashboard'
+  );
 end;
 $$;
 
@@ -1602,6 +1684,14 @@ begin
   if not found then
     raise exception 'Payment not found or already reviewed';
   end if;
+
+  insert into public.notifications (user_id, message, link)
+  select b.owner_id,
+         'Your payment proof could not be verified. Please resubmit from the subscription page.',
+         '/subscription'
+  from public.businesses b
+  join public.subscription_payments sp on sp.subscription_id = b.id
+  where sp.id = reject_subscription_payment.payment_id;
 end;
 $$;
 
@@ -1794,3 +1884,4 @@ alter publication supabase_realtime add table public.orders;
 alter publication supabase_realtime add table public.order_items;
 alter publication supabase_realtime add table public.tables;
 alter publication supabase_realtime add table public.inventory_transactions;
+

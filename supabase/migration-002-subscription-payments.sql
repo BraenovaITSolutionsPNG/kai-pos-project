@@ -504,6 +504,13 @@ begin
       current_period_end = now() + case v_cycle
         when 'annual' then interval '1 year' else interval '1 month' end
   where id = v_business_id;
+
+  insert into public.notifications (user_id, message, link)
+  values (
+    (select owner_id from public.businesses where id = v_business_id),
+    'Your payment was approved. Your subscription is now active — welcome aboard!',
+    '/dashboard'
+  );
 end;
 $$;
 
@@ -528,6 +535,14 @@ begin
   if not found then
     raise exception 'Payment not found or already reviewed';
   end if;
+
+  insert into public.notifications (user_id, message, link)
+  select b.owner_id,
+         'Your payment proof could not be verified. Please resubmit from the subscription page.',
+         '/subscription'
+  from public.businesses b
+  join public.subscription_payments sp on sp.subscription_id = b.id
+  where sp.id = reject_subscription_payment.payment_id;
 end;
 $$;
 

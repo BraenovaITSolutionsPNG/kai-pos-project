@@ -55,8 +55,9 @@ export async function signup(
 
   if (error) return { error: error.message };
 
-  // If a session is returned the account is ready to use.
-  if (data.session) redirect("/dashboard");
+  // New businesses start inactive: send owners straight to billing so
+  // they can submit their first payment for approval.
+  if (data.session) redirect("/subscription");
 
   // Otherwise the project has email confirmation enabled — bounce to login.
   return { message: "Check your email to confirm your account, then log in." };

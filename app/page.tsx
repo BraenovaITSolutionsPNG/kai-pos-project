@@ -100,11 +100,18 @@ export default async function LandingPage() {
     data: { user },
   } = await supabase.auth.getUser();
   if (user) {
-    // Logged-in users with an active plan go straight to the app. Owners
-    // whose payment is pending/lapsed stay on the landing page so the
-    // "Back to home" button actually works for them.
+    const { data: profile } = await supabase
+      .from("users")
+      .select("is_platform_admin")
+      .eq("id", user.id)
+      .maybeSingle();
+    // Platform admins run the site, not a restaurant.
+    if (profile?.is_platform_admin) redirect("/admin");
+    // Owners with an active plan go straight into the app; owners whose
+    // payment is pending are taken to billing.
     const sub = await getMySubscription();
     if (!sub || sub.status === "active") redirect("/dashboard");
+    redirect("/subscription");
   }
 
   const content = resolveSiteContent(await getSiteContent());
