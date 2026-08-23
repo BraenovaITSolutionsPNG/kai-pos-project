@@ -275,7 +275,6 @@ alter table public.ingredients enable row level security;
 alter table public.recipes enable row level security;
 alter table public.inventory_transactions enable row level security;
 alter table public.notifications enable row level security;
-alter table public.order_counters enable row level security;
 alter table public.site_content enable row level security;
 
 -- Helper: restaurants the current user is active staff at.
@@ -583,11 +582,6 @@ create policy "inventory_transaction insert"
   for insert
   with check (restaurant_id in (select public.user_restaurant_ids()));
 
--- order_counters.
-create policy "order_counter access"
-  on public.order_counters
-  using (restaurant_id in (select public.user_restaurant_ids()));
-
 -- site_content (read-only for non-admin).
 create policy "site_content read"
   on public.site_content
@@ -684,6 +678,11 @@ create table public.order_counters (
   last_number bigint not null default 0
 );
 alter table public.order_counters enable row level security;
+
+create policy "order_counter access"
+  on public.order_counters
+  using (restaurant_id in (select public.user_restaurant_ids()))
+  with check (restaurant_id in (select public.user_restaurant_ids()));
 
 create or replace function public.next_order_number(v_restaurant_id uuid)
 returns bigint
