@@ -341,9 +341,23 @@ export interface AdminUserRow {
 }
 
 export const requirePlatformAdmin = cache(async () => {
-  const { data } = await authGetUser();
-  if (!data.user || !data.user.is_platform_admin) redirect("/dashboard");
-  return data.user;
+  if (isMySqlMode()) {
+    const { data } = await authGetUser();
+    if (!data.user || !data.user.is_platform_admin) redirect("/dashboard");
+    return data.user;
+  }
+  const supabase = await createClient();
+  const {
+    data: { user: authUser },
+  } = await supabase.auth.getUser();
+  if (!authUser) redirect("/login");
+  const { data: profile } = await supabase
+    .from("users")
+    .select("*")
+    .eq("id", authUser.id)
+    .single();
+  if (!profile?.is_platform_admin) redirect("/dashboard");
+  return profile;
 });
 
 export const getAdminOverview = cache(async (): Promise<AdminOverview> => {
