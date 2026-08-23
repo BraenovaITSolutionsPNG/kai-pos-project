@@ -89,8 +89,9 @@ export const getSessionContext = cache(async (): Promise<SessionContext> => {
     .eq("id", restaurant.business_id)
     .single();
 
-  // A suspended business can no longer use the platform.
-  if (business && business.is_active === false) redirect("/login");
+  // Inactive businesses (pending first payment, suspended, or lapsed)
+  // are handled by the subscription gate below, which routes owners to
+  // /subscription so they can pay or resubmit proof.
 
   // Payment approval gates app access: only businesses with an active
   // subscription use the service. Owners are still signed in so they can
