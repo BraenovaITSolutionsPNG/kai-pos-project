@@ -1,5 +1,5 @@
 -- ============================================================
--- KAI POS — Phase 1 Schema (PNG restaurant POS platform)
+-- KAI POS — Complete Schema (PNG restaurant POS platform)
 -- Run this in the Supabase SQL editor.
 -- ============================================================
 
@@ -14,6 +14,7 @@ create table public.businesses (
   owner_id uuid references auth.users (id) on delete cascade,
   plan text not null default 'starter'
     check (plan in ('starter', 'business', 'professional')),
+  is_active boolean not null default true,
   created_at timestamptz not null default now()
 );
 
@@ -35,6 +36,7 @@ create table public.users (
   email text not null,
   full_name text,
   phone text,
+  is_platform_admin boolean not null default false,
   created_at timestamptz not null default now()
 );
 
@@ -93,7 +95,7 @@ create table public.orders (
   restaurant_id uuid references public.restaurants (id) on delete cascade not null,
   table_id uuid references public.tables (id) on delete set null,
   order_number bigint not null,
-  status text not null default 'paid'
+  status text not null default 'open'
     check (status in (
       'open', 'sent_to_kitchen', 'preparing', 'ready',
       'served', 'paid', 'cancelled'
@@ -134,12 +136,122 @@ create table public.payments (
   created_at timestamptz not null default now()
 );
 
+-- Customers (for future loyalty/online ordering).
+create table public.customers (
+  id uuid primary key default gen_random_uuid(),
+  restaurant_id uuid references public.restaurants (id) on delete cascade not null,
+  name text not null,
+  phone text,
+  email text,
+  loyalty_points integer not null default 0,
+  created_at timestamptz not null default now()
+);
+
+-- Expenses tracking.
+create table public.expenses (
+  id uuid primary key default gen_random_uuid(),
+  restaurant_id uuid references public.restaurants (id) on delete cascade not null,
+  category text not null,
+  amount numeric(10, 2) not null check (amount >= 0),
+  note text,
+  created_by uuid references public.users (id),
+  created_at timestamptz not null default now()
+);
+
+-- Shifts for staff clock-in/out.
+create table public.shifts (
+  id uuid primary key default gen_random_uuid(),
+  restaurant_id uuid references public.restaurants (id) on delete cascade not null,
+  staff_id uuid references public.staff (id) on delete cascade not null,
+  clock_in timestamptz not null default now(),
+  clock_out timestamptz,
+  created_at timestamptz not null default now()
+);
+
+-- Daily cashup reconciliation.
+create table public.cashups (
+  id uuid primary key default gen_random_uuid(),
+  restaurant_id uuid references public.restaurants (id) on delete cascade not null,
+  shift_id uuid references public.shifts (id) on delete set null,
+  cash_total numeric(10, 2) not null default 0,
+  eftpos_total numeric(10, 2) not null default 0,
+  bank_transfer_total numeric(10, 2) not null default 0,
+  refunds numeric(10, 2) not null default 0,
+  expenses numeric(10, 2) not null default 0,
+  net_sales numeric(10, 2) not null default 0,
+  closed_by uuid references public.users (id),
+  closed_at timestamptz not null default now(),
+  unique (shift_id)
+);
+
+-- Ingredients for inventory.
+create table public.ingredients (
+  id uuid primary key default gen_random_uuid(),
+  restaurant_id uuid references public.restaurants (id) on delete cascade not null,
+  name text not null,
+  unit text not null,
+  current_stock numeric(10, 3) not null default 0,
+  reorder_level numeric(10, 3) not null default 0,
+  created_at timestamptz not null default now()
+);
+
+-- Recipes linking products to ingredients.
+create table public.recipes (
+  id uuid primary key default gen_random_uuid(),
+  restaurant_id uuid references public.restaurants (id) on delete cascade not null,
+  product_id uuid references public.products (id) on delete cascade not null,
+  ingredient_id uuid references public.ingredients (id) on delete cascade not null,
+  quantity_required numeric(10, 3) not null check (quantity_required > 0),
+  created_at timestamptz not null default now(),
+  unique (product_id, ingredient_id)
+);
+
+-- Inventory transactions (stock movements).
+create table public.inventory_transactions (
+  id uuid primary key default gen_random_uuid(),
+  restaurant_id uuid references public.restaurants (id) on delete cascade not null,
+  ingredient_id uuid references public.ingredients (id) on delete cascade not null,
+  type text not null
+    check (type in ('restock', 'sale_deduction', 'adjustment', 'waste')),
+  quantity numeric(10, 3) not null,
+  reference_order_id uuid references public.orders (id) on delete set null,
+  reference text,
+  created_by uuid references public.users (id),
+  created_at timestamptz not null default now()
+);
+
+-- Notifications (for admin panel).
+create table public.notifications (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references public.users (id) on delete cascade,
+  message text not null,
+  link text,
+  read_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
+-- Site content (for landing page CMS).
+create table public.site_content (
+  id uuid primary key default gen_random_uuid(),
+  key text not null unique,
+  value jsonb,
+  created_at timestamptz not null default now()
+);
+
 create index if not exists idx_orders_restaurant_created
   on public.orders (restaurant_id, created_at desc);
 create index if not exists idx_products_restaurant
   on public.products (restaurant_id, category_id);
 create index if not exists idx_categories_restaurant
   on public.categories (restaurant_id, sort_order);
+create index if not exists idx_inventory_transactions_ingredient
+  on public.inventory_transactions (ingredient_id, created_at desc);
+create index if not exists idx_shifts_restaurant_staff
+  on public.shifts (restaurant_id, staff_id, clock_in desc);
+create index if not exists idx_cashups_restaurant
+  on public.cashups (restaurant_id, closed_at desc);
+create index if not exists idx_expenses_restaurant
+  on public.expenses (restaurant_id, created_at desc);
 
 -- ------------------------------------------------------------------
 -- Row Level Security
@@ -155,6 +267,16 @@ alter table public.orders enable row level security;
 alter table public.order_items enable row level security;
 alter table public.payments enable row level security;
 alter table public.tables enable row level security;
+alter table public.customers enable row level security;
+alter table public.expenses enable row level security;
+alter table public.shifts enable row level security;
+alter table public.cashups enable row level security;
+alter table public.ingredients enable row level security;
+alter table public.recipes enable row level security;
+alter table public.inventory_transactions enable row level security;
+alter table public.notifications enable row level security;
+alter table public.order_counters enable row level security;
+alter table public.site_content enable row level security;
 
 -- Helper: restaurants the current user is active staff at.
 create or replace function public.user_restaurant_ids()
@@ -334,11 +456,151 @@ create policy "table delete"
   for delete
   using (restaurant_id in (select public.user_restaurant_ids()));
 
+-- customers.
+create policy "customer select"
+  on public.customers
+  for select
+  using (restaurant_id in (select public.user_restaurant_ids()));
+
+create policy "customer insert"
+  on public.customers
+  for insert
+  with check (restaurant_id in (select public.user_restaurant_ids()));
+
+create policy "customer update"
+  on public.customers
+  for update
+  using (restaurant_id in (select public.user_restaurant_ids()));
+
+create policy "customer delete"
+  on public.customers
+  for delete
+  using (restaurant_id in (select public.user_restaurant_ids()));
+
+-- expenses.
+create policy "expense select"
+  on public.expenses
+  for select
+  using (restaurant_id in (select public.user_restaurant_ids()));
+
+create policy "expense insert"
+  on public.expenses
+  for insert
+  with check (restaurant_id in (select public.user_restaurant_ids()));
+
+create policy "expense update"
+  on public.expenses
+  for update
+  using (restaurant_id in (select public.user_restaurant_ids()));
+
+create policy "expense delete"
+  on public.expenses
+  for delete
+  using (restaurant_id in (select public.user_restaurant_ids()));
+
+-- shifts.
+create policy "shift select"
+  on public.shifts
+  for select
+  using (restaurant_id in (select public.user_restaurant_ids()));
+
+create policy "shift insert"
+  on public.shifts
+  for insert
+  with check (restaurant_id in (select public.user_restaurant_ids()));
+
+create policy "shift update"
+  on public.shifts
+  for update
+  using (restaurant_id in (select public.user_restaurant_ids()));
+
+-- cashups.
+create policy "cashup select"
+  on public.cashups
+  for select
+  using (restaurant_id in (select public.user_restaurant_ids()));
+
+create policy "cashup insert"
+  on public.cashups
+  for insert
+  with check (restaurant_id in (select public.user_restaurant_ids()));
+
+create policy "cashup update"
+  on public.cashups
+  for update
+  using (restaurant_id in (select public.user_restaurant_ids()));
+
+-- ingredients.
+create policy "ingredient select"
+  on public.ingredients
+  for select
+  using (restaurant_id in (select public.user_restaurant_ids()));
+
+create policy "ingredient insert"
+  on public.ingredients
+  for insert
+  with check (restaurant_id in (select public.user_restaurant_ids()));
+
+create policy "ingredient update"
+  on public.ingredients
+  for update
+  using (restaurant_id in (select public.user_restaurant_ids()));
+
+create policy "ingredient delete"
+  on public.ingredients
+  for delete
+  using (restaurant_id in (select public.user_restaurant_ids()));
+
+-- recipes.
+create policy "recipe select"
+  on public.recipes
+  for select
+  using (restaurant_id in (select public.user_restaurant_ids()));
+
+create policy "recipe insert"
+  on public.recipes
+  for insert
+  with check (restaurant_id in (select public.user_restaurant_ids()));
+
+create policy "recipe update"
+  on public.recipes
+  for update
+  using (restaurant_id in (select public.user_restaurant_ids()));
+
+create policy "recipe delete"
+  on public.recipes
+  for delete
+  using (restaurant_id in (select public.user_restaurant_ids()));
+
+-- inventory_transactions.
+create policy "inventory_transaction select"
+  on public.inventory_transactions
+  for select
+  using (restaurant_id in (select public.user_restaurant_ids()));
+
+create policy "inventory_transaction insert"
+  on public.inventory_transactions
+  for insert
+  with check (restaurant_id in (select public.user_restaurant_ids()));
+
+-- order_counters.
+create policy "order_counter access"
+  on public.order_counters
+  using (restaurant_id in (select public.user_restaurant_ids()));
+
+-- site_content (read-only for non-admin).
+create policy "site_content read"
+  on public.site_content
+  for select
+  using (true);
+
+-- notifications.
+create policy "notification access"
+  on public.notifications
+  using (user_id = auth.uid());
+
 -- ------------------------------------------------------------------
 -- Sign-up provisioning
--- When a new auth user is created, provision their first tenant
--- (business + restaurant + owner staff + demo menu) so they land
--- in a working POS straight away.
 -- ------------------------------------------------------------------
 
 create or replace function public.handle_new_user()
@@ -414,8 +676,8 @@ create trigger on_auth_user_created
 
 -- ------------------------------------------------------------------
 -- Order numbering
--- Daily sequential order numbers per restaurant.
 -- ------------------------------------------------------------------
+
 create table public.order_counters (
   restaurant_id uuid primary key references public.restaurants (id) on delete cascade,
   day date not null default current_date,
@@ -455,6 +717,11 @@ begin
 end;
 $$;
 
+-- ------------------------------------------------------------------
+-- Core RPCs
+-- ------------------------------------------------------------------
+
+-- Create order (used by POS)
 create or replace function public.create_order(
   v_restaurant_id uuid,
   v_created_by uuid,
@@ -493,7 +760,7 @@ begin
     (restaurant_id, order_number, status, subtotal, tax, total, created_by)
   values
     (v_restaurant_id, public.next_order_number(v_restaurant_id),
-     'paid', v_subtotal, v_tax, v_total, v_created_by)
+     'open', v_subtotal, v_tax, v_total, v_created_by)
   returning * into v_order;
 
   for v_item in select * from jsonb_array_elements(p_items)
@@ -515,3 +782,658 @@ begin
   return v_order;
 end;
 $$;
+
+-- Advance kitchen order status (used by KDS)
+create or replace function public.advance_kitchen(
+  p_order_id uuid,
+  p_action text
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_order public.orders;
+  v_new_status text;
+  v_item_status text;
+begin
+  -- Validate action
+  if p_action not in ('preparing', 'ready', 'served') then
+    raise exception 'Invalid action: %', p_action;
+  end if;
+
+  -- Get order and verify it belongs to user's restaurant
+  select * into v_order
+  from public.orders
+  where id = p_order_id
+    and restaurant_id in (select public.user_restaurant_ids());
+
+  if not found then
+    raise exception 'Order not found or access denied';
+  end if;
+
+  -- Determine new order status based on action and current item statuses
+  case p_action
+    when 'preparing' then
+      v_new_status := 'preparing';
+      v_item_status := 'preparing';
+    when 'ready' then
+      v_new_status := 'ready';
+      v_item_status := 'ready';
+    when 'served' then
+      v_new_status := 'served';
+      v_item_status := 'ready';
+  end case;
+
+  -- Update order status
+  update public.orders
+  set status = v_new_status,
+      updated_at = now()
+  where id = p_order_id;
+
+  -- Update order_items status
+  if p_action in ('preparing', 'ready') then
+    update public.order_items
+    set status = v_item_status
+    where order_id = p_order_id
+      and status = 'new';
+
+    -- If marking ready, also update any 'preparing' items
+    if p_action = 'ready' then
+      update public.order_items
+      set status = 'ready'
+      where order_id = p_order_id
+        and status = 'preparing';
+    end if;
+  end if;
+
+  -- If served, mark all items as ready
+  if p_action = 'served' then
+    update public.order_items
+    set status = 'ready'
+    where order_id = p_order_id;
+  end if;
+end;
+$$;
+
+-- Add staff member (creates auth user + staff record)
+create or replace function public.add_staff(
+  p_email text,
+  p_full_name text,
+  p_password text,
+  p_role text
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_user_id uuid;
+  v_restaurant_id uuid;
+begin
+  -- Get current user's restaurant
+  select restaurant_id into v_restaurant_id
+  from public.staff
+  where user_id = auth.uid() and is_active = true
+  limit 1;
+
+  if v_restaurant_id is null then
+    raise exception 'No active restaurant found for current user';
+  end if;
+
+  -- Check if user already exists
+  select id into v_user_id
+  from public.users
+  where email = p_email;
+
+  if v_user_id is not null then
+    -- User exists, just add staff record
+    insert into public.staff (restaurant_id, user_id, role, is_active)
+    values (v_restaurant_id, v_user_id, p_role, true)
+    on conflict (restaurant_id, user_id) do update
+      set role = p_role, is_active = true;
+    return;
+  end if;
+
+  -- Create auth user (this will trigger handle_new_user, but we catch it)
+  -- We need to create the user in auth.users first
+  -- Since we can't call auth.sign_up from here, we create the user record
+  -- and the admin will need to invite them, OR we use a different approach.
+  
+  -- For now, create the user profile and staff record.
+  -- The actual auth user creation should happen via admin invite flow.
+  -- This RPC assumes the user already exists in auth.users.
+  
+  v_user_id := gen_random_uuid();
+  
+  insert into public.users (id, email, full_name)
+  values (v_user_id, p_email, p_full_name)
+  on conflict (id) do nothing;
+
+  insert into public.staff (restaurant_id, user_id, role, is_active)
+  values (v_restaurant_id, v_user_id, p_role, true)
+  on conflict (restaurant_id, user_id) do update
+    set role = p_role, is_active = true;
+end;
+$$;
+
+-- Update staff (role, is_active)
+create or replace function public.update_staff(
+  p_staff_id uuid,
+  p_role text default null,
+  p_is_active boolean default null
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_restaurant_id uuid;
+begin
+  -- Verify staff belongs to user's restaurant
+  select restaurant_id into v_restaurant_id
+  from public.staff
+  where id = p_staff_id
+    and restaurant_id in (select public.user_restaurant_ids());
+
+  if v_restaurant_id is null then
+    raise exception 'Staff not found or access denied';
+  end if;
+
+  -- Prevent removing owner role
+  if p_role = 'owner' then
+    raise exception 'Cannot change role to owner via this function';
+  end if;
+
+  update public.staff
+  set role = coalesce(p_role, role),
+      is_active = coalesce(p_is_active, is_active)
+  where id = p_staff_id;
+end;
+$$;
+
+-- Remove staff member
+create or replace function public.remove_staff(
+  p_staff_id uuid
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_restaurant_id uuid;
+  v_role text;
+begin
+  -- Verify staff belongs to user's restaurant
+  select restaurant_id, role into v_restaurant_id, v_role
+  from public.staff
+  where id = p_staff_id
+    and restaurant_id in (select public.user_restaurant_ids());
+
+  if v_restaurant_id is null then
+    raise exception 'Staff not found or access denied';
+  end if;
+
+  -- Prevent removing owner
+  if v_role = 'owner' then
+    raise exception 'Cannot remove owner';
+  end if;
+
+  -- Prevent removing self
+  if (select user_id from public.staff where id = p_staff_id) = auth.uid() then
+    raise exception 'Cannot remove yourself';
+  end if;
+
+  delete from public.staff where id = p_staff_id;
+end;
+$$;
+
+-- Restock ingredient (add to stock)
+create or replace function public.restock_ingredient(
+  p_ingredient_id uuid,
+  p_quantity numeric
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_restaurant_id uuid;
+begin
+  -- Verify ingredient belongs to user's restaurant
+  select restaurant_id into v_restaurant_id
+  from public.ingredients
+  where id = p_ingredient_id
+    and restaurant_id in (select public.user_restaurant_ids());
+
+  if v_restaurant_id is null then
+    raise exception 'Ingredient not found or access denied';
+  end if;
+
+  if p_quantity <= 0 then
+    raise exception 'Quantity must be positive';
+  end if;
+
+  update public.ingredients
+  set current_stock = current_stock + p_quantity
+  where id = p_ingredient_id;
+
+  insert into public.inventory_transactions
+    (restaurant_id, ingredient_id, type, quantity, created_by)
+  values
+    (v_restaurant_id, p_ingredient_id, 'restock', p_quantity, auth.uid());
+end;
+$$;
+
+-- Adjust ingredient (set stock to specific value)
+create or replace function public.adjust_ingredient(
+  p_ingredient_id uuid,
+  p_quantity numeric,
+  p_note text default null
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_restaurant_id uuid;
+  v_old_stock numeric;
+  v_diff numeric;
+begin
+  -- Verify ingredient belongs to user's restaurant
+  select restaurant_id, current_stock into v_restaurant_id, v_old_stock
+  from public.ingredients
+  where id = p_ingredient_id
+    and restaurant_id in (select public.user_restaurant_ids());
+
+  if v_restaurant_id is null then
+    raise exception 'Ingredient not found or access denied';
+  end if;
+
+  if p_quantity < 0 then
+    raise exception 'Quantity cannot be negative';
+  end if;
+
+  v_diff := p_quantity - v_old_stock;
+
+  update public.ingredients
+  set current_stock = p_quantity
+  where id = p_ingredient_id;
+
+  insert into public.inventory_transactions
+    (restaurant_id, ingredient_id, type, quantity, reference, created_by)
+  values
+    (v_restaurant_id, p_ingredient_id, 'adjustment', v_diff, p_note, auth.uid());
+end;
+$$;
+
+-- ------------------------------------------------------------------
+-- Subscription / Billing RPCs (for admin panel)
+-- ------------------------------------------------------------------
+
+create or replace function public.get_admin_overview()
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_result jsonb;
+begin
+  select jsonb_build_object(
+    'businesses', (select count(*) from public.businesses),
+    'active_businesses', (select count(*) from public.businesses where is_active = true),
+    'restaurants', (select count(*) from public.restaurants),
+    'users', (select count(*) from public.users),
+    'platform_admins', (select count(*) from public.users where is_platform_admin = true),
+    'staff', (select count(*) from public.staff where is_active = true),
+    'orders', (select count(*) from public.orders),
+    'revenue', (select coalesce(sum(total), 0) from public.orders where status = 'paid')
+  ) into v_result;
+  return v_result;
+end;
+$$;
+
+create or replace function public.get_admin_businesses()
+returns setof record
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  return query
+  select 
+    b.id,
+    b.name,
+    b.owner_id,
+    u.email as owner_email,
+    b.plan,
+    b.is_active,
+    (select count(*) from public.restaurants r where r.business_id = b.id) as restaurant_count,
+    b.created_at
+  from public.businesses b
+  left join public.users u on u.id = b.owner_id
+  order by b.created_at desc;
+end;
+$$;
+
+create or replace function public.get_admin_users()
+returns setof record
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  return query
+  select 
+    u.id,
+    u.email,
+    u.full_name,
+    u.phone,
+    u.is_platform_admin,
+    (
+      select string_agg(r.name, ', ')
+      from public.restaurants r
+      join public.staff s on s.restaurant_id = r.id
+      where s.user_id = u.id and s.is_active = true
+    ) as memberships,
+    u.created_at
+  from public.users u
+  order by u.created_at desc;
+end;
+$$;
+
+create or replace function public.get_admin_subscriptions()
+returns setof record
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  return query
+  select 
+    b.id,
+    b.business_id,
+    b.name as business_name,
+    u.email as owner_email,
+    b.plan,
+    case when b.plan = 'starter' then 'monthly' else 'annual' end as billing_cycle,
+    case b.plan 
+      when 'starter' then 500
+      when 'business' then 1500
+      when 'professional' then 2500
+    end as price,
+    case when b.is_active then 'active' else 'cancelled' end as status,
+    b.created_at as current_period_start,
+    (b.created_at + interval '1 month') as current_period_end,
+    null as reminder_sent_at,
+    0 as pending_payments,
+    30 as days_left
+  from public.businesses b
+  left join public.users u on u.id = b.owner_id
+  order by b.created_at desc;
+end;
+$$;
+
+create or replace function public.get_admin_subscription_payments(p_subscription_id uuid)
+returns setof record
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  return query
+  select 
+    gen_random_uuid() as id,
+    p_subscription_id as subscription_id,
+    0 as amount,
+    'cash' as method,
+    null as bank,
+    null as reference,
+    null as proof_url,
+    'pending' as status,
+    null as created_by_email,
+    now() as created_at,
+    null as approved_at
+  where false; -- placeholder, replace with actual payments table when implemented
+end;
+$$;
+
+create or replace function public.get_notifications()
+returns setof record
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  return query
+  select 
+    id,
+    message,
+    link,
+    read_at,
+    created_at
+  from public.notifications
+  where user_id = auth.uid()
+  order by created_at desc
+  limit 50;
+end;
+$$;
+
+create or replace function public.get_site_content()
+returns setof record
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  return query
+  select id, value
+  from public.site_content
+  order by key;
+end;
+$$;
+
+create or replace function public.get_my_subscription()
+returns setof record
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_restaurant_id uuid;
+  v_business_id uuid;
+begin
+  select restaurant_id into v_restaurant_id
+  from public.staff
+  where user_id = auth.uid() and is_active = true
+  limit 1;
+
+  if v_restaurant_id is null then
+    return;
+  end if;
+
+  select business_id into v_business_id
+  from public.restaurants
+  where id = v_restaurant_id;
+
+  return query
+  select 
+    b.id,
+    b.plan,
+    'monthly' as billing_cycle,
+    case b.plan 
+      when 'starter' then 500
+      when 'business' then 1500
+      when 'professional' then 2500
+    end as price,
+    case when b.is_active then 'active' else 'cancelled' end as status,
+    b.created_at as current_period_start,
+    (b.created_at + interval '1 month') as current_period_end,
+    r.name as business_name
+  from public.businesses b
+  join public.restaurants r on r.business_id = b.id
+  where b.id = v_business_id;
+end;
+$$;
+
+create or replace function public.get_my_payments()
+returns setof record
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  return query
+  select 
+    gen_random_uuid() as id,
+    gen_random_uuid() as subscription_id,
+    0 as amount,
+    'cash' as method,
+    null as bank,
+    null as reference,
+    null as proof_url,
+    'pending' as status,
+    now() as created_at,
+    null as approved_at
+  where false; -- placeholder
+end;
+$$;
+
+-- ------------------------------------------------------------------
+-- Additional Helper Functions
+-- ------------------------------------------------------------------
+
+-- Get current user's restaurant ID
+create or replace function public.get_my_restaurant_id()
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_restaurant_id uuid;
+begin
+  select restaurant_id into v_restaurant_id
+  from public.staff
+  where user_id = auth.uid() and is_active = true
+  limit 1;
+  return v_restaurant_id;
+end;
+$$;
+
+-- Clock in for shift
+create or replace function public.clock_in()
+returns public.shifts
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_staff_id uuid;
+  v_shift public.shifts;
+begin
+  select id into v_staff_id
+  from public.staff
+  where user_id = auth.uid() and is_active = true
+  limit 1;
+
+  if v_staff_id is null then
+    raise exception 'No active staff record found';
+  end if;
+
+  -- Check if already clocked in
+  if exists (
+    select 1 from public.shifts
+    where staff_id = v_staff_id and clock_out is null
+  ) then
+    raise exception 'Already clocked in';
+  end if;
+
+  insert into public.shifts (restaurant_id, staff_id, clock_in)
+  select restaurant_id, v_staff_id, now()
+  from public.staff
+  where id = v_staff_id
+  returning * into v_shift;
+
+  return v_shift;
+end;
+$$;
+
+-- Clock out for shift
+create or replace function public.clock_out()
+returns public.shifts
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_staff_id uuid;
+  v_shift public.shifts;
+begin
+  select id into v_staff_id
+  from public.staff
+  where user_id = auth.uid() and is_active = true
+  limit 1;
+
+  if v_staff_id is null then
+    raise exception 'No active staff record found';
+  end if;
+
+  update public.shifts
+  set clock_out = now()
+  where staff_id = v_staff_id and clock_out is null
+  returning * into v_shift;
+
+  if v_shift is null then
+    raise exception 'No active shift found';
+  end if;
+
+  return v_shift;
+end;
+$$;
+
+-- Get active shift for current user
+create or replace function public.get_active_shift()
+returns public.shifts
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_staff_id uuid;
+  v_shift public.shifts;
+begin
+  select id into v_staff_id
+  from public.staff
+  where user_id = auth.uid() and is_active = true
+  limit 1;
+
+  if v_staff_id is null then
+    return null;
+  end if;
+
+  select * into v_shift
+  from public.shifts
+  where staff_id = v_staff_id and clock_out is null
+  order by clock_in desc
+  limit 1;
+
+  return v_shift;
+end;
+$$;
+
+-- ------------------------------------------------------------------
+-- Realtime publication (for KDS, tables, etc.)
+-- ------------------------------------------------------------------
+
+alter publication supabase_realtime add table public.orders;
+alter publication supabase_realtime add table public.order_items;
+alter publication supabase_realtime add table public.tables;
+alter publication supabase_realtime add table public.inventory_transactions;

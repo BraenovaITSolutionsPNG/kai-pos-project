@@ -302,3 +302,8 @@
   Reload env: .env.local
 ✓ Compiled in 3s
 ✓ Compiled in 11ms
+ POST /login 200 in 3.2s (next.js: 3.0s, proxy.ts: 20ms, application-code: 110ms)
+ GET /login 200 in 1257ms (next.js: 6ms, proxy.ts: 6ms, application-code: 1244ms)
+ POST /login 200 in 992ms (next.js: 4ms, proxy.ts: 8ms, application-code: 980ms)
+  └─ ƒ login({}, {}) in 959ms lib/auth-actions.ts
+ GET / 200 in 3.2s (next.js: 1195ms, proxy.ts: 287ms, application-code: 1768ms)

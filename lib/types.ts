@@ -160,8 +160,9 @@ export interface InventoryTransaction {
   id: string;
   restaurant_id: string;
   ingredient_id: string;
-  type: "restock" | "sale" | "adjustment" | "waste";
+  type: "restock" | "sale_deduction" | "adjustment" | "waste";
   quantity: number;
+  reference_order_id: string | null;
   reference: string | null;
   created_by: string | null;
   created_at: string;
@@ -174,5 +175,54 @@ export interface Expense {
   amount: number;
   note: string | null;
   created_by: string | null;
+  created_at: string;
+}
+
+export interface Shift {
+  id: string;
+  restaurant_id: string;
+  staff_id: string;
+  clock_in: string;
+  clock_out: string | null;
+  created_at: string;
+}
+
+export interface Cashup {
+  id: string;
+  restaurant_id: string;
+  shift_id: string | null;
+  cash_total: number;
+  eftpos_total: number;
+  bank_transfer_total: number;
+  refunds: number;
+  expenses: number;
+  net_sales: number;
+  closed_by: string | null;
+  closed_at: string;
+}
+
+export interface Customer {
+  id: string;
+  restaurant_id: string;
+  name: string;
+  phone: string | null;
+  email: string | null;
+  loyalty_points: number;
+  created_at: string;
+}
+
+export interface Notification {
+  id: string;
+  user_id: string | null;
+  message: string;
+  link: string | null;
+  read_at: string | null;
+  created_at: string;
+}
+
+export interface SiteContent {
+  id: string;
+  key: string;
+  value: Record<string, unknown> | null;
   created_at: string;
 }

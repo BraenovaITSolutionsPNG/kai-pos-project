@@ -28,6 +28,7 @@ import type {
   Product,
   Recipe,
   Restaurant,
+  Shift,
   Staff,
   UserProfile,
 } from "@/lib/types";
@@ -290,6 +291,19 @@ export const getKitchenOrders = cache(
     return (data as unknown as Order[]) ?? [];
   }
 );
+
+export const getShifts = cache(async (): Promise<Shift[]> => {
+  const ctx = await getSessionContext();
+  const supabase = await createClient();
+
+  const { data } = await supabase
+    .from("shifts")
+    .select("*")
+    .eq("restaurant_id", ctx.restaurant.id)
+    .order("clock_in", { ascending: false });
+
+  return (data as unknown as Shift[]) ?? [];
+});
 
 // ---------------------------------------------------------------
 // Platform administration

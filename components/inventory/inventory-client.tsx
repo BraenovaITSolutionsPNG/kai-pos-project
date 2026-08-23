@@ -273,14 +273,12 @@ function RecipeEditor({
 }) {
   const router = useRouter();
   const [productId, setProductId] = useState("");
-  const [rows, setRows] = useState<Recipe[]>([]);
   const [selIngredient, setSelIngredient] = useState("");
   const [selQty, setSelQty] = useState("");
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
-    setRows(recipes.filter((r) => r.product_id === productId));
-  }, [productId, recipes]);
+  // Derived state instead of useEffect
+  const rows = recipes.filter((r) => r.product_id === productId);
 
   async function addRow() {
     if (!productId || !selIngredient || !selQty) return;
@@ -461,9 +459,15 @@ export function InventoryClient({
     if (data) setItems(data as unknown as Ingredient[]);
   }, []);
 
+  // Initial load from props, then sync with server on mount
   useEffect(() => {
-    void reload();
-  }, [reload]);
+    setItems(ingredients);
+  }, [ingredients]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    reload();
+  }, []);
 
   async function confirmDelete() {
     if (!deleting) return;

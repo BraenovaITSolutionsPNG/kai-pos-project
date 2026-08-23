@@ -260,8 +260,9 @@ export function ReportsClient() {
   }, []);
 
   useEffect(() => {
-    void load(range);
-  }, [range, load]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    load(range);
+  }, [range]);
 
   const stats = computeStats(orders, expenses);
 

@@ -165,9 +165,15 @@ export function TablesClient({
     if (data) setItems(data as unknown as DiningTable[]);
   }, []);
 
+  // Initial load from props, then sync with server on mount
   useEffect(() => {
-    void reload();
-  }, [reload]);
+    setItems(tables);
+  }, [tables]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    reload();
+  }, []);
 
   async function flipStatus(table: DiningTable) {
     setFlipping(table.id);

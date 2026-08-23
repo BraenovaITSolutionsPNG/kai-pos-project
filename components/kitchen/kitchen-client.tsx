@@ -129,6 +129,7 @@ export function KitchenClient({ initialOrders }: { initialOrders: Order[] }) {
   const [orders, setOrders] = useState<Order[]>(initialOrders);
   const [busy, setBusy] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const scheduleRef = useRef<() => void>(() => {});
 
   const load = useCallback(async () => {
     const supabase = createClient();
@@ -143,9 +144,14 @@ export function KitchenClient({ initialOrders }: { initialOrders: Order[] }) {
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(async () => {
       await load();
-      schedule();
+      scheduleRef.current?.();
     }, POLL_MS);
   }, [load]);
+
+  // Initialize scheduleRef after schedule is defined
+  useEffect(() => {
+    scheduleRef.current = schedule;
+  }, [schedule]);
 
   useEffect(() => {
     schedule();
