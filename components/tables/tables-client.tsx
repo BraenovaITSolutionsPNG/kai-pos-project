@@ -165,14 +165,16 @@ export function TablesClient({
     if (data) setItems(data as unknown as DiningTable[]);
   }, []);
 
-  // Initial load from props, then sync with server on mount
   useEffect(() => {
-    setItems(tables);
-  }, [tables]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    reload();
+    let cancelled = false;
+    void (async () => {
+      const supabase = createClient();
+      const { data } = await supabase.from("tables").select("*").order("label");
+      if (!cancelled && data) setItems(data as unknown as DiningTable[]);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   async function flipStatus(table: DiningTable) {

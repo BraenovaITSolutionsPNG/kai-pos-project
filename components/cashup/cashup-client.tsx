@@ -165,9 +165,20 @@ export function CashupClient({
   }, [restaurantId]);
 
   useEffect(() => {
-    loadOrders();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    let cancelled = false;
+    void (async () => {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from("orders")
+        .select("*, order_items(*), payments(*)")
+        .eq("restaurant_id", restaurantId)
+        .order("created_at", { ascending: false });
+      if (!cancelled && data) setOrders(data as unknown as OrderWithRelations[]);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [restaurantId]);
 
   // Check for active shift on mount
   useEffect(() => {

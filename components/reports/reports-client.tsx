@@ -260,8 +260,31 @@ export function ReportsClient() {
   }, []);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    load(range);
+    let cancelled = false;
+    void (async () => {
+      const { from, to } = rangeBounds(range);
+      const supabase = createClient();
+      const [ordersRes, expRes] = await Promise.all([
+        supabase
+          .from("orders")
+          .select("*")
+          .gte("created_at", `${from}T00:00:00`)
+          .lte("created_at", `${to}T23:59:59`),
+        supabase
+          .from("expenses")
+          .select("*")
+          .gte("created_at", `${from}T00:00:00`)
+          .lte("created_at", `${to}T23:59:59`),
+      ]);
+      if (!cancelled && ordersRes.data)
+        setOrders(ordersRes.data as unknown as Order[]);
+      if (!cancelled && expRes.data)
+        setExpenses(expRes.data as unknown as Expense[]);
+      if (!cancelled) setLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [range]);
 
   const stats = computeStats(orders, expenses);

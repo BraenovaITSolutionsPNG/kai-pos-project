@@ -26,6 +26,7 @@ export function getPool(): mysql.Pool {
 
 export async function query<T = unknown[]>(
   sql: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- mysql2 ExecuteValues rejects unknown[]
   params: any[] = []
 ): Promise<T> {
   const [rows] = await getPool().execute(sql, params);
@@ -34,6 +35,7 @@ export async function query<T = unknown[]>(
 
 export async function execute(
   sql: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- mysql2 ExecuteValues rejects unknown[]
   params: any[] = []
 ): Promise<mysql.ResultSetHeader> {
   const [result] = await getPool().execute(sql, params);

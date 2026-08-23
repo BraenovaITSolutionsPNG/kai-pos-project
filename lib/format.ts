@@ -11,8 +11,9 @@ const paymentLabels: Record<PaymentMethod, string> = {
   other: "Other",
 };
 
-export function formatKina(amount: number): string {
-  return `K${amount.toLocaleString("en-PG", {
+export function formatKina(amount: number | null | undefined): string {
+  const value = Number(amount ?? 0);
+  return `K${value.toLocaleString("en-PG", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;

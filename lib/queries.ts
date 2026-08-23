@@ -347,23 +347,35 @@ export const requirePlatformAdmin = cache(async () => {
 });
 
 export const getAdminOverview = cache(async (): Promise<AdminOverview> => {
-  if (!isMySqlMode()) return {} as AdminOverview;
-  const { data } = await execAdminOverview();
-  return data as AdminOverview;
+  if (isMySqlMode()) {
+    const { data } = await execAdminOverview();
+    return data as AdminOverview;
+  }
+  const supabase = await createClient();
+  const { data } = await supabase.rpc("get_admin_overview");
+  return (data as unknown as AdminOverview) ?? ({} as AdminOverview);
 });
 
 export const getAdminBusinesses = cache(
   async (): Promise<AdminBusinessRow[]> => {
-    if (!isMySqlMode()) return [];
-    const { data } = await execAdminBusinesses();
-    return (data as AdminBusinessRow[]) ?? [];
+    if (isMySqlMode()) {
+      const { data } = await execAdminBusinesses();
+      return (data as AdminBusinessRow[]) ?? [];
+    }
+    const supabase = await createClient();
+    const { data } = await supabase.rpc("get_admin_businesses");
+    return (data as unknown as AdminBusinessRow[]) ?? [];
   }
 );
 
 export const getAdminUsers = cache(async (): Promise<AdminUserRow[]> => {
-  if (!isMySqlMode()) return [];
-  const { data } = await execAdminUsers();
-  return (data as AdminUserRow[]) ?? [];
+  if (isMySqlMode()) {
+    const { data } = await execAdminUsers();
+    return (data as AdminUserRow[]) ?? [];
+  }
+  const supabase = await createClient();
+  const { data } = await supabase.rpc("get_admin_users");
+  return (data as unknown as AdminUserRow[]) ?? [];
 });
 
 export interface AdminSubscriptionRow {
@@ -398,19 +410,29 @@ export interface SubscriptionPaymentRow {
 
 export const getAdminSubscriptions = cache(
   async (): Promise<AdminSubscriptionRow[]> => {
-    if (!isMySqlMode()) return [];
-    const { data } = await execAdminSubscriptions();
-    return (data as AdminSubscriptionRow[]) ?? [];
+    if (isMySqlMode()) {
+      const { data } = await execAdminSubscriptions();
+      return (data as AdminSubscriptionRow[]) ?? [];
+    }
+    const supabase = await createClient();
+    const { data } = await supabase.rpc("get_admin_subscriptions");
+    return (data as unknown as AdminSubscriptionRow[]) ?? [];
   }
 );
 
 export const getAdminSubscriptionPayments = cache(
   async (subscriptionId: string): Promise<SubscriptionPaymentRow[]> => {
-    if (!isMySqlMode()) return [];
-    const { data } = await execAdminSubscriptionPayments({
-      subscription_id: subscriptionId,
+    if (isMySqlMode()) {
+      const { data } = await execAdminSubscriptionPayments({
+        subscription_id: subscriptionId,
+      });
+      return (data as SubscriptionPaymentRow[]) ?? [];
+    }
+    const supabase = await createClient();
+    const { data } = await supabase.rpc("get_admin_subscription_payments", {
+      p_subscription_id: subscriptionId,
     });
-    return (data as SubscriptionPaymentRow[]) ?? [];
+    return (data as unknown as SubscriptionPaymentRow[]) ?? [];
   }
 );
 
@@ -423,9 +445,13 @@ export interface NotificationRow {
 }
 
 export const getNotifications = cache(async (): Promise<NotificationRow[]> => {
-  if (!isMySqlMode()) return [];
-  const { data } = await execGetNotifications();
-  return (data as NotificationRow[]) ?? [];
+  if (isMySqlMode()) {
+    const { data } = await execGetNotifications();
+    return (data as NotificationRow[]) ?? [];
+  }
+  const supabase = await createClient();
+  const { data } = await supabase.rpc("get_notifications");
+  return (data as unknown as NotificationRow[]) ?? [];
 });
 
 export interface SiteContentRow {
@@ -434,9 +460,13 @@ export interface SiteContentRow {
 }
 
 export const getSiteContent = cache(async (): Promise<SiteContentRow[]> => {
-  if (!isMySqlMode()) return [];
-  const { data } = await execGetSiteContent();
-  return (data as SiteContentRow[]) ?? [];
+  if (isMySqlMode()) {
+    const { data } = await execGetSiteContent();
+    return (data as SiteContentRow[]) ?? [];
+  }
+  const supabase = await createClient();
+  const { data } = await supabase.rpc("get_site_content");
+  return (data as unknown as SiteContentRow[]) ?? [];
 });
 
 export interface MySubscriptionRow {
@@ -452,9 +482,14 @@ export interface MySubscriptionRow {
 
 export const getMySubscription = cache(
   async (): Promise<MySubscriptionRow | null> => {
-    if (!isMySqlMode()) return null;
-    const { data } = await execGetMySubscription();
-    const rows = (data as MySubscriptionRow[]) ?? [];
+    if (isMySqlMode()) {
+      const { data } = await execGetMySubscription();
+      const rows = (data as MySubscriptionRow[]) ?? [];
+      return rows[0] ?? null;
+    }
+    const supabase = await createClient();
+    const { data } = await supabase.rpc("get_my_subscription");
+    const rows = (data as unknown as MySubscriptionRow[]) ?? [];
     return rows[0] ?? null;
   }
 );
@@ -473,7 +508,11 @@ export interface MyPaymentRow {
 }
 
 export const getMyPayments = cache(async (): Promise<MyPaymentRow[]> => {
-  if (!isMySqlMode()) return [];
-  const { data } = await execGetMyPayments();
-  return (data as MyPaymentRow[]) ?? [];
+  if (isMySqlMode()) {
+    const { data } = await execGetMyPayments();
+    return (data as MyPaymentRow[]) ?? [];
+  }
+  const supabase = await createClient();
+  const { data } = await supabase.rpc("get_my_payments");
+  return (data as unknown as MyPaymentRow[]) ?? [];
 });

@@ -459,14 +459,16 @@ export function InventoryClient({
     if (data) setItems(data as unknown as Ingredient[]);
   }, []);
 
-  // Initial load from props, then sync with server on mount
   useEffect(() => {
-    setItems(ingredients);
-  }, [ingredients]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    reload();
+    let cancelled = false;
+    void (async () => {
+      const supabase = createClient();
+      const { data } = await supabase.from("ingredients").select("*").order("name");
+      if (!cancelled && data) setItems(data as unknown as Ingredient[]);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   async function confirmDelete() {
