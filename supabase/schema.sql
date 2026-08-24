@@ -933,7 +933,7 @@ begin
     from public.staff s
     where s.restaurant_id = v_order.restaurant_id
       and s.is_active = true
-      and s.role <> 'kitchen'
+      and s.role in ('waiter', 'cashier')
       and not exists (
         select 1 from public.notifications n
         where n.user_id = s.user_id
