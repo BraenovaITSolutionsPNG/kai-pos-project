@@ -22,6 +22,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import Pricing from "@/components/landing/pricing";
+import { CountUp } from "@/components/landing/count-up";
 import { getSiteContent, getMySubscription } from "@/lib/queries";
 import { resolveSiteContent, renderAccent } from "@/lib/site-content";
 
@@ -119,10 +120,10 @@ export default async function LandingPage() {
   return (
     <div className="min-h-svh bg-background">
       {/* Nav */}
-      <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur">
+      <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur animate-slide-down">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-2">
-            <div className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+            <div className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-transform duration-300 hover:rotate-12 hover:scale-110">
               <UtensilsCrossed className="size-5" />
             </div>
             <div className="leading-tight">
@@ -165,25 +166,40 @@ export default async function LandingPage() {
           aria-hidden
           className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[600px] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent"
         />
+        {/* Ambient drifting orbs */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -top-24 left-1/4 -z-10 size-72 animate-orb-a rounded-full bg-primary/10 blur-3xl"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute right-0 top-40 -z-10 size-80 animate-orb-b rounded-full bg-primary/5 blur-3xl"
+        />
         <div className="mx-auto grid max-w-6xl gap-12 px-4 pb-20 pt-16 sm:px-6 lg:grid-cols-2 lg:items-center lg:pt-24">
           <div>
-            <Badge variant="outline" className="mb-4 gap-1.5">
+            <Badge
+              variant="outline"
+              className="mb-4 animate-fade-up gap-1.5"
+            >
               <MonitorSmartphone className="size-3.5" />
               {content.hero.badge}
             </Badge>
-            <h1 className="font-heading text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
+            <h1 className="animate-fade-up font-heading text-4xl font-semibold leading-tight tracking-tight [animation-delay:100ms] sm:text-5xl">
               {renderAccent(content.hero.title)}
             </h1>
-            <p className="mt-4 max-w-lg text-lg text-muted-foreground">
+            <p className="mt-4 max-w-lg animate-fade-up text-lg text-muted-foreground [animation-delay:200ms]">
               {content.hero.subtitle}
             </p>
-            <div className="mt-8 flex flex-wrap items-center gap-3">
+            <div className="mt-8 flex flex-wrap items-center gap-3 [animation-delay:300ms] animate-fade-up">
               <Link
                 href="/signup"
-                className={cn(buttonVariants({ size: "lg" }))}
+                className={cn(
+                  "group",
+                  buttonVariants({ size: "lg" })
+                )}
               >
                 {content.hero.cta}
-                <ArrowRight />
+                <ArrowRight className="transition-transform duration-300 group-hover:translate-x-1" />
               </Link>
               <Link
                 href="#features"
@@ -192,30 +208,46 @@ export default async function LandingPage() {
                 {content.hero.cta2}
               </Link>
             </div>
-            <p className="mt-4 text-sm text-muted-foreground">
+            <p className="mt-4 animate-fade-up text-sm text-muted-foreground [animation-delay:400ms]">
               Your menu is set up for you
             </p>
           </div>
 
           {/* App mockup */}
-          <div className="relative mx-auto w-full max-w-md">
-            <div className="rounded-2xl border bg-card p-4 shadow-2xl">
+          <div className="relative mx-auto w-full max-w-md [animation-delay:250ms] animate-fade-up">
+            <div className="animate-float rounded-2xl border bg-card p-4 shadow-2xl">
               <div className="mb-4 flex items-center gap-2 border-b pb-3">
                 <div className="flex size-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
                   <UtensilsCrossed className="size-4" />
                 </div>
                 <div className="text-sm font-medium">KAI POS Today</div>
-                <Badge className="ml-auto">Live</Badge>
+                <Badge className="ml-auto gap-1.5">
+                  <span className="relative flex size-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary-foreground opacity-75" />
+                    <span className="relative inline-flex size-2 rounded-full bg-primary-foreground" />
+                  </span>
+                  Live
+                </Badge>
               </div>
               <div className="grid grid-cols-3 gap-3">
                 {[
-                  { label: "Sales", value: "K1,240" },
-                  { label: "Orders", value: "48" },
-                  { label: "Avg", value: "K25.83" },
-                ].map((s) => (
-                  <div key={s.label} className="rounded-lg bg-muted p-3 text-center">
+                  { label: "Sales", value: 1240, decimals: 0, prefix: "K" },
+                  { label: "Orders", value: 48, decimals: 0, prefix: "" },
+                  { label: "Avg", value: 25.83, decimals: 2, prefix: "K" },
+                ].map((s, i) => (
+                  <div
+                    key={s.label}
+                    className="animate-fade-up rounded-lg bg-muted p-3 text-center"
+                    style={{ animationDelay: `${450 + i * 120}ms` }}
+                  >
                     <p className="text-[11px] text-muted-foreground">{s.label}</p>
-                    <p className="font-heading text-sm font-semibold">{s.value}</p>
+                    <CountUp
+                      to={s.value}
+                      decimals={s.decimals}
+                      prefix={s.prefix}
+                      duration={1400 + i * 300}
+                      className="font-heading text-sm font-semibold"
+                    />
                   </div>
                 ))}
               </div>
@@ -224,10 +256,11 @@ export default async function LandingPage() {
                   { name: "Chicken Fried Rice", qty: "2×", price: "K50.00" },
                   { name: "Fish & Chips", qty: "1×", price: "K32.00" },
                   { name: "Mango Juice", qty: "3×", price: "K24.00" },
-                ].map((item) => (
+                ].map((item, i) => (
                   <div
                     key={item.name}
-                    className="flex items-center justify-between rounded-lg border px-3 py-2 text-sm"
+                    className="flex animate-fade-up items-center justify-between rounded-lg border px-3 py-2 text-sm"
+                    style={{ animationDelay: `${700 + i * 130}ms` }}
                   >
                     <span>
                       <span className="font-medium">{item.qty}</span> {item.name}
@@ -236,17 +269,17 @@ export default async function LandingPage() {
                   </div>
                 ))}
               </div>
-              <div className="mt-3 rounded-lg bg-primary p-3 text-center text-sm font-semibold text-primary-foreground">
+              <div className="mt-3 rounded-lg bg-primary p-3 text-center text-sm font-semibold text-primary-foreground [animation-delay:1100ms] animate-fade-up">
                 Total K106.00 · EFTPOS
               </div>
             </div>
-            <div className="absolute -bottom-5 -left-6 hidden rounded-xl border bg-card px-4 py-3 shadow-lg sm:block">
+            <div className="absolute -bottom-5 -left-6 hidden animate-float-soft rounded-xl border bg-card px-4 py-3 shadow-lg [animation-delay:800ms] sm:block">
               <div className="flex items-center gap-2 text-sm">
                 <Wifi className="size-4 text-green-500" />
                 <span>Orders synced</span>
               </div>
             </div>
-            <div className="absolute -top-4 -right-4 hidden rounded-xl border bg-card px-4 py-3 shadow-lg sm:block">
+            <div className="absolute -top-4 -right-4 hidden animate-float-soft rounded-xl border bg-card px-4 py-3 shadow-lg sm:block">
               <div className="flex items-center gap-2 text-sm">
                 <ShieldCheck className="size-4 text-primary" />
                 <span>Staff roles locked</span>
