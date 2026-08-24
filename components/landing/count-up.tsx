@@ -23,8 +23,8 @@ export function CountUp({
     started.current = true;
 
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setValue(to);
-      return;
+      raf = requestAnimationFrame(() => setValue(to));
+      return () => cancelAnimationFrame(raf);
     }
 
     let raf: number;
