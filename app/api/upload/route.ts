@@ -22,6 +22,27 @@ const BUCKET = "payment-proofs";
 
 export async function POST(request: Request) {
   try {
+    if (isMySqlMode()) {
+      const { data: auth } = await authGetUser();
+      if (!auth.user) {
+        return NextResponse.json(
+          { data: null, error: { message: "Unauthorized" } },
+          { status: 401 }
+        );
+      }
+    } else {
+      const supabase = await createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        return NextResponse.json(
+          { data: null, error: { message: "Unauthorized" } },
+          { status: 401 }
+        );
+      }
+    }
+
     const form = await request.formData();
     const file = form.get("file");
     if (!(file instanceof File)) {
@@ -46,14 +67,6 @@ export async function POST(request: Request) {
     }
 
     if (isMySqlMode()) {
-      const { data: auth } = await authGetUser();
-      if (!auth.user) {
-        return NextResponse.json(
-          { data: null, error: { message: "Unauthorized" } },
-          { status: 401 }
-        );
-      }
-
       // Local MySQL mode: keep files on disk.
       const name = `${randomUUID()}${ext}`;
       const dir = path.join(process.cwd(), "public", "uploads");
@@ -63,17 +76,7 @@ export async function POST(request: Request) {
     }
 
     const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json(
-        { data: null, error: { message: "Unauthorized" } },
-        { status: 401 }
-      );
-    }
-
-    const name = `${user.id}/${randomUUID()}${ext}`;
+    const name = `${(await supabase.auth.getUser()).data.user!.id}/${randomUUID()}${ext}`;
     const { error: uploadError } = await supabase.storage
       .from(BUCKET)
       .upload(name, Buffer.from(await file.arrayBuffer()), {
