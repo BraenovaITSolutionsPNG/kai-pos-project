@@ -301,6 +301,31 @@ function ReconciliationTab({
     }
   }
 
+  async function deleteShift(shift: ShiftWithStaff) {
+    if (
+      !window.confirm(
+        `Delete the shift for ${shift.staff_name} on ${
+          formatDateTime(shift.clock_in).split(",")[0]
+        }? This cannot be undone.`
+      )
+    ) {
+      return;
+    }
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.from("shifts").delete().eq("id", shift.id);
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      if (selectedShift?.id === shift.id) setSelectedShift(null);
+      toast.success("Shift deleted");
+      router.refresh();
+    } catch {
+      toast.error("Failed to delete shift");
+    }
+  }
+
   async function performCashup() {
     if (!selectedShift || !selectedTotals) return;
     setCashupBusy(true);
@@ -542,6 +567,17 @@ function ReconciliationTab({
                               Reconciled
                             </span>
                           )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              void deleteShift(shift);
+                            }}
+                          >
+                            <Trash2 className="size-4" />
+                          </Button>
                         </TableCell>
                       </TableRow>
                     );

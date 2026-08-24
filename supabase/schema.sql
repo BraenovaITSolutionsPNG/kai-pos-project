@@ -517,6 +517,11 @@ create policy "shift update"
   for update
   using (restaurant_id in (select public.user_restaurant_ids()));
 
+create policy "shift delete"
+  on public.shifts
+  for delete
+  using (restaurant_id in (select public.user_restaurant_ids()));
+
 -- cashups.
 create policy "cashup select"
   on public.cashups
