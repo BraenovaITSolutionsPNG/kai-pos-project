@@ -227,7 +227,10 @@ function ReconciliationTab({
     refunds: "0",
   });
   const [cashupBusy, setCashupBusy] = useState(false);
-  const [activeShift, setActiveShift] = useState<ShiftWithStaff | null>(null);
+  // Derive the active shift straight from the server-provided shifts list so
+  // the UI can never show a stale "in progress" shift. Refreshing (after
+  // clock in/out) re-fetches this prop and keeps the card in sync.
+  const activeShift = shifts.find((s) => !s.clock_out) ?? null;
 
   const loadOrders = useCallback(async () => {
     const supabase = createClient();
@@ -254,19 +257,6 @@ function ReconciliationTab({
       cancelled = true;
     };
   }, [restaurantId]);
-
-  useEffect(() => {
-    const supabase = createClient();
-    supabase.rpc("get_active_shift").then(({ data }) => {
-      const active = (data as ShiftWithStaff) ?? null;
-      if (active) {
-        const enriched = shifts.find((s) => s.id === active.id) ?? active;
-        setActiveShift(enriched);
-      } else {
-        setActiveShift(null);
-      }
-    });
-  }, [shifts]);
 
   const selectedTotals = selectedShift
     ? computeShiftTotals(selectedShift, orders, expenses)
@@ -297,7 +287,6 @@ function ReconciliationTab({
       const { error } = await supabase.rpc("clock_out");
       if (error) {
         if (/no active shift/i.test(error.message)) {
-          setActiveShift(null);
           toast.success("Shift already ended");
           router.refresh();
           return;
@@ -305,7 +294,6 @@ function ReconciliationTab({
         toast.error(error.message);
         return;
       }
-      setActiveShift(null);
       toast.success("Shift ended");
       router.refresh();
     } catch {
@@ -445,7 +433,7 @@ function ReconciliationTab({
                         ? formatDateTime(activeShift.clock_in)
                         : sch
                         ? formatTime(sch.start_time)
-                        : "not recorded";
+                        : "start time not recorded";
                     return (
                       <>
                         <p className="text-sm text-green-700">Started {started}</p>
