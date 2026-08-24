@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { isDemoMode } from "@/lib/supabase/env";
 import { OrdersFilter } from "@/components/orders/orders-filter";
 import { formatDateTime, formatKina, paymentMethodLabel } from "@/lib/format";
-import type { Order, PaymentMethod } from "@/lib/types";
+import type { Order, PaymentMethod, StaffRole } from "@/lib/types";
 import {
   Table,
   TableBody,
@@ -35,12 +35,20 @@ export function OrdersClient({
   initialOrders,
   from,
   to,
+  role,
 }: {
   initialOrders: Order[];
   from: string;
   to: string;
+  role: StaffRole;
 }) {
   const [orders, setOrders] = useState<Order[]>(initialOrders);
+
+  // Waiters only see orders that are ready to serve / pick up.
+  const visibleOrders =
+    role === "waiter"
+      ? orders.filter((o) => o.status === "ready")
+      : orders;
 
   // In demo mode the browser holds the live data (including orders rung up
   // this session), so reload from it instead of trusting server seed data.
@@ -65,7 +73,7 @@ export function OrdersClient({
     };
   }, [from, to]);
 
-  const totalSales = orders
+  const totalSales = visibleOrders
     .filter((o) => o.status !== "cancelled")
     .reduce((sum, o) => sum + Number(o.total), 0);
 
@@ -76,8 +84,9 @@ export function OrdersClient({
           Orders
         </h1>
         <p className="text-sm text-muted-foreground">
-          {orders.length} order{orders.length === 1 ? "" : "s"} ·{" "}
+          {visibleOrders.length} order{visibleOrders.length === 1 ? "" : "s"} ·{" "}
           {formatKina(totalSales)} total
+          {role === "waiter" && " · ready to serve / pick up"}
         </p>
       </div>
 
@@ -96,17 +105,19 @@ export function OrdersClient({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {orders.length === 0 ? (
+            {visibleOrders.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={6}
                   className="py-10 text-center text-muted-foreground"
                 >
-                  No orders in this period yet.
+                  {role === "waiter"
+                    ? "No orders are ready yet."
+                    : "No orders in this period yet."}
                 </TableCell>
               </TableRow>
             ) : (
-              orders.map((o) => (
+              visibleOrders.map((o) => (
                 <TableRow key={o.id}>
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">

@@ -829,6 +829,8 @@ declare
   v_order public.orders;
   v_new_status text;
   v_item_status text;
+  v_role text;
+  v_msg text;
 begin
   if advance_kitchen.action not in ('preparing', 'ready', 'served') then
     raise exception 'Invalid action: %', advance_kitchen.action;
@@ -841,6 +843,18 @@ begin
 
   if not found then
     raise exception 'Order not found or access denied';
+  end if;
+
+  -- Only kitchen staff may update order progress.
+  select s.role into v_role
+  from public.staff s
+  where s.user_id = auth.uid()
+    and s.restaurant_id = v_order.restaurant_id
+    and s.is_active = true
+  limit 1;
+
+  if coalesce(v_role, '') <> 'kitchen' then
+    raise exception 'Only kitchen staff can update orders';
   end if;
 
   case advance_kitchen.action
@@ -878,6 +892,28 @@ begin
     update public.order_items
     set status = 'ready'
     where order_items.order_id = advance_kitchen.order_id;
+  end if;
+
+  -- Notify non-kitchen staff (waiters, cashiers, managers, owners) when an
+  -- order is ready to serve or pick up.
+  if advance_kitchen.action = 'ready' then
+    v_msg := case when v_order.order_type = 'takeaway'
+                  then 'Order #' || v_order.order_number || ' is ready for pickup'
+                  else 'Order #' || v_order.order_number || ' is ready to serve' end;
+
+    insert into public.notifications (user_id, message, link)
+    select s.user_id, v_msg, '/orders'
+    from public.staff s
+    where s.restaurant_id = v_order.restaurant_id
+      and s.is_active = true
+      and s.role <> 'kitchen'
+      and not exists (
+        select 1 from public.notifications n
+        where n.user_id = s.user_id
+          and n.link = '/orders'
+          and n.message = v_msg
+          and n.read_at is null
+      );
   end if;
 end;
 $$;

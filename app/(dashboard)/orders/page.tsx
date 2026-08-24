@@ -19,5 +19,12 @@ export default async function OrdersPage({
 
   const orders = await getOrders(from || undefined, to || undefined);
 
-  return <OrdersClient initialOrders={orders} from={from} to={to} />;
+  return (
+    <OrdersClient
+      initialOrders={orders}
+      from={from}
+      to={to}
+      role={ctx.staff.role}
+    />
+  );
 }
