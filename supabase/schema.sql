@@ -168,6 +168,7 @@ create table public.shifts (
   staff_id uuid references public.staff (id) on delete cascade not null,
   clock_in timestamptz not null default now(),
   clock_out timestamptz,
+  scheduled_shift_id uuid references public.shift_schedules (id) on delete set null,
   created_at timestamptz not null default now()
 );
 
@@ -1913,6 +1914,7 @@ as $$
 declare
   v_staff_id uuid;
   v_shift public.shifts;
+  v_schedule_id uuid;
 begin
   select id into v_staff_id
   from public.staff
@@ -1931,8 +1933,16 @@ begin
     raise exception 'Already clocked in';
   end if;
 
-  insert into public.shifts (restaurant_id, staff_id, clock_in)
-  select restaurant_id, v_staff_id, now()
+  -- Link to today's schedule for this staff member when one exists.
+  select id into v_schedule_id
+  from public.shift_schedules
+  where staff_id = v_staff_id
+    and schedule_date = current_date
+  order by start_time
+  limit 1;
+
+  insert into public.shifts (restaurant_id, staff_id, clock_in, scheduled_shift_id)
+  select restaurant_id, v_staff_id, now(), v_schedule_id
   from public.staff
   where id = v_staff_id
   returning * into v_shift;

@@ -184,6 +184,7 @@ export interface Shift {
   staff_id: string;
   clock_in: string;
   clock_out: string | null;
+  scheduled_shift_id: string | null;
   created_at: string;
 }
 

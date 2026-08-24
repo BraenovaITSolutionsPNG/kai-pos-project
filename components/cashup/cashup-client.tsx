@@ -14,7 +14,7 @@ import {
   Users,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { formatKina, formatDateTime, paymentMethodLabel } from "@/lib/format";
+import { formatKina, formatDateTime, formatTime, paymentMethodLabel } from "@/lib/format";
 import type {
   ShiftWithStaff,
   ShiftScheduleRow,
@@ -178,6 +178,7 @@ export function CashupClient({
           shifts={shifts}
           expenses={expenses}
           userId={userId}
+          shiftSchedules={shiftSchedules}
         />
       </TabsContent>
       <TabsContent value="schedule">
@@ -188,6 +189,7 @@ export function CashupClient({
           userId={userId}
           currentUserRole={userRole}
           currentUserStaffId={userStaffId}
+          shifts={shifts}
         />
       </TabsContent>
     </Tabs>
@@ -200,12 +202,14 @@ function ReconciliationTab({
   shifts,
   expenses,
   userId,
+  shiftSchedules,
 }: {
   restaurantId: string;
   restaurantName: string;
   shifts: ShiftWithStaff[];
   expenses: Expense[];
   userId: string;
+  shiftSchedules: ShiftScheduleRow[];
 }) {
   const router = useRouter();
   const [selectedShift, setSelectedShift] = useState<ShiftWithStaff | null>(null);
@@ -419,9 +423,28 @@ function ReconciliationTab({
                   <p className="font-medium text-green-800">
                     Shift in progress — {activeShift.staff_name}
                   </p>
-                  <p className="text-sm text-green-700">
-                    Started {formatDateTime(activeShift.clock_in || activeShift.created_at)}
-                  </p>
+                  {(() => {
+                    const sch = activeShift.scheduled_shift_id
+                      ? shiftSchedules.find((s) => s.id === activeShift.scheduled_shift_id)
+                      : undefined;
+                    return (
+                      <>
+                        <p className="text-sm text-green-700">
+                          Started{" "}
+                          {sch
+                            ? formatTime(sch.start_time)
+                            : formatDateTime(activeShift.clock_in || activeShift.created_at)}
+                        </p>
+                        {sch && (
+                          <p className="text-xs text-green-600">
+                            Scheduled {formatTime(sch.start_time)} –{" "}
+                            {formatTime(sch.end_time)}
+                            {sch.notes ? ` · ${sch.notes}` : ""}
+                          </p>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
               <Button variant="outline" size="sm" onClick={endShift}>
@@ -760,6 +783,7 @@ function ScheduleManager({
   userId,
   currentUserRole,
   currentUserStaffId,
+  shifts,
 }: {
   restaurantId: string;
   schedules: ShiftScheduleRow[];
@@ -767,6 +791,7 @@ function ScheduleManager({
   userId: string;
   currentUserRole: string;
   currentUserStaffId: string;
+  shifts: ShiftWithStaff[];
 }) {
   const router = useRouter();
   const [rows, setRows] = useState<ShiftScheduleRow[]>(schedules);
@@ -894,6 +919,21 @@ function ScheduleManager({
   }
   const dates = [...byDate.keys()].sort();
 
+  // Relate scheduled shifts to the actual clocked shifts.
+  const activeStaffIds = new Set(
+    shifts.filter((s) => !s.clock_out).map((s) => s.staff_id)
+  );
+  const shiftBySchedule = new Map<string, ShiftWithStaff>();
+  for (const s of shifts) {
+    if (s.scheduled_shift_id) shiftBySchedule.set(s.scheduled_shift_id, s);
+  }
+  function scheduleStatus(row: ShiftScheduleRow): "scheduled" | "in_progress" | "completed" {
+    const linked = shiftBySchedule.get(row.id);
+    if (linked) return linked.clock_out ? "completed" : "in_progress";
+    if (activeStaffIds.has(row.staff_id)) return "in_progress";
+    return "scheduled";
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -946,6 +986,13 @@ function ScheduleManager({
                 <div className="space-y-2">
                   {byDate.get(date)!.map((s) => {
                     const badge = ROLE_BADGE[s.staff_role] ?? ROLE_BADGE.cashier;
+                    const status = scheduleStatus(s);
+                    const statusBadge =
+                      status === "in_progress"
+                        ? { label: "In progress", className: "bg-green-100 text-green-800" }
+                        : status === "completed"
+                        ? { label: "Completed", className: "bg-blue-100 text-blue-800" }
+                        : { label: "Scheduled", className: "" };
                     return (
                       <div
                         key={s.id}
@@ -962,6 +1009,12 @@ function ScheduleManager({
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
+                          <Badge
+                            variant="outline"
+                            className={`text-xs ${statusBadge.className}`}
+                          >
+                            {statusBadge.label}
+                          </Badge>
                           <Badge
                             variant="outline"
                             className={`text-xs ${badge.className}`}
