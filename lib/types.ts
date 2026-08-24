@@ -72,6 +72,8 @@ export interface Product {
   name: string;
   price: number;
   image_url: string | null;
+  ingredients: string | null;
+  prep_time: number;
   is_active: boolean;
   sort_order: number;
   created_at: string;
@@ -97,6 +99,7 @@ export interface Order {
   order_number: number;
   status: OrderStatus;
   order_type: "dine_in" | "takeaway";
+  source: "pos" | "self_service";
   subtotal: number;
   tax: number;
   total: number;

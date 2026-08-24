@@ -43,6 +43,8 @@ interface ProductFormValues {
   sortOrder: string;
   isActive: boolean;
   imageUrl: string;
+  ingredients: string;
+  prepTime: string;
 }
 
 function ProductForm({
@@ -66,6 +68,8 @@ function ProductForm({
     sortOrder: String(initial?.sort_order ?? 0),
     isActive: initial?.is_active ?? true,
     imageUrl: initial?.image_url ?? "",
+    ingredients: initial?.ingredients ?? "",
+    prepTime: initial?.prep_time != null ? String(initial.prep_time) : "",
   });
   const [busy, setBusy] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
@@ -108,6 +112,8 @@ function ProductForm({
       sort_order: Number(values.sortOrder) || 0,
       is_active: values.isActive,
       image_url: imageUrl || null,
+      ingredients: values.ingredients.trim() || null,
+      prep_time: values.prepTime ? Number(values.prepTime) : 0,
     };
 
     if (initial) {
@@ -225,6 +231,30 @@ function ProductForm({
               className="h-20 w-20 rounded-lg border object-cover"
             />
           ) : null}
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-2">
+          <Label htmlFor="product-ingredients">Ingredients (optional)</Label>
+          <textarea
+            id="product-ingredients"
+            className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 min-h-[80px] resize-y"
+            placeholder="e.g. Chicken, rice, vegetables, soy sauce"
+            value={values.ingredients}
+            onChange={(e) => set("ingredients", e.target.value)}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="product-prep">Prep time (minutes)</Label>
+          <Input
+            id="product-prep"
+            type="number"
+            min="0"
+            max="180"
+            value={values.prepTime}
+            onChange={(e) => set("prepTime", e.target.value)}
+            placeholder="15"
+          />
         </div>
       </div>
       <label className="flex items-center gap-2 text-sm">

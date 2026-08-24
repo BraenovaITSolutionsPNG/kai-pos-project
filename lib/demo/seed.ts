@@ -38,16 +38,16 @@ export function demoCategories(): Category[] {
 export function demoProducts(): Product[] {
   const cat = (id: string) => id;
   return [
-    { id: "p-1", restaurant_id: DEMO_RESTAURANT.id, category_id: cat("c-food"), name: "Chicken Fried Rice", price: 25, image_url: null, is_active: true, sort_order: 1, created_at: iso(-6 * 24 * HOUR) },
-    { id: "p-2", restaurant_id: DEMO_RESTAURANT.id, category_id: cat("c-food"), name: "Fish & Chips", price: 32, image_url: null, is_active: true, sort_order: 2, created_at: iso(-6 * 24 * HOUR) },
-    { id: "p-3", restaurant_id: DEMO_RESTAURANT.id, category_id: cat("c-food"), name: "Chicken Steak", price: 38, image_url: null, is_active: true, sort_order: 3, created_at: iso(-6 * 24 * HOUR) },
-    { id: "p-4", restaurant_id: DEMO_RESTAURANT.id, category_id: cat("c-food"), name: "BBQ Pork Ribs", price: 42, image_url: null, is_active: true, sort_order: 4, created_at: iso(-6 * 24 * HOUR) },
-    { id: "p-5", restaurant_id: DEMO_RESTAURANT.id, category_id: cat("c-drinks"), name: "Coca-Cola (330ml)", price: 5.5, image_url: null, is_active: true, sort_order: 1, created_at: iso(-6 * 24 * HOUR) },
-    { id: "p-6", restaurant_id: DEMO_RESTAURANT.id, category_id: cat("c-drinks"), name: "Fresh Water (1.5L)", price: 5, image_url: null, is_active: true, sort_order: 2, created_at: iso(-6 * 24 * HOUR) },
-    { id: "p-7", restaurant_id: DEMO_RESTAURANT.id, category_id: cat("c-drinks"), name: "Mango Juice", price: 8, image_url: null, is_active: true, sort_order: 3, created_at: iso(-6 * 24 * HOUR) },
-    { id: "p-8", restaurant_id: DEMO_RESTAURANT.id, category_id: cat("c-snacks"), name: "Crisps", price: 4, image_url: null, is_active: true, sort_order: 1, created_at: iso(-6 * 24 * HOUR) },
-    { id: "p-9", restaurant_id: DEMO_RESTAURANT.id, category_id: cat("c-snacks"), name: "Chicken Roll", price: 12, image_url: null, is_active: true, sort_order: 2, created_at: iso(-6 * 24 * HOUR) },
-    { id: "p-10", restaurant_id: DEMO_RESTAURANT.id, category_id: cat("c-desserts"), name: "Ice Cream Sundae", price: 8, image_url: null, is_active: true, sort_order: 1, created_at: iso(-6 * 24 * HOUR) },
+    { id: "p-1", restaurant_id: DEMO_RESTAURANT.id, category_id: cat("c-food"), name: "Chicken Fried Rice", price: 25, image_url: null, ingredients: "Chicken, rice, vegetables, soy sauce", prep_time: 15, is_active: true, sort_order: 1, created_at: iso(-6 * 24 * HOUR) },
+    { id: "p-2", restaurant_id: DEMO_RESTAURANT.id, category_id: cat("c-food"), name: "Fish & Chips", price: 32, image_url: null, ingredients: "Fish fillet, potatoes, batter", prep_time: 20, is_active: true, sort_order: 2, created_at: iso(-6 * 24 * HOUR) },
+    { id: "p-3", restaurant_id: DEMO_RESTAURANT.id, category_id: cat("c-food"), name: "Chicken Steak", price: 38, image_url: null, ingredients: "Chicken breast, pepper sauce, vegetables", prep_time: 25, is_active: true, sort_order: 3, created_at: iso(-6 * 24 * HOUR) },
+    { id: "p-4", restaurant_id: DEMO_RESTAURANT.id, category_id: cat("c-food"), name: "BBQ Pork Ribs", price: 42, image_url: null, ingredients: "Pork ribs, BBQ sauce, coleslaw", prep_time: 30, is_active: true, sort_order: 4, created_at: iso(-6 * 24 * HOUR) },
+    { id: "p-5", restaurant_id: DEMO_RESTAURANT.id, category_id: cat("c-drinks"), name: "Coca-Cola (330ml)", price: 5.5, image_url: null, ingredients: null, prep_time: 0, is_active: true, sort_order: 1, created_at: iso(-6 * 24 * HOUR) },
+    { id: "p-6", restaurant_id: DEMO_RESTAURANT.id, category_id: cat("c-drinks"), name: "Fresh Water (1.5L)", price: 5, image_url: null, ingredients: null, prep_time: 0, is_active: true, sort_order: 2, created_at: iso(-6 * 24 * HOUR) },
+    { id: "p-7", restaurant_id: DEMO_RESTAURANT.id, category_id: cat("c-drinks"), name: "Mango Juice", price: 8, image_url: null, ingredients: "Fresh mango, water, sugar", prep_time: 5, is_active: true, sort_order: 3, created_at: iso(-6 * 24 * HOUR) },
+    { id: "p-8", restaurant_id: DEMO_RESTAURANT.id, category_id: cat("c-snacks"), name: "Crisps", price: 4, image_url: null, ingredients: null, prep_time: 0, is_active: true, sort_order: 1, created_at: iso(-6 * 24 * HOUR) },
+    { id: "p-9", restaurant_id: DEMO_RESTAURANT.id, category_id: cat("c-snacks"), name: "Chicken Roll", price: 12, image_url: null, ingredients: "Chicken, wrap, lettuce, mayo", prep_time: 10, is_active: true, sort_order: 2, created_at: iso(-6 * 24 * HOUR) },
+    { id: "p-10", restaurant_id: DEMO_RESTAURANT.id, category_id: cat("c-desserts"), name: "Ice Cream Sundae", price: 8, image_url: null, ingredients: "Vanilla ice cream, chocolate sauce, nuts", prep_time: 5, is_active: true, sort_order: 1, created_at: iso(-6 * 24 * HOUR) },
   ];
 }
 
