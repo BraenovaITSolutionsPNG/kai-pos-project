@@ -14,7 +14,7 @@ import {
   Users,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { formatKina, formatDateTime, formatTime, paymentMethodLabel } from "@/lib/format";
+import { formatKina, formatDateTime, formatDate, formatTime, paymentMethodLabel } from "@/lib/format";
 import type {
   ShiftWithStaff,
   ShiftScheduleRow,
@@ -215,6 +215,8 @@ function ReconciliationTab({
   const [selectedShift, setSelectedShift] = useState<ShiftWithStaff | null>(null);
   const [orders, setOrders] = useState<OrderWithRelations[]>([]);
   const [cashupOpen, setCashupOpen] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<ShiftWithStaff | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [cashupData, setCashupData] = useState<Record<string, string>>({
     cash: "0",
     eftpos: "0",
@@ -301,28 +303,31 @@ function ReconciliationTab({
     }
   }
 
-  async function deleteShift(shift: ShiftWithStaff) {
-    if (
-      !window.confirm(
-        `Delete the shift for ${shift.staff_name} on ${
-          formatDateTime(shift.clock_in).split(",")[0]
-        }? This cannot be undone.`
-      )
-    ) {
-      return;
-    }
+  function deleteShift(shift: ShiftWithStaff) {
+    setPendingDelete(shift);
+  }
+
+  async function confirmDelete() {
+    if (!pendingDelete) return;
+    setDeleting(true);
     try {
       const supabase = createClient();
-      const { error } = await supabase.from("shifts").delete().eq("id", shift.id);
+      const { error } = await supabase
+        .from("shifts")
+        .delete()
+        .eq("id", pendingDelete.id);
       if (error) {
         toast.error(error.message);
         return;
       }
-      if (selectedShift?.id === shift.id) setSelectedShift(null);
+      if (selectedShift?.id === pendingDelete.id) setSelectedShift(null);
       toast.success("Shift deleted");
+      setPendingDelete(null);
       router.refresh();
     } catch {
       toast.error("Failed to delete shift");
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -808,8 +813,42 @@ function ReconciliationTab({
               </DialogFooter>
             </form>
           )}
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog
+          open={pendingDelete !== null}
+          onOpenChange={(open) => {
+            if (!open) setPendingDelete(null);
+          }}
+        >
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Delete shift</DialogTitle>
+              <DialogDescription>
+                Delete the shift for {pendingDelete?.staff_name} on{" "}
+                {pendingDelete ? formatDate(pendingDelete.clock_in) : ""}? This
+                cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setPendingDelete(null)}
+                disabled={deleting}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={confirmDelete}
+                disabled={deleting}
+              >
+                {deleting ? "Deleting…" : "Delete shift"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
     </div>
   );
 }
