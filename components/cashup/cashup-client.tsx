@@ -277,6 +277,10 @@ function ReconciliationTab({
       const supabase = createClient();
       const { error } = await supabase.rpc("clock_in");
       if (error) {
+        if (/already clocked in/i.test(error.message)) {
+          router.refresh();
+          return;
+        }
         toast.error(error.message);
         return;
       }
@@ -292,9 +296,16 @@ function ReconciliationTab({
       const supabase = createClient();
       const { error } = await supabase.rpc("clock_out");
       if (error) {
+        if (/no active shift/i.test(error.message)) {
+          setActiveShift(null);
+          toast.success("Shift already ended");
+          router.refresh();
+          return;
+        }
         toast.error(error.message);
         return;
       }
+      setActiveShift(null);
       toast.success("Shift ended");
       router.refresh();
     } catch {
