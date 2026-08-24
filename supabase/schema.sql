@@ -1041,8 +1041,8 @@ $$;
 
 -- Restock ingredient (add to stock)
 create or replace function public.restock_ingredient(
-  p_ingredient_id uuid,
-  p_quantity numeric
+  ingredient_id uuid,
+  quantity numeric
 )
 returns void
 language plpgsql
@@ -1055,33 +1055,34 @@ begin
   -- Verify ingredient belongs to user's restaurant
   select restaurant_id into v_restaurant_id
   from public.ingredients
-  where id = p_ingredient_id
+  where id = restock_ingredient.ingredient_id
     and restaurant_id in (select public.user_restaurant_ids());
 
   if v_restaurant_id is null then
     raise exception 'Ingredient not found or access denied';
   end if;
 
-  if p_quantity <= 0 then
+  if restock_ingredient.quantity <= 0 then
     raise exception 'Quantity must be positive';
   end if;
 
   update public.ingredients
-  set current_stock = current_stock + p_quantity
-  where id = p_ingredient_id;
+  set current_stock = current_stock + restock_ingredient.quantity
+  where id = restock_ingredient.ingredient_id;
 
   insert into public.inventory_transactions
     (restaurant_id, ingredient_id, type, quantity, created_by)
   values
-    (v_restaurant_id, p_ingredient_id, 'restock', p_quantity, auth.uid());
+    (v_restaurant_id, restock_ingredient.ingredient_id, 'restock',
+     restock_ingredient.quantity, auth.uid());
 end;
 $$;
 
 -- Adjust ingredient (set stock to specific value)
 create or replace function public.adjust_ingredient(
-  p_ingredient_id uuid,
-  p_quantity numeric,
-  p_note text default null
+  ingredient_id uuid,
+  quantity numeric,
+  note text default null
 )
 returns void
 language plpgsql
@@ -1096,27 +1097,28 @@ begin
   -- Verify ingredient belongs to user's restaurant
   select restaurant_id, current_stock into v_restaurant_id, v_old_stock
   from public.ingredients
-  where id = p_ingredient_id
+  where id = adjust_ingredient.ingredient_id
     and restaurant_id in (select public.user_restaurant_ids());
 
   if v_restaurant_id is null then
     raise exception 'Ingredient not found or access denied';
   end if;
 
-  if p_quantity < 0 then
+  if adjust_ingredient.quantity < 0 then
     raise exception 'Quantity cannot be negative';
   end if;
 
-  v_diff := p_quantity - v_old_stock;
+  v_diff := adjust_ingredient.quantity - v_old_stock;
 
   update public.ingredients
-  set current_stock = p_quantity
-  where id = p_ingredient_id;
+  set current_stock = adjust_ingredient.quantity
+  where id = adjust_ingredient.ingredient_id;
 
   insert into public.inventory_transactions
     (restaurant_id, ingredient_id, type, quantity, reference, created_by)
   values
-    (v_restaurant_id, p_ingredient_id, 'adjustment', v_diff, p_note, auth.uid());
+    (v_restaurant_id, adjust_ingredient.ingredient_id, 'adjustment',
+     v_diff, adjust_ingredient.note, auth.uid());
 end;
 $$;
 
@@ -2032,3 +2034,42 @@ alter publication supabase_realtime add table public.inventory_transactions;
 
 
 
+
+
+-- Platform admins may manage businesses and user roles directly
+-- (admin console plan changes / suspension / promotion).
+drop policy if exists "businesses platform admin manage" on public.businesses;
+create policy "businesses platform admin manage"
+  on public.businesses
+  for update
+  to authenticated
+  using (
+    exists (
+      select 1 from public.users
+      where id = auth.uid() and is_platform_admin = true
+    )
+  )
+  with check (
+    exists (
+      select 1 from public.users
+      where id = auth.uid() and is_platform_admin = true
+    )
+  );
+
+drop policy if exists "users platform admin manage" on public.users;
+create policy "users platform admin manage"
+  on public.users
+  for update
+  to authenticated
+  using (
+    exists (
+      select 1 from public.users
+      where id = auth.uid() and is_platform_admin = true
+    )
+  )
+  with check (
+    exists (
+      select 1 from public.users
+      where id = auth.uid() and is_platform_admin = true
+    )
+  );
