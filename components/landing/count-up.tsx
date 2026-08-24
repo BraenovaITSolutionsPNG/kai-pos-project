@@ -22,12 +22,13 @@ export function CountUp({
     if (started.current) return;
     started.current = true;
 
+    let raf: number;
+
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       raf = requestAnimationFrame(() => setValue(to));
       return () => cancelAnimationFrame(raf);
     }
 
-    let raf: number;
     const t0 = performance.now();
     const tick = (t: number) => {
       const p = Math.min((t - t0) / duration, 1);
