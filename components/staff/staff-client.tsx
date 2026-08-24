@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -49,6 +49,7 @@ const roleBadge: Record<StaffRole, { label: string; className: string }> = {
   manager: { label: "Manager", className: "" },
   cashier: { label: "Cashier", className: "" },
   kitchen: { label: "Kitchen", className: "" },
+  waiter: { label: "Waiter", className: "" },
 };
 
 function AddStaffDialog({
@@ -92,7 +93,7 @@ function AddStaffDialog({
         <DialogHeader>
           <DialogTitle>Add staff member</DialogTitle>
           <DialogDescription>
-            Create their account from here — staff log in with the details you
+            Create their account from here â€” staff log in with the details you
             set. They don&apos;t need to sign up themselves.
           </DialogDescription>
         </DialogHeader>
@@ -141,6 +142,7 @@ function AddStaffDialog({
                 <SelectItem value="manager">Manager</SelectItem>
                 <SelectItem value="cashier">Cashier</SelectItem>
                 <SelectItem value="kitchen">Kitchen</SelectItem>
+                <SelectItem value="waiter">Waiter</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -149,7 +151,7 @@ function AddStaffDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={busy}>
-              {busy ? "Adding…" : "Add member"}
+              {busy ? "Addingâ€¦" : "Add member"}
             </Button>
           </DialogFooter>
         </form>
@@ -310,6 +312,7 @@ export function StaffClient({
                             <SelectItem value="manager">Manager</SelectItem>
                             <SelectItem value="cashier">Cashier</SelectItem>
                             <SelectItem value="kitchen">Kitchen</SelectItem>
+                <SelectItem value="waiter">Waiter</SelectItem>
                           </SelectContent>
                         </Select>
                       ) : (

@@ -68,7 +68,7 @@ const features = [
   {
     icon: Users,
     title: "Staff & roles",
-    text: "Owner, manager, cashier and kitchen accounts with role-based access to your system.",
+    text: "Owner, manager, cashier, kitchen and waiter accounts with role-based access to your system.",
   },
   {
     icon: Tags,

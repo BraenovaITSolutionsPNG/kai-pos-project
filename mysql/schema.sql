@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS staff (
   id CHAR(36) PRIMARY KEY,
   restaurant_id CHAR(36) NOT NULL,
   user_id CHAR(36) NOT NULL,
-  role ENUM('owner','manager','cashier','kitchen') NOT NULL DEFAULT 'cashier',
+  role ENUM('owner','manager','cashier','kitchen','waiter') NOT NULL DEFAULT 'cashier',
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE KEY uq_staff_rest_user (restaurant_id, user_id),

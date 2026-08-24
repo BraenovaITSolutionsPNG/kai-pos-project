@@ -1,4 +1,4 @@
--- Migration 005: staff management RPCs.
+﻿-- Migration 005: staff management RPCs.
 -- The UI called add_staff/update_staff/remove_staff/advance_kitchen with
 -- (email, full_name, password, role / staff_id / order_id, action) but the
 -- database used p_-prefixed overloads -> PostgREST "not found in schema
@@ -59,7 +59,7 @@ begin
   returning id into v_business_id;
 
   insert into public.restaurants (business_id, name, address, currency)
-  values (v_business_id, v_business_name || ' — Main', '', 'PGK')
+  values (v_business_id, v_business_name || ' â€” Main', '', 'PGK')
   returning id into v_restaurant_id;
 
   insert into public.staff (restaurant_id, user_id, role, is_active)
@@ -135,7 +135,7 @@ begin
     raise exception 'No active restaurant found for current user';
   end if;
 
-  if add_staff.role not in ('owner', 'manager', 'cashier', 'kitchen') then
+  if add_staff.role not in ('owner', 'manager', 'cashier', 'kitchen', 'waiter') then
     raise exception 'Invalid role';
   end if;
 
@@ -226,7 +226,7 @@ begin
   end if;
 
   if update_staff.role is not null
-     and update_staff.role not in ('owner', 'manager', 'cashier', 'kitchen') then
+     and update_staff.role not in ('owner', 'manager', 'cashier', 'kitchen', 'waiter') then
     raise exception 'Invalid role';
   end if;
 
@@ -349,3 +349,4 @@ begin
   end if;
 end;
 $$;
+

@@ -49,7 +49,7 @@ create table public.staff (
   restaurant_id uuid references public.restaurants (id) on delete cascade not null,
   user_id uuid references public.users (id) on delete cascade not null,
   role text not null default 'cashier'
-    check (role in ('owner', 'manager', 'cashier', 'kitchen')),
+    check (role in ('owner', 'manager', 'cashier', 'kitchen', 'waiter')),
   is_active boolean not null default true,
   created_at timestamptz not null default now(),
   unique (restaurant_id, user_id)
@@ -903,7 +903,7 @@ begin
     raise exception 'No active restaurant found for current user';
   end if;
 
-  if add_staff.role not in ('owner', 'manager', 'cashier', 'kitchen') then
+  if add_staff.role not in ('owner', 'manager', 'cashier', 'kitchen', 'waiter') then
     raise exception 'Invalid role';
   end if;
 
@@ -992,7 +992,7 @@ begin
   end if;
 
   if update_staff.role is not null
-     and update_staff.role not in ('owner', 'manager', 'cashier', 'kitchen') then
+     and update_staff.role not in ('owner', 'manager', 'cashier', 'kitchen', 'waiter') then
     raise exception 'Invalid role';
   end if;
 

@@ -61,6 +61,7 @@ const ROLE_BADGE: Record<string, { label: string; className: string }> = {
   manager: { label: "Manager", className: "" },
   cashier: { label: "Cashier", className: "" },
   kitchen: { label: "Kitchen", className: "" },
+  waiter: { label: "Waiter", className: "" },
 };
 
 interface OrderWithRelations extends Order {
@@ -879,6 +880,7 @@ function ScheduleManager({
     currentUserRole === "owner" ||
     role === "cashier" ||
     role === "kitchen" ||
+    role === "waiter" ||
     staffId === currentUserStaffId;
 
   const selectableStaff = staffOptions.filter((o) => canManage(o.role, o.id));
@@ -1047,7 +1049,7 @@ function ScheduleManager({
         <Card>
           <CardContent className="py-10 text-center text-muted-foreground">
             No team members available to schedule. You can schedule cashiers,
-            kitchen staff and yourself.
+            waiters, kitchen staff and yourself.
           </CardContent>
         </Card>
       ) : visibleRows.length === 0 ? (

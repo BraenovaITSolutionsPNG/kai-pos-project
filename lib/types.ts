@@ -17,7 +17,7 @@ export type OrderStatus =
   | "paid"
   | "cancelled";
 
-export type StaffRole = "owner" | "manager" | "cashier" | "kitchen";
+export type StaffRole = "owner" | "manager" | "cashier" | "kitchen" | "waiter";
 
 export interface Business {
   id: string;

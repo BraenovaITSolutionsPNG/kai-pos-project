@@ -37,6 +37,7 @@ export const ROLE_ROUTES: Record<StaffRole, string[]> = {
   ],
   cashier: ["/dashboard", "/pos", "/orders"],
   kitchen: ["/dashboard", "/orders", "/kitchen"],
+  waiter: ["/dashboard", "/pos", "/orders", "/kitchen"],
 };
 
 export function canAccess(role: StaffRole, path: string): boolean {
