@@ -18,6 +18,17 @@ export function NotificationsBanner({
 
   if (unread.length === 0) return null;
 
+  const ctaLink =
+    unread.find((n) => n.link)?.link ?? "/orders";
+  const ctaLabel =
+    ctaLink === "/orders"
+      ? "View order"
+      : ctaLink === "/subscription"
+        ? "View plan"
+        : ctaLink === "/dashboard"
+          ? "View dashboard"
+          : "View";
+
   async function markRead() {
     setBusy(true);
     const supabase = createClient();
@@ -53,8 +64,8 @@ export function NotificationsBanner({
             {busy ? "Marking…" : "Mark all read"}
           </Button>
           {unread.some((n) => n.link) && (
-            <Button size="sm" variant="ghost" nativeButton={false} render={<Link href="/settings" />}>
-              View plan
+            <Button size="sm" variant="ghost" nativeButton={false} render={<Link href={ctaLink} />}>
+              {ctaLabel}
             </Button>
           )}
         </div>
