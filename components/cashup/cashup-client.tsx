@@ -420,7 +420,7 @@ function ReconciliationTab({
                     Shift in progress — {activeShift.staff_name}
                   </p>
                   <p className="text-sm text-green-700">
-                    Started {formatDateTime(activeShift.clock_in)}
+                    Started {formatDateTime(activeShift.clock_in || activeShift.created_at)}
                   </p>
                 </div>
               </div>

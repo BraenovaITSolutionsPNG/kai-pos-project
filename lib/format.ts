@@ -34,8 +34,10 @@ export const PAYMENT_METHODS: PaymentMethod[] = [
   "other",
 ];
 
-export function formatDateTime(iso: string): string {
+export function formatDateTime(iso: string | null | undefined): string {
+  if (!iso) return "—";
   const date = new Date(iso);
+  if (isNaN(date.getTime()) || date.getFullYear() < 2000) return "—";
   return date.toLocaleString("en-PG", {
     day: "2-digit",
     month: "2-digit",
@@ -45,8 +47,10 @@ export function formatDateTime(iso: string): string {
   });
 }
 
-export function formatDate(iso: string): string {
+export function formatDate(iso: string | null | undefined): string {
+  if (!iso) return "—";
   const date = new Date(iso);
+  if (isNaN(date.getTime()) || date.getFullYear() < 2000) return "—";
   return date.toLocaleDateString("en-PG", {
     day: "2-digit",
     month: "2-digit",
@@ -54,8 +58,10 @@ export function formatDate(iso: string): string {
   });
 }
 
-export function formatTime(iso: string): string {
+export function formatTime(iso: string | null | undefined): string {
+  if (!iso) return "—";
   const date = new Date(iso);
+  if (isNaN(date.getTime()) || date.getFullYear() < 2000) return "—";
   return date.toLocaleTimeString("en-PG", {
     hour: "2-digit",
     minute: "2-digit",

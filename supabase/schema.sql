@@ -1996,8 +1996,8 @@ begin
 
   select * into v_shift
   from public.shifts
-  where staff_id = v_staff_id and clock_out is null
-  order by clock_in desc
+  where staff_id = v_staff_id and clock_out is null and clock_in is not null
+  order by clock_in desc nulls last
   limit 1;
 
   return v_shift;
