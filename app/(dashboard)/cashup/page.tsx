@@ -32,6 +32,8 @@ export default async function CashupPage() {
       shiftSchedules={shiftSchedules}
       staffOptions={staffOptions}
       userId={ctx.user.id}
+      userRole={ctx.staff.role}
+      userStaffId={ctx.staff.id}
     />
   );
 }

@@ -146,6 +146,8 @@ export function CashupClient({
   shiftSchedules,
   staffOptions,
   userId,
+  userRole,
+  userStaffId,
 }: {
   restaurantId: string;
   restaurantName: string;
@@ -154,6 +156,8 @@ export function CashupClient({
   shiftSchedules: ShiftScheduleRow[];
   staffOptions: StaffOption[];
   userId: string;
+  userRole: string;
+  userStaffId: string;
 }) {
   return (
     <Tabs defaultValue="reconcile" className="space-y-6">
@@ -182,6 +186,8 @@ export function CashupClient({
           schedules={shiftSchedules}
           staffOptions={staffOptions}
           userId={userId}
+          currentUserRole={userRole}
+          currentUserStaffId={userStaffId}
         />
       </TabsContent>
     </Tabs>
@@ -752,14 +758,29 @@ function ScheduleManager({
   schedules,
   staffOptions,
   userId,
+  currentUserRole,
+  currentUserStaffId,
 }: {
   restaurantId: string;
   schedules: ShiftScheduleRow[];
   staffOptions: StaffOption[];
   userId: string;
+  currentUserRole: string;
+  currentUserStaffId: string;
 }) {
   const router = useRouter();
   const [rows, setRows] = useState<ShiftScheduleRow[]>(schedules);
+
+  // A manager can only schedule cashiers, kitchen staff and themselves.
+  // The owner (top of the hierarchy) can schedule anyone.
+  const canManage = (role: string, staffId: string) =>
+    currentUserRole === "owner" ||
+    role === "cashier" ||
+    role === "kitchen" ||
+    staffId === currentUserStaffId;
+
+  const selectableStaff = staffOptions.filter((o) => canManage(o.role, o.id));
+  const visibleRows = rows.filter((s) => canManage(s.staff_role, s.staff_id));
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<ShiftScheduleRow | null>(null);
   const [busy, setBusy] = useState(false);
@@ -797,7 +818,7 @@ function ScheduleManager({
   function openAdd() {
     setEditing(null);
     setForm({
-      staff_id: staffOptions[0]?.id ?? "",
+      staff_id: selectableStaff[0]?.id ?? "",
       schedule_date: new Date().toISOString().slice(0, 10),
       start_time: "09:00",
       end_time: "17:00",
@@ -867,7 +888,7 @@ function ScheduleManager({
 
   // Group by date
   const byDate = new Map<string, ShiftScheduleRow[]>();
-  for (const s of rows) {
+  for (const s of visibleRows) {
     if (!byDate.has(s.schedule_date)) byDate.set(s.schedule_date, []);
     byDate.get(s.schedule_date)!.push(s);
   }
@@ -890,13 +911,14 @@ function ScheduleManager({
         </Button>
       </div>
 
-      {staffOptions.length === 0 ? (
+      {selectableStaff.length === 0 ? (
         <Card>
           <CardContent className="py-10 text-center text-muted-foreground">
-            Add staff members first before scheduling shifts.
+            No team members available to schedule. You can schedule cashiers,
+            kitchen staff and yourself.
           </CardContent>
         </Card>
-      ) : rows.length === 0 ? (
+      ) : visibleRows.length === 0 ? (
         <Card>
           <CardContent className="py-10 text-center text-muted-foreground">
             No shifts scheduled yet. Click “Schedule Shift” to plan your week.
@@ -989,7 +1011,7 @@ function ScheduleManager({
                 value={form.staff_id}
                 onChange={(e) => setForm((f) => ({ ...f, staff_id: e.target.value }))}
               >
-                {staffOptions.map((o) => (
+                {selectableStaff.map((o) => (
                   <option key={o.id} value={o.id} disabled={!o.is_active}>
                     {o.name} ({o.role})
                     {o.is_active ? "" : " — inactive"}
