@@ -886,6 +886,8 @@ function ScheduleManager({
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<ShiftScheduleRow | null>(null);
   const [busy, setBusy] = useState(false);
+  const [pendingRemove, setPendingRemove] = useState<ShiftScheduleRow | null>(null);
+  const [removing, setRemoving] = useState(false);
   const [form, setForm] = useState({
     staff_id: "",
     schedule_date: "",
@@ -974,18 +976,31 @@ function ScheduleManager({
     await reload();
   }
 
-  async function remove(s: ShiftScheduleRow) {
-    if (!window.confirm(`Remove the scheduled shift for ${s.staff_name} on ${s.schedule_date}?`)) {
-      return;
+  function remove(s: ShiftScheduleRow) {
+    setPendingRemove(s);
+  }
+
+  async function confirmRemove() {
+    if (!pendingRemove) return;
+    setRemoving(true);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from("shift_schedules")
+        .delete()
+        .eq("id", pendingRemove.id);
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      toast.success("Scheduled shift removed");
+      setPendingRemove(null);
+      await reload();
+    } catch {
+      toast.error("Failed to remove scheduled shift");
+    } finally {
+      setRemoving(false);
     }
-    const supabase = createClient();
-    const { error } = await supabase.from("shift_schedules").delete().eq("id", s.id);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    toast.success("Scheduled shift removed");
-    await reload();
   }
 
   // Group by date
@@ -1192,6 +1207,40 @@ function ScheduleManager({
             </Button>
             <Button onClick={save} disabled={busy}>
               {busy ? "Saving…" : editing ? "Save changes" : "Schedule"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={pendingRemove !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingRemove(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Remove scheduled shift</DialogTitle>
+            <DialogDescription>
+              Remove the scheduled shift for {pendingRemove?.staff_name} on{" "}
+              {pendingRemove ? pendingRemove.schedule_date : ""}? This cannot be
+              undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setPendingRemove(null)}
+              disabled={removing}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmRemove}
+              disabled={removing}
+            >
+              {removing ? "Removing…" : "Remove shift"}
             </Button>
           </DialogFooter>
         </DialogContent>
