@@ -41,6 +41,7 @@ interface ReceiptSnapshot {
   tax: number;
   total: number;
   method: PaymentMethod;
+  orderType: "dine_in" | "takeaway";
 }
 
 export function PosClient({
@@ -67,6 +68,7 @@ export function PosClient({
     categories[0]?.id ?? null
   );
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [orderType, setOrderType] = useState<"dine_in" | "takeaway">("dine_in");
   const [payOpen, setPayOpen] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [receipt, setReceipt] = useState<ReceiptSnapshot | null>(null);
@@ -175,6 +177,7 @@ export function PosClient({
       v_created_by: createdBy,
       p_items: items,
       v_method: method,
+      v_order_type: orderType,
     });
 
     setProcessing(false);
@@ -197,6 +200,7 @@ export function PosClient({
       tax: Math.round(tax * 100) / 100,
       total: Math.round(total * 100) / 100,
       method,
+      orderType,
     });
     setCart([]);
     router.refresh();
@@ -315,6 +319,38 @@ export function PosClient({
             )}
           </div>
 
+          <div className="flex items-center gap-2 border-b px-4 py-2.5">
+            <span className="text-xs font-medium text-muted-foreground">
+              Order type
+            </span>
+            <div className="ml-auto flex rounded-lg border p-0.5">
+              <button
+                type="button"
+                onClick={() => setOrderType("dine_in")}
+                className={cn(
+                  "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                  orderType === "dine_in"
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                Dine in
+              </button>
+              <button
+                type="button"
+                onClick={() => setOrderType("takeaway")}
+                className={cn(
+                  "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                  orderType === "takeaway"
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                Takeaway
+              </button>
+            </div>
+          </div>
+
           <div className="flex flex-col gap-2 overflow-y-auto p-3">
             {cart.length === 0 ? (
               <p className="py-10 text-center text-sm text-muted-foreground">
@@ -419,6 +455,7 @@ export function PosClient({
               tax={receipt.tax}
               total={receipt.total}
               method={receipt.method}
+              orderType={receipt.orderType}
             />
           )}
           <div className="flex justify-end gap-2 print:hidden">

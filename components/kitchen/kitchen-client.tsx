@@ -60,6 +60,7 @@ function OrderCard({
   const hasNew = items.some((i) => i.status === "new");
   const hasPreparing = items.some((i) => i.status === "preparing");
   const allReady = stage === "ready";
+  const isTakeaway = order.order_type === "takeaway";
 
   return (
     <div className={cn("rounded-xl border border-l-4 shadow-sm", columnMeta[stage].card)}>
@@ -67,6 +68,11 @@ function OrderCard({
         <div>
           <p className="font-heading text-base font-semibold">
             Order #{order.order_number}
+            {isTakeaway && (
+              <span className="ml-2 rounded bg-amber-500 px-1.5 py-0.5 align-middle text-[10px] font-bold uppercase text-white">
+                Takeaway
+              </span>
+            )}
           </p>
           <p className="text-xs text-muted-foreground">
             {formatTime(order.created_at)}

@@ -26,6 +26,11 @@ const statusLabel: Record<string, string> = {
   cancelled: "Cancelled",
 };
 
+const orderTypeLabel: Record<string, string> = {
+  dine_in: "Dine in",
+  takeaway: "Takeaway",
+};
+
 export function OrdersClient({
   initialOrders,
   from,
@@ -103,7 +108,14 @@ export function OrdersClient({
             ) : (
               orders.map((o) => (
                 <TableRow key={o.id}>
-                  <TableCell className="font-medium">#{o.order_number}</TableCell>
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-2">
+                      <span>#{o.order_number}</span>
+                      <Badge variant="outline" className="text-xs font-normal">
+                        {orderTypeLabel[o.order_type] ?? o.order_type}
+                      </Badge>
+                    </div>
+                  </TableCell>
                   <TableCell>{formatDateTime(o.created_at)}</TableCell>
                   <TableCell className="max-w-64 truncate">
                     {(o.order_items ?? [])

@@ -16,6 +16,7 @@ export function Receipt({
   tax,
   total,
   method,
+  orderType,
 }: {
   businessName: string;
   address?: string | null;
@@ -26,6 +27,7 @@ export function Receipt({
   tax: number;
   total: number;
   method: PaymentMethod;
+  orderType: "dine_in" | "takeaway";
 }) {
   const d = date;
   const dateStr = `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
@@ -50,6 +52,10 @@ export function Receipt({
       <div className="flex justify-between">
         <span>Time</span>
         <span>{timeStr}</span>
+      </div>
+      <div className="flex justify-between">
+        <span>Type</span>
+        <span>{orderType === "takeaway" ? "Takeaway" : "Dine in"}</span>
       </div>
       <div className="my-2 border-t border-dashed border-black" />
       {items.map((item) => (

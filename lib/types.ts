@@ -96,6 +96,7 @@ export interface Order {
   table_id: string | null;
   order_number: number;
   status: OrderStatus;
+  order_type: "dine_in" | "takeaway";
   subtotal: number;
   tax: number;
   total: number;

@@ -103,6 +103,8 @@ create table public.orders (
       'open', 'sent_to_kitchen', 'preparing', 'ready',
       'served', 'paid', 'cancelled'
     )),
+  order_type text not null default 'dine_in'
+    check (order_type in ('dine_in', 'takeaway')),
   subtotal numeric(10, 2) not null default 0,
   tax numeric(10, 2) not null default 0,
   total numeric(10, 2) not null default 0,
@@ -754,7 +756,8 @@ create or replace function public.create_order(
   v_restaurant_id uuid,
   v_created_by uuid,
   p_items jsonb,
-  v_method text
+  v_method text,
+  v_order_type text default 'dine_in'
 )
 returns public.orders
 language plpgsql
@@ -785,10 +788,11 @@ begin
   v_total := v_subtotal + v_tax;
 
   insert into public.orders
-    (restaurant_id, order_number, status, subtotal, tax, total, created_by)
+    (restaurant_id, order_number, status, subtotal, tax, total, created_by, order_type)
   values
     (v_restaurant_id, public.next_order_number(v_restaurant_id),
-     'open', v_subtotal, v_tax, v_total, v_created_by)
+     'open', v_subtotal, v_tax, v_total, v_created_by,
+     coalesce(v_order_type, 'dine_in'))
   returning * into v_order;
 
   for v_item in select * from jsonb_array_elements(p_items)

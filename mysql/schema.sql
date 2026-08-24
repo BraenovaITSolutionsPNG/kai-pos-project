@@ -111,6 +111,7 @@ CREATE TABLE IF NOT EXISTS orders (
   order_number BIGINT NOT NULL,
   status ENUM('open','sent_to_kitchen','preparing','ready','served','paid','cancelled')
     NOT NULL DEFAULT 'paid',
+  order_type ENUM('dine_in','takeaway') NOT NULL DEFAULT 'dine_in',
   subtotal DECIMAL(10,2) NOT NULL DEFAULT 0,
   tax DECIMAL(10,2) NOT NULL DEFAULT 0,
   total DECIMAL(10,2) NOT NULL DEFAULT 0,
