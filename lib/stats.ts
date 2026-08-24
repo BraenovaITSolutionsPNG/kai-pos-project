@@ -27,7 +27,12 @@ export function computeDashboardStats(orders: Order[]): DashboardStats {
   start.setDate(start.getDate() - 6);
   start.setHours(0, 0, 0, 0);
 
-  const paid = orders.filter((o) => o.status === "paid");
+  // An order is paid at the POS when it is created (a payment row is
+  // inserted), while its status tracks kitchen fulfilment (open → served).
+  // Count any non-cancelled order that actually has a payment record.
+  const paid = orders.filter(
+    (o) => o.status !== "cancelled" && (o.payments?.length ?? 0) > 0
+  );
 
   const todayStart = new Date(now);
   todayStart.setHours(0, 0, 0, 0);
