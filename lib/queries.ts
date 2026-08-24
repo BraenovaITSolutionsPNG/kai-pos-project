@@ -30,6 +30,7 @@ import type {
   Restaurant,
   Shift,
   Staff,
+  StaffRole,
   UserProfile,
 } from "@/lib/types";
 
@@ -293,7 +294,13 @@ export const getKitchenOrders = cache(
   }
 );
 
-export const getShifts = cache(async (): Promise<Shift[]> => {
+export interface ShiftWithStaff extends Shift {
+  staff_name: string;
+  staff_role: StaffRole;
+  cashed_up: boolean;
+}
+
+export const getShifts = cache(async (): Promise<ShiftWithStaff[]> => {
   const ctx = await getSessionContext();
   const supabase = await createClient();
 
@@ -303,8 +310,146 @@ export const getShifts = cache(async (): Promise<Shift[]> => {
     .eq("restaurant_id", ctx.restaurant.id)
     .order("clock_in", { ascending: false });
 
-  return (data as unknown as Shift[]) ?? [];
+  const shifts = (data as unknown as Shift[]) ?? [];
+  if (shifts.length === 0) return [];
+
+  const staffIds = [...new Set(shifts.map((s) => s.staff_id))];
+  const { data: staffData } = await supabase
+    .from("staff")
+    .select("id, role, user_id")
+    .in("id", staffIds);
+  const userIds = [...new Set((staffData ?? []).map((s) => s.user_id))];
+  const { data: usersData } = await supabase
+    .from("users")
+    .select("id, full_name")
+    .in("id", userIds);
+  const userMap = new Map((usersData ?? []).map((u) => [u.id, u.full_name]));
+  const staffMap = new Map(
+    (staffData ?? []).map((s) => [s.id, { role: s.role, user_id: s.user_id }])
+  );
+
+  const { data: cashups } = await supabase
+    .from("cashups")
+    .select("shift_id")
+    .in(
+      "shift_id",
+      shifts.map((s) => s.id)
+    );
+  const cashedSet = new Set((cashups ?? []).map((c) => c.shift_id));
+
+  return shifts.map((s) => {
+    const st = staffMap.get(s.staff_id);
+    return {
+      ...s,
+      staff_name: (st?.user_id && userMap.get(st.user_id)) || "Unknown",
+      staff_role: (st?.role ?? "cashier") as StaffRole,
+      cashed_up: cashedSet.has(s.id),
+    };
+  });
 });
+
+export interface StaffOption {
+  id: string;
+  user_id: string;
+  role: StaffRole;
+  is_active: boolean;
+  name: string;
+}
+
+export const getStaffOptions = cache(async (): Promise<StaffOption[]> => {
+  const ctx = await getSessionContext();
+  const supabase = await createClient();
+
+  const { data } = await supabase
+    .from("staff")
+    .select("id, role, user_id, is_active")
+    .eq("restaurant_id", ctx.restaurant.id)
+    .order("is_active", { ascending: false });
+
+  const staff = (data ?? []) as Array<{
+    id: string;
+    role: StaffRole;
+    user_id: string;
+    is_active: boolean;
+  }>;
+  if (staff.length === 0) return [];
+
+  const userIds = [...new Set(staff.map((s) => s.user_id))];
+  const { data: usersData } = await supabase
+    .from("users")
+    .select("id, full_name")
+    .in("id", userIds);
+  const userMap = new Map((usersData ?? []).map((u) => [u.id, u.full_name]));
+
+  return staff.map((s) => ({
+    id: s.id,
+    user_id: s.user_id,
+    role: s.role,
+    is_active: s.is_active,
+    name: userMap.get(s.user_id) || "Unknown",
+  }));
+});
+
+export interface ShiftScheduleRow {
+  id: string;
+  restaurant_id: string;
+  staff_id: string;
+  schedule_date: string;
+  start_time: string;
+  end_time: string;
+  notes: string | null;
+  staff_name: string;
+  staff_role: StaffRole;
+}
+
+export const getShiftSchedules = cache(
+  async (): Promise<ShiftScheduleRow[]> => {
+    const ctx = await getSessionContext();
+    const supabase = await createClient();
+
+    const { data } = await supabase
+      .from("shift_schedules")
+      .select("*")
+      .eq("restaurant_id", ctx.restaurant.id)
+      .order("schedule_date", { ascending: true })
+      .order("start_time", { ascending: true });
+
+    const scheds = (data ?? []) as Array<{
+      id: string;
+      restaurant_id: string;
+      staff_id: string;
+      schedule_date: string;
+      start_time: string;
+      end_time: string;
+      notes: string | null;
+    }>;
+    if (scheds.length === 0) return [];
+
+    const staffIds = [...new Set(scheds.map((s) => s.staff_id))];
+    const { data: staffData } = await supabase
+      .from("staff")
+      .select("id, role, user_id")
+      .in("id", staffIds);
+    const userIds = [...new Set((staffData ?? []).map((s) => s.user_id))];
+    const { data: usersData } = await supabase
+      .from("users")
+      .select("id, full_name")
+      .in("id", userIds);
+    const userMap = new Map((usersData ?? []).map((u) => [u.id, u.full_name]));
+    const staffMap = new Map(
+      (staffData ?? []).map((s) => [s.id, { role: s.role, user_id: s.user_id }])
+    );
+
+    return scheds.map((s) => {
+      const st = staffMap.get(s.staff_id);
+      return {
+        ...s,
+        staff_name: (st?.user_id && userMap.get(st.user_id)) || "Unknown",
+        staff_role: (st?.role ?? "cashier") as StaffRole,
+      };
+    });
+  }
+);
 
 // ---------------------------------------------------------------
 // Platform administration

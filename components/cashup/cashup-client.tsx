@@ -2,10 +2,25 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Calculator, Clock, Download, Plus, RefreshCw } from "lucide-react";
+import {
+  Calculator,
+  Clock,
+  Download,
+  Plus,
+  RefreshCw,
+  CalendarDays,
+  Pencil,
+  Trash2,
+  Users,
+} from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { formatKina, formatDateTime, paymentMethodLabel } from "@/lib/format";
-import type { Shift, Expense, PaymentMethod, Order } from "@/lib/types";
+import type {
+  ShiftWithStaff,
+  ShiftScheduleRow,
+  StaffOption,
+} from "@/lib/queries";
+import type { Expense, Order, PaymentMethod } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,6 +42,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 
 const PAYMENT_METHODS: PaymentMethod[] = [
@@ -39,6 +55,13 @@ const PAYMENT_METHODS: PaymentMethod[] = [
   "westpac",
   "other",
 ];
+
+const ROLE_BADGE: Record<string, { label: string; className: string }> = {
+  owner: { label: "Owner", className: "bg-primary text-primary-foreground" },
+  manager: { label: "Manager", className: "" },
+  cashier: { label: "Cashier", className: "" },
+  kitchen: { label: "Kitchen", className: "" },
+};
 
 interface OrderWithRelations extends Order {
   order_items: Order["order_items"];
@@ -56,7 +79,11 @@ interface ShiftTotals {
   netSales: number;
 }
 
-function computeShiftTotals(shift: Shift, orders: OrderWithRelations[], expenses: Expense[]): ShiftTotals {
+function computeShiftTotals(
+  shift: ShiftWithStaff,
+  orders: OrderWithRelations[],
+  expenses: Expense[]
+): ShiftTotals {
   const shiftStart = new Date(shift.clock_in).getTime();
   const shiftEnd = shift.clock_out ? new Date(shift.clock_out).getTime() : Date.now();
 
@@ -116,31 +143,69 @@ export function CashupClient({
   restaurantName,
   shifts,
   expenses,
+  shiftSchedules,
+  staffOptions,
   userId,
-  userRole,
 }: {
   restaurantId: string;
   restaurantName: string;
-  shifts: Shift[];
+  shifts: ShiftWithStaff[];
+  expenses: Expense[];
+  shiftSchedules: ShiftScheduleRow[];
+  staffOptions: StaffOption[];
+  userId: string;
+}) {
+  return (
+    <Tabs defaultValue="reconcile" className="space-y-6">
+      <TabsList>
+        <TabsTrigger value="reconcile">
+          <Calculator className="size-4" />
+          End-of-Shift Cashup
+        </TabsTrigger>
+        <TabsTrigger value="schedule">
+          <CalendarDays className="size-4" />
+          Shift Schedule
+        </TabsTrigger>
+      </TabsList>
+      <TabsContent value="reconcile">
+        <ReconciliationTab
+          restaurantId={restaurantId}
+          restaurantName={restaurantName}
+          shifts={shifts}
+          expenses={expenses}
+          userId={userId}
+        />
+      </TabsContent>
+      <TabsContent value="schedule">
+        <ScheduleManager
+          restaurantId={restaurantId}
+          schedules={shiftSchedules}
+          staffOptions={staffOptions}
+          userId={userId}
+        />
+      </TabsContent>
+    </Tabs>
+  );
+}
+
+function ReconciliationTab({
+  restaurantId,
+  restaurantName,
+  shifts,
+  expenses,
+  userId,
+}: {
+  restaurantId: string;
+  restaurantName: string;
+  shifts: ShiftWithStaff[];
   expenses: Expense[];
   userId: string;
-  userRole: string;
 }) {
   const router = useRouter();
-  const [selectedShift, setSelectedShift] = useState<Shift | null>(null);
+  const [selectedShift, setSelectedShift] = useState<ShiftWithStaff | null>(null);
   const [orders, setOrders] = useState<OrderWithRelations[]>([]);
   const [cashupOpen, setCashupOpen] = useState(false);
-  const [cashupData, setCashupData] = useState<{
-    cash: string;
-    eftpos: string;
-    bank_transfer: string;
-    bsp: string;
-    kina_bank: string;
-    anz: string;
-    westpac: string;
-    other: string;
-    refunds: string;
-  }>({
+  const [cashupData, setCashupData] = useState<Record<string, string>>({
     cash: "0",
     eftpos: "0",
     bank_transfer: "0",
@@ -152,7 +217,7 @@ export function CashupClient({
     refunds: "0",
   });
   const [cashupBusy, setCashupBusy] = useState(false);
-  const [activeShift, setActiveShift] = useState<Shift | null>(null);
+  const [activeShift, setActiveShift] = useState<ShiftWithStaff | null>(null);
 
   const loadOrders = useCallback(async () => {
     const supabase = createClient();
@@ -180,13 +245,16 @@ export function CashupClient({
     };
   }, [restaurantId]);
 
-  // Check for active shift on mount
   useEffect(() => {
     const supabase = createClient();
     supabase.rpc("get_active_shift").then(({ data }) => {
-      if (data) setActiveShift(data as Shift);
+      const active = (data as ShiftWithStaff) ?? null;
+      if (active) {
+        const enriched = shifts.find((s) => s.id === active.id) ?? active;
+        setActiveShift(enriched);
+      }
     });
-  }, []);
+  }, [shifts]);
 
   const selectedTotals = selectedShift
     ? computeShiftTotals(selectedShift, orders, expenses)
@@ -238,31 +306,23 @@ export function CashupClient({
       const otherTotal = Number(cashupData.other);
       const refunds = Number(cashupData.refunds);
 
-      const declaredTotal =
-        cashTotal +
-        eftposTotal +
-        bankTransferTotal +
-        bspTotal +
-        kinaBankTotal +
-        anzTotal +
-        westpacTotal +
-        otherTotal;
-
-      const expectedTotal = totals.gross;
-
-      const { error } = await supabase
-        .from("cashups")
-        .insert({
-          restaurant_id: restaurantId,
-          shift_id: selectedShift.id,
-          cash_total: cashTotal,
-          eftpos_total: eftposTotal,
-          bank_transfer_total: bankTransferTotal + bspTotal + kinaBankTotal + anzTotal + westpacTotal + otherTotal,
-          refunds,
-          expenses: totals.totalExpenses,
-          net_sales: expectedTotal - totals.totalExpenses,
-          closed_by: userId,
-        });
+      const { error } = await supabase.from("cashups").insert({
+        restaurant_id: restaurantId,
+        shift_id: selectedShift.id,
+        cash_total: cashTotal,
+        eftpos_total: eftposTotal,
+        bank_transfer_total:
+          bankTransferTotal +
+          bspTotal +
+          kinaBankTotal +
+          anzTotal +
+          westpacTotal +
+          otherTotal,
+        refunds,
+        expenses: totals.totalExpenses,
+        net_sales: totals.gross - totals.totalExpenses,
+        closed_by: userId,
+      });
 
       if (error) {
         toast.error(error.message);
@@ -308,6 +368,12 @@ export function CashupClient({
     URL.revokeObjectURL(url);
   }
 
+  const declaredTotal = PAYMENT_METHODS.reduce(
+    (sum, m) => sum + Number(cashupData[m]),
+    0
+  );
+  const variance = declaredTotal - (selectedTotals?.gross ?? 0);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -344,7 +410,9 @@ export function CashupClient({
               <div className="flex items-center gap-3">
                 <Clock className="size-5 text-green-600" />
                 <div>
-                  <p className="font-medium text-green-800">Shift in progress</p>
+                  <p className="font-medium text-green-800">
+                    Shift in progress — {activeShift.staff_name}
+                  </p>
                   <p className="text-sm text-green-700">
                     Started {formatDateTime(activeShift.clock_in)}
                   </p>
@@ -387,27 +455,46 @@ export function CashupClient({
                   {shifts.map((shift) => {
                     const isActive = !shift.clock_out;
                     const isSelected = selectedShift?.id === shift.id;
+                    const badge = ROLE_BADGE[shift.staff_role] ?? ROLE_BADGE.cashier;
                     return (
                       <TableRow
                         key={shift.id}
                         className={isSelected ? "bg-primary/5" : undefined}
                         onClick={() => setSelectedShift(shift)}
                       >
-                        <TableCell>{formatDateTime(shift.clock_in).split(",")[0]}</TableCell>
-                        <TableCell>{shift.staff_id.slice(0, 8)}</TableCell>
+                        <TableCell>
+                          {formatDateTime(shift.clock_in).split(",")[0]}
+                        </TableCell>
+                        <TableCell>
+                          <span className="flex items-center gap-2">
+                            {shift.staff_name}
+                            <Badge
+                              variant="outline"
+                              className={`text-xs ${badge.className}`}
+                            >
+                              {badge.label}
+                            </Badge>
+                          </span>
+                        </TableCell>
                         <TableCell>{formatDateTime(shift.clock_in)}</TableCell>
                         <TableCell>
-                          {shift.clock_out
-                            ? formatDateTime(shift.clock_out)
-                            : <span className="text-muted-foreground">—</span>}
+                          {shift.clock_out ? (
+                            formatDateTime(shift.clock_out)
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
                         </TableCell>
                         <TableCell>
-                          <Badge variant={isActive ? "default" : "secondary"}>
-                            {isActive ? "Active" : "Closed"}
-                          </Badge>
+                          {shift.cashed_up ? (
+                            <Badge variant="secondary">Cashed up</Badge>
+                          ) : isActive ? (
+                            <Badge variant="default">Active</Badge>
+                          ) : (
+                            <Badge variant="secondary">Closed</Badge>
+                          )}
                         </TableCell>
                         <TableCell className="text-right">
-                          {!isActive && (
+                          {!isActive && !shift.cashed_up && (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -418,6 +505,11 @@ export function CashupClient({
                             >
                               View
                             </Button>
+                          )}
+                          {shift.cashed_up && (
+                            <span className="text-xs text-muted-foreground">
+                              Reconciled
+                            </span>
                           )}
                         </TableCell>
                       </TableRow>
@@ -434,27 +526,43 @@ export function CashupClient({
             <CardTitle>Quick Actions</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <Button variant="outline" className="w-full justify-start" onClick={loadOrders}>
+            <Button
+              variant="outline"
+              className="w-full justify-start"
+              onClick={loadOrders}
+            >
               <RefreshCw />
               Refresh Data
             </Button>
-            {selectedShift && selectedTotals && (
+            {selectedShift && selectedTotals && !selectedShift.cashed_up && (
               <>
-                <Button variant="outline" className="w-full justify-start" onClick={exportShiftCSV}>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={exportShiftCSV}
+                >
                   <Download />
                   Export Shift CSV
                 </Button>
-                <Button className="w-full justify-start" onClick={() => setCashupOpen(true)}>
+                <Button
+                  className="w-full justify-start"
+                  onClick={() => setCashupOpen(true)}
+                >
                   <Calculator />
                   Perform Cashup
                 </Button>
               </>
             )}
+            {selectedShift && selectedShift.cashed_up && (
+              <p className="rounded-md bg-muted p-3 text-sm text-muted-foreground">
+                This shift has already been reconciled.
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>
 
-      {selectedShift && selectedTotals && (
+      {selectedShift && selectedTotals && !selectedShift.cashed_up && (
         <div className="space-y-6">
           <Card>
             <CardHeader>
@@ -470,19 +578,27 @@ export function CashupClient({
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                 <div className="rounded-lg border bg-card p-4">
                   <p className="text-sm text-muted-foreground">Orders</p>
-                  <p className="mt-1 font-heading text-2xl font-semibold">{selectedTotals.orders.length}</p>
+                  <p className="mt-1 font-heading text-2xl font-semibold">
+                    {selectedTotals.orders.length}
+                  </p>
                 </div>
                 <div className="rounded-lg border bg-card p-4">
                   <p className="text-sm text-muted-foreground">Subtotal</p>
-                  <p className="mt-1 font-heading text-2xl font-semibold">{formatKina(selectedTotals.subtotal)}</p>
+                  <p className="mt-1 font-heading text-2xl font-semibold">
+                    {formatKina(selectedTotals.subtotal)}
+                  </p>
                 </div>
                 <div className="rounded-lg border bg-card p-4">
                   <p className="text-sm text-muted-foreground">Tax</p>
-                  <p className="mt-1 font-heading text-2xl font-semibold">{formatKina(selectedTotals.tax)}</p>
+                  <p className="mt-1 font-heading text-2xl font-semibold">
+                    {formatKina(selectedTotals.tax)}
+                  </p>
                 </div>
                 <div className="rounded-lg border bg-card p-4">
                   <p className="text-sm text-muted-foreground">Gross Sales</p>
-                  <p className="mt-1 font-heading text-2xl font-semibold">{formatKina(selectedTotals.gross)}</p>
+                  <p className="mt-1 font-heading text-2xl font-semibold">
+                    {formatKina(selectedTotals.gross)}
+                  </p>
                 </div>
               </div>
 
@@ -493,8 +609,12 @@ export function CashupClient({
                     const expected = selectedTotals.totals[method] ?? 0;
                     return expected > 0 ? (
                       <div key={method} className="rounded-lg border p-3">
-                        <p className="text-sm text-muted-foreground">{paymentMethodLabel(method)}</p>
-                        <p className="font-heading font-semibold">{formatKina(expected)}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {paymentMethodLabel(method)}
+                        </p>
+                        <p className="font-heading font-semibold">
+                          {formatKina(expected)}
+                        </p>
                       </div>
                     ) : null;
                   })}
@@ -503,7 +623,9 @@ export function CashupClient({
 
               {selectedTotals.totalExpenses > 0 && (
                 <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
-                  <h3 className="font-semibold mb-3 text-amber-800">Expenses in Shift</h3>
+                  <h3 className="font-semibold mb-3 text-amber-800">
+                    Expenses in Shift
+                  </h3>
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                     {selectedTotals.expenses.map((e) => (
                       <div key={e.id} className="rounded-lg border bg-white p-3">
@@ -586,36 +708,24 @@ export function CashupClient({
                   </div>
                   <div>
                     <p className="text-muted-foreground">Declared Total</p>
-                    <p className="font-semibold">
-                      {formatKina(
-                        PAYMENT_METHODS.reduce(
-                          (sum, m) => sum + Number(cashupData[m]),
-                          0
-                        )
-                      )}
-                    </p>
+                    <p className="font-semibold">{formatKina(declaredTotal)}</p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">Refunds</p>
-                    <p className="font-semibold">{formatKina(Number(cashupData.refunds))}</p>
+                    <p className="font-semibold">
+                      {formatKina(Number(cashupData.refunds))}
+                    </p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">Variance</p>
                     <p
                       className={`font-semibold ${
-                        PAYMENT_METHODS.reduce((sum, m) => sum + Number(cashupData[m]), 0) -
-                          selectedTotals.gross -
-                          Number(cashupData.refunds) ===
-                        0
+                        Number(variance.toFixed(2)) === 0
                           ? "text-green-600"
                           : "text-red-600"
                       }`}
                     >
-                      {formatKina(
-                        PAYMENT_METHODS.reduce((sum, m) => sum + Number(cashupData[m]), 0) -
-                          selectedTotals.gross -
-                          Number(cashupData.refunds)
-                      )}
+                      {formatKina(variance)}
                     </p>
                   </div>
                 </div>
@@ -631,6 +741,307 @@ export function CashupClient({
               </DialogFooter>
             </form>
           )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function ScheduleManager({
+  restaurantId,
+  schedules,
+  staffOptions,
+  userId,
+}: {
+  restaurantId: string;
+  schedules: ShiftScheduleRow[];
+  staffOptions: StaffOption[];
+  userId: string;
+}) {
+  const router = useRouter();
+  const [rows, setRows] = useState<ShiftScheduleRow[]>(schedules);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editing, setEditing] = useState<ShiftScheduleRow | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [form, setForm] = useState({
+    staff_id: "",
+    schedule_date: "",
+    start_time: "",
+    end_time: "",
+    notes: "",
+  });
+
+  useEffect(() => {
+    const current = schedules;
+    void Promise.resolve().then(() => setRows(current));
+  }, [schedules]);
+
+  const reload = useCallback(async () => {
+    const supabase = createClient();
+    const { data } = await supabase
+      .from("shift_schedules")
+      .select("*")
+      .eq("restaurant_id", restaurantId)
+      .order("schedule_date", { ascending: true })
+      .order("start_time", { ascending: true });
+    const list = (data ?? []) as ShiftScheduleRow[];
+    setRows(
+      list.map((s) => ({
+        ...s,
+        staff_name: staffOptions.find((o) => o.id === s.staff_id)?.name ?? "Unknown",
+        staff_role: staffOptions.find((o) => o.id === s.staff_id)?.role ?? "cashier",
+      }))
+    );
+  }, [restaurantId, staffOptions]);
+
+  function openAdd() {
+    setEditing(null);
+    setForm({
+      staff_id: staffOptions[0]?.id ?? "",
+      schedule_date: new Date().toISOString().slice(0, 10),
+      start_time: "09:00",
+      end_time: "17:00",
+      notes: "",
+    });
+    setDialogOpen(true);
+  }
+
+  function openEdit(s: ShiftScheduleRow) {
+    setEditing(s);
+    setForm({
+      staff_id: s.staff_id,
+      schedule_date: s.schedule_date,
+      start_time: s.start_time,
+      end_time: s.end_time,
+      notes: s.notes ?? "",
+    });
+    setDialogOpen(true);
+  }
+
+  async function save() {
+    if (!form.staff_id || !form.schedule_date || !form.start_time || !form.end_time) {
+      toast.error("Please fill in staff, date and times");
+      return;
+    }
+    if (form.start_time >= form.end_time) {
+      toast.error("End time must be after start time");
+      return;
+    }
+    setBusy(true);
+    const supabase = createClient();
+    const payload = {
+      restaurant_id: restaurantId,
+      staff_id: form.staff_id,
+      schedule_date: form.schedule_date,
+      start_time: form.start_time,
+      end_time: form.end_time,
+      notes: form.notes,
+      created_by: userId,
+    };
+    const { error } = editing
+      ? await supabase.from("shift_schedules").update(payload).eq("id", editing.id)
+      : await supabase.from("shift_schedules").insert(payload);
+    setBusy(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(editing ? "Shift updated" : "Shift scheduled");
+    setDialogOpen(false);
+    await reload();
+  }
+
+  async function remove(s: ShiftScheduleRow) {
+    if (!window.confirm(`Remove the scheduled shift for ${s.staff_name} on ${s.schedule_date}?`)) {
+      return;
+    }
+    const supabase = createClient();
+    const { error } = await supabase.from("shift_schedules").delete().eq("id", s.id);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Scheduled shift removed");
+    await reload();
+  }
+
+  // Group by date
+  const byDate = new Map<string, ShiftScheduleRow[]>();
+  for (const s of rows) {
+    if (!byDate.has(s.schedule_date)) byDate.set(s.schedule_date, []);
+    byDate.get(s.schedule_date)!.push(s);
+  }
+  const dates = [...byDate.keys()].sort();
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-heading text-2xl font-semibold tracking-tight">
+            Shift Schedule
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Plan who works when. Schedules are visible to your whole team.
+          </p>
+        </div>
+        <Button onClick={openAdd}>
+          <Plus />
+          Schedule Shift
+        </Button>
+      </div>
+
+      {staffOptions.length === 0 ? (
+        <Card>
+          <CardContent className="py-10 text-center text-muted-foreground">
+            Add staff members first before scheduling shifts.
+          </CardContent>
+        </Card>
+      ) : rows.length === 0 ? (
+        <Card>
+          <CardContent className="py-10 text-center text-muted-foreground">
+            No shifts scheduled yet. Click “Schedule Shift” to plan your week.
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          {dates.map((date) => (
+            <Card key={date}>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">
+                  {new Date(date + "T00:00:00").toLocaleDateString("en-PG", {
+                    weekday: "long",
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </CardTitle>
+                <CardDescription>
+                  {byDate.get(date)!.length} shift
+                  {byDate.get(date)!.length === 1 ? "" : "s"}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {byDate.get(date)!.map((s) => {
+                    const badge = ROLE_BADGE[s.staff_role] ?? ROLE_BADGE.cashier;
+                    return (
+                      <div
+                        key={s.id}
+                        className="flex items-center justify-between rounded-lg border p-3"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Users className="size-4 text-muted-foreground" />
+                          <div>
+                            <p className="font-medium">{s.staff_name}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {s.start_time.slice(0, 5)} – {s.end_time.slice(0, 5)}
+                              {s.notes ? ` · ${s.notes}` : ""}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            variant="outline"
+                            className={`text-xs ${badge.className}`}
+                          >
+                            {badge.label}
+                          </Badge>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openEdit(s)}
+                          >
+                            <Pencil className="size-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive"
+                            onClick={() => void remove(s)}
+                          >
+                            <Trash2 className="size-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{editing ? "Edit Scheduled Shift" : "Schedule Shift"}</DialogTitle>
+            <DialogDescription>
+              Assign a team member to a shift on a specific date.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="sched-staff">Staff member</Label>
+              <select
+                id="sched-staff"
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+                value={form.staff_id}
+                onChange={(e) => setForm((f) => ({ ...f, staff_id: e.target.value }))}
+              >
+                {staffOptions.map((o) => (
+                  <option key={o.id} value={o.id} disabled={!o.is_active}>
+                    {o.name} ({o.role})
+                    {o.is_active ? "" : " — inactive"}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="sched-date">Date</Label>
+                <Input
+                  id="sched-date"
+                  type="date"
+                  value={form.schedule_date}
+                  onChange={(e) => setForm((f) => ({ ...f, schedule_date: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Time</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="time"
+                    value={form.start_time}
+                    onChange={(e) => setForm((f) => ({ ...f, start_time: e.target.value }))}
+                  />
+                  <span className="text-muted-foreground">–</span>
+                  <Input
+                    type="time"
+                    value={form.end_time}
+                    onChange={(e) => setForm((f) => ({ ...f, end_time: e.target.value }))}
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="sched-notes">Notes (optional)</Label>
+              <Input
+                id="sched-notes"
+                value={form.notes}
+                onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
+                placeholder="e.g. Opening shift, cover for Mary"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={save} disabled={busy}>
+              {busy ? "Saving…" : editing ? "Save changes" : "Schedule"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

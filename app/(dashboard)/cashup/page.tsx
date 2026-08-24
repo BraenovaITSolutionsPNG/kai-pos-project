@@ -4,6 +4,8 @@ import {
   getSessionContext,
   getShifts,
   getExpenses,
+  getShiftSchedules,
+  getStaffOptions,
 } from "@/lib/queries";
 import { assertAccess } from "@/lib/permissions";
 
@@ -12,10 +14,12 @@ export const metadata: Metadata = {
 };
 
 export default async function CashupPage() {
-  const [ctx, shifts, expenses] = await Promise.all([
+  const [ctx, shifts, expenses, shiftSchedules, staffOptions] = await Promise.all([
     getSessionContext(),
     getShifts(),
     getExpenses(),
+    getShiftSchedules(),
+    getStaffOptions(),
   ]);
   assertAccess(ctx.staff.role, "/cashup");
 
@@ -25,8 +29,9 @@ export default async function CashupPage() {
       restaurantName={ctx.restaurant.name}
       shifts={shifts}
       expenses={expenses}
+      shiftSchedules={shiftSchedules}
+      staffOptions={staffOptions}
       userId={ctx.user.id}
-      userRole={ctx.staff.role}
     />
   );
 }
