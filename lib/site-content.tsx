@@ -25,7 +25,7 @@ export interface SiteContent {
 export const DEFAULT_CONTENT: SiteContent = {
   hero: {
     badge: "Built for Papua New Guinea",
-    title: "Run your restaurant the {accent}smart way{/accent}, in Kina.",
+    title: "Run your restaurant & cafe the {accent}smart way{/accent}, in Kina.",
     subtitle:
       "KAI POS is an all-in-one point of sale, kitchen, inventory and reporting platform made for PNG restaurants. Say goodbye to paper receipts and the calculator.",
     cta: "Get started",
