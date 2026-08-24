@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     template: "%s | KAI POS",
   },
   description:
-    "Restaurant management platform for Papua New Guinea with POS, orders, payments and reports in PGK.",
+    "Restaurant & Cafe management platform for Papua New Guinea with POS, orders, payments and reports in PGK.",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,

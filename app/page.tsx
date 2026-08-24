@@ -27,7 +27,7 @@ import { getSiteContent, getMySubscription } from "@/lib/queries";
 import { resolveSiteContent, renderAccent } from "@/lib/site-content";
 
 export const metadata: Metadata = {
-  title: "Restaurant POS for Papua New Guinea",
+  title: "Restaurant & Cafe POS for Papua New Guinea",
   description:
     "KAI POS is the all-in-one restaurant & cafe operating system for PNG with POS, tables, kitchen display, inventory, staff and reports, built around the Kina.",
 };
@@ -411,7 +411,7 @@ export default async function LandingPage() {
             <div className="leading-tight">
               <p className="font-heading text-sm font-semibold">KAI POS</p>
               <p className="text-[11px] text-muted-foreground">
-                Restaurant platform · Papua New Guinea
+                Restaurant & Cafe platform · Papua New Guinea
               </p>
             </div>
           </div>

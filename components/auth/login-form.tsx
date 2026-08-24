@@ -22,7 +22,7 @@ export function LoginForm({ message }: { message?: string }) {
         </div>
         <h1 className="font-heading text-xl font-semibold">Sign in to KAI POS</h1>
         <p className="text-sm text-muted-foreground">
-          Restaurant operating system for Papua New Guinea
+          Restaurant & Cafe operating system for Papua New Guinea
         </p>
       </div>
 

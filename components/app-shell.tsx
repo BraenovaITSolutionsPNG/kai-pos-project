@@ -111,7 +111,7 @@ function Brand({ collapsed }: { collapsed: boolean }) {
         <div className="leading-tight">
           <p className="font-heading text-sm font-semibold">KAI POS</p>
           <p className="text-[11px] text-muted-foreground">
-            Restaurant platform
+            Restaurant & Cafe platform
           </p>
         </div>
       )}
