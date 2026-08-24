@@ -9,6 +9,11 @@ export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
   const path = request.nextUrl.pathname;
+
+  // API routes authenticate themselves and answer with JSON errors;
+  // redirecting them to /login breaks multipart bodies and XHR callers.
+  if (path.startsWith("/api")) return response;
+
   const isAuthPage = path.startsWith("/login") || path.startsWith("/signup");
   const isPublicPage =
     path === "/" ||
