@@ -27,12 +27,12 @@ export const DEFAULT_CONTENT: SiteContent = {
     badge: "Built for Papua New Guinea",
     title: "Run your restaurant & cafe the {accent}smart way{/accent}, in Kina.",
     subtitle:
-      "KAI POS is an all-in-one point of sale, kitchen, inventory and reporting platform made for PNG restaurants. Say goodbye to paper receipts and the calculator.",
+      "KAI POS is an all-in-one point of sale, kitchen, inventory and reporting platform made for PNG restaurants & cafes. Say goodbye to paper receipts and the calculator.",
     cta: "Get started",
     cta2: "See what's inside",
   },
   features: {
-    heading: "Everything your restaurant needs",
+    heading: "Everything your restaurant & cafe needs",
     subtext:
       "From the cashier to the kitchen to the owner's office, one platform, one source of truth.",
   },
@@ -48,7 +48,7 @@ export const DEFAULT_CONTENT: SiteContent = {
       "All plans include product setup support and PNG payment methods.",
   },
   cta: {
-    heading: "Ready to run your restaurant the smart way?",
+    heading: "Ready to run your restaurant & cafe the smart way?",
     subtext:
       "Create your cafe, add your menu and start taking orders, in Kina, on any tablet or phone.",
   },

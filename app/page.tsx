@@ -29,7 +29,7 @@ import { resolveSiteContent, renderAccent } from "@/lib/site-content";
 export const metadata: Metadata = {
   title: "Restaurant POS for Papua New Guinea",
   description:
-    "KAI POS is the all-in-one restaurant operating system for PNG with POS, tables, kitchen display, inventory, staff and reports, built around the Kina.",
+    "KAI POS is the all-in-one restaurant & cafe operating system for PNG with POS, tables, kitchen display, inventory, staff and reports, built around the Kina.",
 };
 
 export const dynamic = "force-dynamic";
@@ -81,7 +81,7 @@ const steps = [
   {
     step: "1",
     title: "Create your cafe",
-    text: "Sign up and your business, restaurant and owner account are set up automatically.",
+    text: "Sign up and your business, restaurant or cafe, and owner account are set up automatically.",
   },
   {
     step: "2",

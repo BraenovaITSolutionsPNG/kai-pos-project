@@ -28,7 +28,7 @@ const plans = [
     monthly: "K1,500",
     annual: "K15,000",
     period: "/month",
-    description: "The complete operating system for a busy restaurant.",
+    description: "The complete operating system for a busy restaurant & cafe.",
     features: [
       "Everything in Starter",
       "Tables & floor plan",
