@@ -1,5 +1,5 @@
 -- ============================================================
--- KAI POS â€” Complete Schema (PNG restaurant POS platform)
+-- KAI POS Ã¢â‚¬â€ Complete Schema (PNG restaurant POS platform)
 -- Run this in the Supabase SQL editor.
 -- ============================================================
 
@@ -617,6 +617,19 @@ declare
   v_business_name text := new.raw_user_meta_data ->> 'business_name';
   v_plan text := coalesce(nullif(new.raw_user_meta_data ->> 'plan', ''), 'starter');
 begin
+  -- Staff accounts created via add_staff() only need a profile row;
+  -- they belong to their employer's restaurant, not their own tenant.
+  if coalesce(new.raw_user_meta_data ->> 'staff_only', '') = 'true' then
+    insert into public.users (id, email, full_name)
+    values (
+      new.id,
+      new.email,
+      new.raw_user_meta_data ->> 'full_name'
+    )
+    on conflict (id) do nothing;
+    return new;
+  end if;
+
   if v_plan not in ('starter', 'business', 'professional') then
     v_plan := 'starter';
   end if;
@@ -640,7 +653,7 @@ begin
   insert into public.staff (restaurant_id, user_id, role, is_active)
   values (v_restaurant_id, new.id, 'owner', true);
 
-  -- A starter menu so the POS is immediately usable.
+  -- A starter menu so the POS is ready once activated.
   insert into public.categories (restaurant_id, name, sort_order) values
     (v_restaurant_id, 'Food', 1),
     (v_restaurant_id, 'Drinks', 2),
@@ -794,8 +807,8 @@ $$;
 
 -- Advance kitchen order status (used by KDS)
 create or replace function public.advance_kitchen(
-  p_order_id uuid,
-  p_action text
+  order_id uuid,
+  action text
 )
 returns void
 language plpgsql
@@ -807,23 +820,20 @@ declare
   v_new_status text;
   v_item_status text;
 begin
-  -- Validate action
-  if p_action not in ('preparing', 'ready', 'served') then
-    raise exception 'Invalid action: %', p_action;
+  if advance_kitchen.action not in ('preparing', 'ready', 'served') then
+    raise exception 'Invalid action: %', advance_kitchen.action;
   end if;
 
-  -- Get order and verify it belongs to user's restaurant
   select * into v_order
   from public.orders
-  where id = p_order_id
+  where id = advance_kitchen.order_id
     and restaurant_id in (select public.user_restaurant_ids());
 
   if not found then
     raise exception 'Order not found or access denied';
   end if;
 
-  -- Determine new order status based on action and current item statuses
-  case p_action
+  case advance_kitchen.action
     when 'preparing' then
       v_new_status := 'preparing';
       v_item_status := 'preparing';
@@ -835,43 +845,39 @@ begin
       v_item_status := 'ready';
   end case;
 
-  -- Update order status
   update public.orders
   set status = v_new_status,
       updated_at = now()
-  where id = p_order_id;
+  where id = advance_kitchen.order_id;
 
-  -- Update order_items status
-  if p_action in ('preparing', 'ready') then
+  if advance_kitchen.action in ('preparing', 'ready') then
     update public.order_items
     set status = v_item_status
-    where order_id = p_order_id
-      and status = 'new';
+    where order_items.order_id = advance_kitchen.order_id
+      and order_items.status = 'new';
 
-    -- If marking ready, also update any 'preparing' items
-    if p_action = 'ready' then
+    if advance_kitchen.action = 'ready' then
       update public.order_items
       set status = 'ready'
-      where order_id = p_order_id
-        and status = 'preparing';
+      where order_items.order_id = advance_kitchen.order_id
+        and order_items.status = 'preparing';
     end if;
   end if;
 
-  -- If served, mark all items as ready
-  if p_action = 'served' then
+  if advance_kitchen.action = 'served' then
     update public.order_items
     set status = 'ready'
-    where order_id = p_order_id;
+    where order_items.order_id = advance_kitchen.order_id;
   end if;
 end;
 $$;
 
 -- Add staff member (creates auth user + staff record)
 create or replace function public.add_staff(
-  p_email text,
-  p_full_name text,
-  p_password text,
-  p_role text
+  email text,
+  full_name text,
+  password text,
+  role text
 )
 returns void
 language plpgsql
@@ -882,7 +888,6 @@ declare
   v_user_id uuid;
   v_restaurant_id uuid;
 begin
-  -- Get current user's restaurant
   select restaurant_id into v_restaurant_id
   from public.staff
   where user_id = auth.uid() and is_active = true
@@ -892,47 +897,76 @@ begin
     raise exception 'No active restaurant found for current user';
   end if;
 
-  -- Check if user already exists
-  select id into v_user_id
-  from public.users
-  where email = p_email;
-
-  if v_user_id is not null then
-    -- User exists, just add staff record
-    insert into public.staff (restaurant_id, user_id, role, is_active)
-    values (v_restaurant_id, v_user_id, p_role, true)
-    on conflict (restaurant_id, user_id) do update
-      set role = p_role, is_active = true;
-    return;
+  if add_staff.role not in ('owner', 'manager', 'cashier', 'kitchen') then
+    raise exception 'Invalid role';
   end if;
 
-  -- Create auth user (this will trigger handle_new_user, but we catch it)
-  -- We need to create the user in auth.users first
-  -- Since we can't call auth.sign_up from here, we create the user record
-  -- and the admin will need to invite them, OR we use a different approach.
-  
-  -- For now, create the user profile and staff record.
-  -- The actual auth user creation should happen via admin invite flow.
-  -- This RPC assumes the user already exists in auth.users.
-  
-  v_user_id := gen_random_uuid();
-  
-  insert into public.users (id, email, full_name)
-  values (v_user_id, p_email, p_full_name)
-  on conflict (id) do nothing;
+  if length(add_staff.password) < 8 then
+    raise exception 'Password must be at least 8 characters';
+  end if;
+
+  select u.id into v_user_id
+  from public.users u
+  where lower(u.email) = lower(add_staff.email);
+
+  if v_user_id is null then
+    -- Create the auth user; the on_auth_user_created trigger sees
+    -- staff_only=true and skips tenant provisioning.
+    insert into auth.users (
+      instance_id, id, aud, role, email,
+      encrypted_password, email_confirmed_at,
+      raw_app_meta_data, raw_user_meta_data,
+      created_at, updated_at,
+      confirmation_token, recovery_token,
+      email_change, email_change_token_new
+    ) values (
+      '00000000-0000-0000-0000-000000000000',
+      gen_random_uuid(),
+      'authenticated',
+      'authenticated',
+      add_staff.email,
+      extensions.crypt(add_staff.password, extensions.gen_salt('bf')),
+      now(),
+      '{"provider":"email","providers":["email"]}',
+      jsonb_build_object('full_name', add_staff.full_name, 'staff_only', 'true'),
+      now(), now(), '', '', '', ''
+    )
+    returning id into v_user_id;
+
+    insert into auth.identities (
+      id, user_id, provider_id, identity_data, provider,
+      last_sign_in_at, created_at, updated_at
+    ) values (
+      v_user_id,
+      v_user_id,
+      v_user_id::text,
+      jsonb_build_object(
+        'sub', v_user_id::text,
+        'email', add_staff.email,
+        'email_verified', true
+      ),
+      'email',
+      now(), now(), now()
+    );
+  else
+    update public.users
+    set full_name = add_staff.full_name
+    where id = v_user_id;
+  end if;
 
   insert into public.staff (restaurant_id, user_id, role, is_active)
-  values (v_restaurant_id, v_user_id, p_role, true)
+  values (v_restaurant_id, v_user_id, add_staff.role, true)
   on conflict (restaurant_id, user_id) do update
-    set role = p_role, is_active = true;
+    set role = excluded.role,
+        is_active = true;
 end;
 $$;
 
 -- Update staff (role, is_active)
 create or replace function public.update_staff(
-  p_staff_id uuid,
-  p_role text default null,
-  p_is_active boolean default null
+  staff_id uuid,
+  role text default null,
+  is_active boolean default null
 )
 returns void
 language plpgsql
@@ -942,31 +976,34 @@ as $$
 declare
   v_restaurant_id uuid;
 begin
-  -- Verify staff belongs to user's restaurant
-  select restaurant_id into v_restaurant_id
-  from public.staff
-  where id = p_staff_id
-    and restaurant_id in (select public.user_restaurant_ids());
+  select s.restaurant_id into v_restaurant_id
+  from public.staff s
+  where s.id = update_staff.staff_id
+    and s.restaurant_id in (select public.user_restaurant_ids());
 
   if v_restaurant_id is null then
     raise exception 'Staff not found or access denied';
   end if;
 
-  -- Prevent removing owner role
-  if p_role = 'owner' then
-    raise exception 'Cannot change role to owner via this function';
+  if update_staff.role is not null
+     and update_staff.role not in ('owner', 'manager', 'cashier', 'kitchen') then
+    raise exception 'Invalid role';
   end if;
 
-  update public.staff
-  set role = coalesce(p_role, role),
-      is_active = coalesce(p_is_active, is_active)
-  where id = p_staff_id;
+  update public.staff s
+  set role = coalesce(update_staff.role, s.role),
+      is_active = coalesce(update_staff.is_active, s.is_active)
+  where s.id = update_staff.staff_id;
+
+  if not found then
+    raise exception 'Staff not found';
+  end if;
 end;
 $$;
 
 -- Remove staff member
 create or replace function public.remove_staff(
-  p_staff_id uuid
+  staff_id uuid
 )
 returns void
 language plpgsql
@@ -977,27 +1014,28 @@ declare
   v_restaurant_id uuid;
   v_role text;
 begin
-  -- Verify staff belongs to user's restaurant
-  select restaurant_id, role into v_restaurant_id, v_role
-  from public.staff
-  where id = p_staff_id
-    and restaurant_id in (select public.user_restaurant_ids());
+  select s.restaurant_id, s.role into v_restaurant_id, v_role
+  from public.staff s
+  where s.id = remove_staff.staff_id
+    and s.restaurant_id in (select public.user_restaurant_ids());
 
   if v_restaurant_id is null then
     raise exception 'Staff not found or access denied';
   end if;
 
-  -- Prevent removing owner
   if v_role = 'owner' then
     raise exception 'Cannot remove owner';
   end if;
 
-  -- Prevent removing self
-  if (select user_id from public.staff where id = p_staff_id) = auth.uid() then
+  if (
+    select s.user_id from public.staff s
+    where s.id = remove_staff.staff_id
+  ) = auth.uid() then
     raise exception 'Cannot remove yourself';
   end if;
 
-  delete from public.staff where id = p_staff_id;
+  delete from public.staff
+  where id = remove_staff.staff_id;
 end;
 $$;
 
@@ -1657,7 +1695,7 @@ begin
   insert into public.notifications (user_id, message, link)
   values (
     (select owner_id from public.businesses where id = v_business_id),
-    'Your payment was approved. Your subscription is now active â€” welcome aboard!',
+    'Your payment was approved. Your subscription is now active Ã¢â‚¬â€ welcome aboard!',
     '/dashboard'
   );
 end;
@@ -1990,6 +2028,7 @@ alter publication supabase_realtime add table public.orders;
 alter publication supabase_realtime add table public.order_items;
 alter publication supabase_realtime add table public.tables;
 alter publication supabase_realtime add table public.inventory_transactions;
+
 
 
 
