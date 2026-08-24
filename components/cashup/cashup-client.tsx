@@ -262,6 +262,8 @@ function ReconciliationTab({
       if (active) {
         const enriched = shifts.find((s) => s.id === active.id) ?? active;
         setActiveShift(enriched);
+      } else {
+        setActiveShift(null);
       }
     });
   }, [shifts]);
@@ -427,14 +429,15 @@ function ReconciliationTab({
                     const sch = activeShift.scheduled_shift_id
                       ? shiftSchedules.find((s) => s.id === activeShift.scheduled_shift_id)
                       : undefined;
+                    const started =
+                      activeShift.clock_in && activeShift.clock_in !== "0001-01-01T00:00:00"
+                        ? formatDateTime(activeShift.clock_in)
+                        : sch
+                        ? formatTime(sch.start_time)
+                        : "not recorded";
                     return (
                       <>
-                        <p className="text-sm text-green-700">
-                          Started{" "}
-                          {sch
-                            ? formatTime(sch.start_time)
-                            : formatDateTime(activeShift.clock_in || activeShift.created_at)}
-                        </p>
+                        <p className="text-sm text-green-700">Started {started}</p>
                         {sch && (
                           <p className="text-xs text-green-600">
                             Scheduled {formatTime(sch.start_time)} –{" "}
