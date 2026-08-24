@@ -17,6 +17,7 @@ export function Receipt({
   total,
   method,
   orderType,
+  tableLabel,
 }: {
   businessName: string;
   address?: string | null;
@@ -28,6 +29,7 @@ export function Receipt({
   total: number;
   method: PaymentMethod;
   orderType: "dine_in" | "takeaway";
+  tableLabel: string | null;
 }) {
   const d = date;
   const dateStr = `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
@@ -57,6 +59,12 @@ export function Receipt({
         <span>Type</span>
         <span>{orderType === "takeaway" ? "Takeaway" : "Dine in"}</span>
       </div>
+      {orderType === "dine_in" && tableLabel ? (
+        <div className="flex justify-between">
+          <span>Table</span>
+          <span>{tableLabel}</span>
+        </div>
+      ) : null}
       <div className="my-2 border-t border-dashed border-black" />
       {items.map((item) => (
         <div key={item.product_id}>

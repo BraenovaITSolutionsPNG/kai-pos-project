@@ -166,7 +166,7 @@ export const getOrders = cache(
 
     let query = supabase
       .from("orders")
-      .select("*, order_items(*), payments(*)")
+      .select("*, order_items(*), payments(*), tables(label)")
       .eq("restaurant_id", ctx.restaurant.id)
       .order("created_at", { ascending: false });
 

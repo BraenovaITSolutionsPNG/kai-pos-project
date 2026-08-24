@@ -757,7 +757,8 @@ create or replace function public.create_order(
   v_created_by uuid,
   p_items jsonb,
   v_method text,
-  v_order_type text default 'dine_in'
+  v_order_type text default 'dine_in',
+  v_table_id uuid default null
 )
 returns public.orders
 language plpgsql
@@ -771,6 +772,7 @@ declare
   v_tax_rate numeric(10, 2);
   v_tax numeric(10, 2);
   v_total numeric(10, 2);
+  v_eff_type text := coalesce(v_order_type, 'dine_in');
 begin
   select tax_rate into v_tax_rate
   from public.restaurants
@@ -788,11 +790,11 @@ begin
   v_total := v_subtotal + v_tax;
 
   insert into public.orders
-    (restaurant_id, order_number, status, subtotal, tax, total, created_by, order_type)
+    (restaurant_id, order_number, status, subtotal, tax, total, created_by, order_type, table_id)
   values
     (v_restaurant_id, public.next_order_number(v_restaurant_id),
      'open', v_subtotal, v_tax, v_total, v_created_by,
-     coalesce(v_order_type, 'dine_in'))
+     v_eff_type, v_table_id)
   returning * into v_order;
 
   for v_item in select * from jsonb_array_elements(p_items)
@@ -810,6 +812,14 @@ begin
 
   insert into public.payments (order_id, method, amount)
   values (v_order.id, v_method, v_total);
+
+  -- A dine-in order occupies its table.
+  if v_eff_type = 'dine_in' and v_table_id is not null then
+    update public.tables
+    set status = 'occupied'
+    where id = v_table_id
+      and restaurant_id = v_restaurant_id;
+  end if;
 
   return v_order;
 end;
@@ -831,6 +841,7 @@ declare
   v_item_status text;
   v_role text;
   v_msg text;
+  v_table_label text;
 begin
   if advance_kitchen.action not in ('preparing', 'ready', 'served') then
     raise exception 'Invalid action: %', advance_kitchen.action;
@@ -892,14 +903,30 @@ begin
     update public.order_items
     set status = 'ready'
     where order_items.order_id = advance_kitchen.order_id;
+
+    -- A served dine-in order frees its table.
+    if v_order.table_id is not null then
+      update public.tables
+      set status = 'available'
+      where id = v_order.table_id
+        and restaurant_id = v_order.restaurant_id;
+    end if;
   end if;
 
   -- Notify non-kitchen staff (waiters, cashiers, managers, owners) when an
   -- order is ready to serve or pick up.
   if advance_kitchen.action = 'ready' then
-    v_msg := case when v_order.order_type = 'takeaway'
-                  then 'Order #' || v_order.order_number || ' is ready for pickup'
-                  else 'Order #' || v_order.order_number || ' is ready to serve' end;
+    select t.label into v_table_label
+    from public.tables t
+    where t.id = v_order.table_id;
+
+    v_msg := 'Order #' || v_order.order_number ||
+             case when v_order.order_type = 'takeaway'
+                  then ' is ready for pickup'
+                  else ' is ready to serve' end ||
+             case when v_table_label is not null
+                  then ' (Table ' || v_table_label || ')'
+                  else '' end;
 
     insert into public.notifications (user_id, message, link)
     select s.user_id, v_msg, '/orders'

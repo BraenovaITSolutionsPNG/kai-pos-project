@@ -15,7 +15,7 @@ import { createClient } from "@/lib/supabase/client";
 import { isDemoMode } from "@/lib/supabase/env";
 import { formatKina } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import type { CartItem, Category, PaymentMethod, Product } from "@/lib/types";
+import type { CartItem, Category, DiningTable, PaymentMethod, Product } from "@/lib/types";
 import { PaymentModal } from "@/components/pos/payment-modal";
 import { Receipt } from "@/components/pos/receipt";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,13 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface LastOrder {
   id: string;
@@ -42,11 +49,13 @@ interface ReceiptSnapshot {
   total: number;
   method: PaymentMethod;
   orderType: "dine_in" | "takeaway";
+  tableLabel: string | null;
 }
 
 export function PosClient({
   categories,
   products,
+  tables,
   restaurantId,
   restaurantName,
   restaurantAddress,
@@ -55,6 +64,7 @@ export function PosClient({
 }: {
   categories: Category[];
   products: Product[];
+  tables: DiningTable[];
   restaurantId: string;
   restaurantName: string;
   restaurantAddress: string | null;
@@ -69,6 +79,7 @@ export function PosClient({
   );
   const [cart, setCart] = useState<CartItem[]>([]);
   const [orderType, setOrderType] = useState<"dine_in" | "takeaway">("dine_in");
+  const [tableId, setTableId] = useState<string | null>(null);
   const [payOpen, setPayOpen] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [receipt, setReceipt] = useState<ReceiptSnapshot | null>(null);
@@ -161,6 +172,10 @@ export function PosClient({
 
   async function completeSale(method: PaymentMethod) {
     if (cart.length === 0) return;
+    if (orderType === "dine_in" && !tableId) {
+      toast.error("Select a table for this dine-in order.");
+      return;
+    }
     setProcessing(true);
     const supabase = createClient();
 
@@ -178,6 +193,7 @@ export function PosClient({
       p_items: items,
       v_method: method,
       v_order_type: orderType,
+      v_table_id: orderType === "dine_in" ? tableId : null,
     });
 
     setProcessing(false);
@@ -201,8 +217,13 @@ export function PosClient({
       total: Math.round(total * 100) / 100,
       method,
       orderType,
+      tableLabel:
+        orderType === "dine_in"
+          ? tables.find((t) => t.id === tableId)?.label ?? null
+          : null,
     });
     setCart([]);
+    setTableId(null);
     router.refresh();
   }
 
@@ -338,7 +359,10 @@ export function PosClient({
               </button>
               <button
                 type="button"
-                onClick={() => setOrderType("takeaway")}
+                onClick={() => {
+                  setOrderType("takeaway");
+                  setTableId(null);
+                }}
                 className={cn(
                   "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
                   orderType === "takeaway"
@@ -350,6 +374,35 @@ export function PosClient({
               </button>
             </div>
           </div>
+
+          {orderType === "dine_in" && (
+            <div className="flex items-center gap-2 border-b px-4 py-2.5">
+              <span className="text-xs font-medium text-muted-foreground">
+                Table
+              </span>
+              <Select
+                value={tableId ?? ""}
+                onValueChange={(v) => setTableId(v || null)}
+              >
+                <SelectTrigger className="ml-auto h-8 w-44 text-xs">
+                  <SelectValue placeholder="Select a table" />
+                </SelectTrigger>
+                <SelectContent>
+                  {tables.length === 0 ? (
+                    <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                      No tables yet
+                    </div>
+                  ) : (
+                    tables.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        {t.label}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div className="flex flex-col gap-2 overflow-y-auto p-3">
             {cart.length === 0 ? (
@@ -456,6 +509,7 @@ export function PosClient({
               total={receipt.total}
               method={receipt.method}
               orderType={receipt.orderType}
+              tableLabel={receipt.tableLabel}
             />
           )}
           <div className="flex justify-end gap-2 print:hidden">

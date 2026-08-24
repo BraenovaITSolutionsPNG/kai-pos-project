@@ -68,6 +68,11 @@ function OrderCard({
         <div>
           <p className="font-heading text-base font-semibold">
             Order #{order.order_number}
+            {order.tables?.label ? (
+              <span className="ml-2 rounded bg-slate-200 px-1.5 py-0.5 align-middle text-[10px] font-bold uppercase text-slate-700">
+                Table {order.tables.label}
+              </span>
+            ) : null}
             {isTakeaway && (
               <span className="ml-2 rounded bg-amber-500 px-1.5 py-0.5 align-middle text-[10px] font-bold uppercase text-white">
                 Takeaway
@@ -141,7 +146,7 @@ export function KitchenClient({ initialOrders }: { initialOrders: Order[] }) {
     const supabase = createClient();
     const { data } = await supabase
       .from("orders")
-      .select("*, order_items(*), payments(*)")
+      .select("*, order_items(*), payments(*), tables(label)")
       .in("status", ["open", "sent_to_kitchen", "preparing", "ready", "paid"]);
     if (data) setOrders(data as unknown as Order[]);
   }, []);

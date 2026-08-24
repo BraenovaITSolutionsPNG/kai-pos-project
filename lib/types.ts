@@ -105,6 +105,7 @@ export interface Order {
   updated_at: string;
   order_items?: OrderItem[];
   payments?: Payment[];
+  tables?: { label: string | null } | null;
 }
 
 export interface Payment {

@@ -57,9 +57,9 @@ export function OrdersClient({
     let cancelled = false;
     (async () => {
       const supabase = createClient();
-      let query = supabase
+       let query = supabase
         .from("orders")
-        .select("*, order_items(*), payments(*)")
+        .select("*, order_items(*), payments(*), tables(label)")
         .order("created_at", { ascending: false });
       if (from) query = query.gte("created_at", `${from}T00:00:00`);
       if (to) query = query.lte("created_at", `${to}T23:59:59`);
@@ -125,6 +125,11 @@ export function OrdersClient({
                       <Badge variant="outline" className="text-xs font-normal">
                         {orderTypeLabel[o.order_type] ?? o.order_type}
                       </Badge>
+                      {o.tables?.label ? (
+                        <span className="text-xs text-muted-foreground">
+                          Table {o.tables.label}
+                        </span>
+                      ) : null}
                     </div>
                   </TableCell>
                   <TableCell>{formatDateTime(o.created_at)}</TableCell>

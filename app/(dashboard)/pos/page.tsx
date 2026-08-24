@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { PosClient } from "@/components/pos/pos-client";
-import { getCategories, getProducts, getSessionContext } from "@/lib/queries";
+import { getCategories, getProducts, getSessionContext, getTables } from "@/lib/queries";
 import { assertAccess } from "@/lib/permissions";
 
 export const metadata: Metadata = {
@@ -8,10 +8,11 @@ export const metadata: Metadata = {
 };
 
 export default async function PosPage() {
-  const [ctx, categories, products] = await Promise.all([
+  const [ctx, categories, products, tables] = await Promise.all([
     getSessionContext(),
     getCategories(),
     getProducts(),
+    getTables(),
   ]);
   assertAccess(ctx.staff.role, "/pos");
 
@@ -19,6 +20,7 @@ export default async function PosPage() {
     <PosClient
       categories={categories}
       products={products}
+      tables={tables}
       restaurantId={ctx.restaurant.id}
       restaurantName={ctx.restaurant.name}
       restaurantAddress={ctx.restaurant.address}
