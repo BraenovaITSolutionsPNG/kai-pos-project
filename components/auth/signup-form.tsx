@@ -39,7 +39,7 @@ export function SignupForm({
         <div className="flex size-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
           <UtensilsCrossed className="size-6" />
         </div>
-        <h1 className="font-heading text-xl font-semibold">Start your cafe</h1>
+        <h1 className="font-heading text-xl font-semibold">Start your business</h1>
         <p className="text-sm text-muted-foreground">
           Your business and a starter menu are set up automatically.
         </p>
