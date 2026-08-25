@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import Image from "next/image";
 import { redirect } from "next/navigation";
 import {
   ArrowRight,
@@ -25,6 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import Pricing from "@/components/landing/pricing";
 import { CountUp } from "@/components/landing/count-up";
 import { FoodAnimation } from "@/components/landing/food-animation";
+import { HeroSlideshow } from "@/components/landing/hero-slideshow";
 import { getSiteContent, getMySubscription } from "@/lib/queries";
 import { resolveSiteContent, renderAccent } from "@/lib/site-content";
 
@@ -164,19 +164,12 @@ export default async function LandingPage() {
 
       {/* Hero */}
       <section className="relative isolate overflow-hidden">
-        {/* Hero background image */}
+        {/* Hero background slideshow */}
         <div
           aria-hidden
-          className="absolute inset-0 -z-20"
+          className="absolute inset-0 -z-20 overflow-hidden"
         >
-          <Image
-            src="/images/hero-banner.jpg"
-            alt=""
-            fill
-            priority
-            className="object-cover"
-            sizes="100vw"
-          />
+          <HeroSlideshow />
           {/* Dark overlay for text readability */}
           <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/40" />
         </div>

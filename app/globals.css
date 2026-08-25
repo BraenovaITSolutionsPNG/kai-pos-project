@@ -316,6 +316,61 @@
   }
 }
 
+/* Hero banner slideshow (crossfade + slide / Ken Burns) */
+@keyframes kai-hero-slide-a {
+  0% {
+    opacity: 1;
+    transform: scale(1.05) translateX(0);
+  }
+  45% {
+    opacity: 1;
+    transform: scale(1.08) translateX(0);
+  }
+  55% {
+    opacity: 0;
+    transform: scale(1.1) translateX(-3%);
+  }
+  95% {
+    opacity: 0;
+    transform: scale(1.1) translateX(-3%);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1.05) translateX(0);
+  }
+}
+
+@keyframes kai-hero-slide-b {
+  0% {
+    opacity: 0;
+    transform: scale(1.05) translateX(3%);
+  }
+  45% {
+    opacity: 0;
+    transform: scale(1.08) translateX(3%);
+  }
+  55% {
+    opacity: 1;
+    transform: scale(1.1) translateX(0);
+  }
+  95% {
+    opacity: 1;
+    transform: scale(1.08) translateX(0);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.05) translateX(3%);
+  }
+}
+
+.animate-hero-slide-a {
+  animation: kai-hero-slide-a 14s ease-in-out infinite;
+}
+
+.animate-hero-slide-b {
+  animation: kai-hero-slide-b 14s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-up,
   .animate-slide-down,
@@ -328,6 +383,8 @@
   .animate-food-pulse,
   .animate-gradient-wave,
   .animate-gradient-shift,
+  .animate-hero-slide-a,
+  .animate-hero-slide-b,
   [class*="animate-ping"] {
     animation: none !important;
   }
