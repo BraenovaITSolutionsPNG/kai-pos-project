@@ -37,6 +37,7 @@ const plans = [
       "Inventory, recipes & auto stock deduction",
       "Reports, payment split & expense tracking",
       "Cashup & shift reconciliation",
+      "Digital menu & QR self-service ordering (pay on exit)",
       "Up to 5 staff accounts",
     ],
     highlight: true,
