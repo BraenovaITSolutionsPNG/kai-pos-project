@@ -290,7 +290,7 @@ export default async function LandingPage() {
       </section>
 
       {/* Stats strip */}
-      <section className="border-y bg-muted/40">
+      <section className="border-y bg-gradient-to-br from-amber-50/50 via-orange-50/40 to-rose-50/50">
         <div className="mx-auto grid max-w-6xl grid-cols-2 gap-6 px-4 py-10 sm:px-6 md:grid-cols-4">
           {[
             { value: "8+", label: "Payment methods supported" },
@@ -307,7 +307,8 @@ export default async function LandingPage() {
       </section>
 
       {/* Features */}
-      <section id="features" className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+      <section id="features" className="relative mx-auto max-w-6xl px-4 py-20 sm:px-6">
+        <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-br from-amber-50/40 via-orange-50/30 to-rose-50/40 rounded-3xl blur-2xl" />
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="font-heading text-3xl font-semibold tracking-tight">
             {content.features.heading}
@@ -333,7 +334,8 @@ export default async function LandingPage() {
       </section>
 
       {/* How it works */}
-      <section id="how" className="border-y bg-muted/40">
+      <section id="how" className="relative border-y bg-gradient-to-br from-amber-50/50 via-orange-50/40 to-rose-50/50">
+        <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-amber-50/40 via-transparent to-rose-50/40" />
         <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="font-heading text-3xl font-semibold tracking-tight">
@@ -367,12 +369,15 @@ export default async function LandingPage() {
       </section>
 
       {/* Pricing */}
-      <Pricing
-        heading={content.pricing.heading}
-        subtext={content.pricing.subtext}
-        note={content.pricing.note}
-        footer={content.pricing.footer}
-      />
+      <section className="relative">
+        <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-br from-amber-50/40 via-orange-50/30 to-rose-50/40 rounded-3xl blur-2xl" />
+        <Pricing
+          heading={content.pricing.heading}
+          subtext={content.pricing.subtext}
+          note={content.pricing.note}
+          footer={content.pricing.footer}
+        />
+      </section>
 
       {/* CTA */}
       <section className="relative overflow-hidden border-t bg-gradient-to-br from-amber-50/60 via-orange-50/40 to-rose-50/50">
@@ -402,7 +407,8 @@ export default async function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t">
+      <footer className="relative border-t bg-gradient-to-br from-amber-50/60 via-orange-50/40 to-rose-50/50">
+        <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-t from-amber-100/30 via-transparent to-rose-100/30" />
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 px-4 py-10 sm:flex-row sm:px-6">
           <div className="flex items-center gap-2">
             <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
