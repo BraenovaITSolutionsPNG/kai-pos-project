@@ -163,10 +163,200 @@ export default async function LandingPage() {
 
       {/* Hero */}
       <section className="relative overflow-hidden bg-gradient-to-b from-amber-300/60 via-orange-300/50 to-rose-300/50">
-        {/* Animated food background */}
-        <FoodAnimation />
+        {/* Hero banner with platform features */}
+        <div className="relative mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+          <div className="relative lg:grid lg:grid-cols-2 lg:gap-16 lg:items-center">
+            {/* Left: Copy */}
+            <div className="relative z-10">
+              <Badge
+                variant="outline"
+                className="mb-4 animate-fade-up gap-1.5"
+              >
+                <MonitorSmartphone className="size-3.5" />
+                {content.hero.badge}
+              </Badge>
+              <h1 className="animate-fade-up font-heading text-4xl font-semibold leading-tight tracking-tight [animation-delay:100ms] sm:text-5xl lg:text-6xl">
+                {renderAccent(content.hero.title)}
+              </h1>
+              <p className="mt-6 max-w-xl animate-fade-up text-lg text-muted-foreground [animation-delay:200ms] lg:text-xl">
+                {content.hero.subtitle}
+              </p>
+              <div className="mt-10 flex flex-wrap items-center gap-3 [animation-delay:300ms] animate-fade-up">
+                <Link
+                  href="/signup"
+                  className={cn(
+                    "group",
+                    buttonVariants({ size: "lg" })
+                  )}
+                >
+                  {content.hero.cta}
+                  <ArrowRight className="transition-transform duration-300 group-hover:translate-x-1" />
+                </Link>
+                <Link
+                  href="#features"
+                  className={cn(buttonVariants({ size: "lg", variant: "outline" }))}
+                >
+                  {content.hero.cta2}
+                </Link>
+              </div>
+              <p className="mt-6 animate-fade-up text-sm text-muted-foreground [animation-delay:400ms]">
+                Your menu is set up for you
+              </p>
 
-        {/* Ambient drifting orbs (warm colors) */}
+              {/* Feature highlights */}
+              <div className="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-4 [animation-delay:500ms] animate-fade-up">
+                {[
+                  { icon: ShoppingCart, label: "Fast POS", desc: "Touch-friendly sales" },
+                  { icon: ChefHat, label: "Kitchen Display", desc: "Orders flow to kitchen" },
+                  { icon: Table, label: "Tables & Floor Plan", desc: "Visual floor plan" },
+                  { icon: BarChart3, label: "Reports & Insights", desc: "Real-time analytics" },
+                ].map((f, i) => (
+                  <div
+                    key={f.label}
+                    className="flex items-start gap-3 rounded-xl bg-white/80 backdrop-blur-sm p-4 border border-amber-100 shadow-sm hover:shadow-md transition-shadow"
+                    style={{ animationDelay: `${500 + i * 80}ms` }}
+                  >
+                    <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
+                      <f.icon className="size-5" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-sm text-gray-900">{f.label}</p>
+                      <p className="text-[11px] text-muted-foreground">{f.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Right: Platform showcase */}
+            <div className="relative mt-12 lg:mt-0 [animation-delay:300ms] animate-fade-up">
+              <div className="relative">
+                {/* Main platform mockup */}
+                <div className="relative rounded-2xl border border-amber-200 bg-white shadow-2xl overflow-hidden">
+                  {/* Top bar */}
+                  <div className="flex items-center gap-2 border-b border-amber-200 bg-amber-50 px-4 py-3">
+                    <div className="flex size-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
+                      <UtensilsCrossed className="size-4" />
+                    </div>
+                    <div className="text-sm font-medium text-gray-900">KAI POS Dashboard</div>
+                    <div className="ml-auto flex items-center gap-2">
+                      <Badge className="gap-1.5 bg-green-100 text-green-700 border-green-200">
+                        <span className="relative flex size-2">
+                          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-75" />
+                          <span className="relative inline-flex size-2 rounded-full bg-green-500" />
+                        </span>
+                        Live
+                      </Badge>
+                    </div>
+                  </div>
+
+                  {/* Dashboard content */}
+                  <div className="p-6 space-y-6">
+                    {/* Key metrics */}
+                    <div className="grid grid-cols-3 gap-4">
+                      {[
+                        { label: "Today's Sales", value: "K1,240", icon: ShoppingCart, color: "emerald" },
+                        { label: "Orders", value: "48", icon: ClipboardList, color: "blue" },
+                        { label: "Avg Order", value: "K25.83", icon: BarChart3, color: "amber" },
+                      ].map((m, i) => (
+                        <div
+                          key={m.label}
+                          className="rounded-xl bg-gray-50 p-4 border border-gray-100"
+                          style={{ animationDelay: `${400 + i * 100}ms` }}
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <p className="text-[11px] text-muted-foreground uppercase tracking-wide">{m.label}</p>
+                            <div className={`flex size-8 items-center justify-center rounded-lg bg-${m.color}-100 text-${m.color}-600`}>
+                              <m.icon className="size-4" />
+                            </div>
+                          </div>
+                          <CountUp
+                            to={Number(m.value.replace("K", "").replace(",", ""))}
+                            decimals={m.value.includes(".") ? 2 : 0}
+                            prefix={m.value.startsWith("K") ? "K" : ""}
+                            duration={1400 + i * 200}
+                            className="font-heading text-2xl font-bold text-gray-900"
+                          />
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Recent orders */}
+                    <div className="border-t border-gray-100 pt-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="font-semibold text-gray-900">Recent Orders</h4>
+                        <span className="text-sm text-muted-foreground">Live updates</span>
+                      </div>
+                      <div className="space-y-2 rounded-lg border border-gray-100 overflow-hidden">
+                        {[
+                          { name: "Chicken Fried Rice", qty: "2×", price: "K50.00", status: "Ready", statusColor: "emerald" },
+                          { name: "Fish & Chips", qty: "1×", price: "K32.00", status: "Preparing", statusColor: "amber" },
+                          { name: "Mango Juice", qty: "3×", price: "K24.00", status: "New", statusColor: "blue" },
+                        ].map((o, i) => (
+                          <div
+                            key={o.name}
+                            className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors"
+                            style={{ animationDelay: `${700 + i * 100}ms` }}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="flex size-10 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+                                <UtensilsCrossed className="size-4" />
+                              </div>
+                              <div>
+                                <p className="font-medium text-sm text-gray-900">{o.name}</p>
+                                <p className="text-[11px] text-muted-foreground">{o.qty} · {o.price}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <Badge variant="outline" className={`border-${o.statusColor}-200 text-${o.statusColor}-700 bg-${o.statusColor}-50`}>
+                                {o.status}
+                              </Badge>
+                              <span className="font-semibold text-amber-700">{o.price}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Floating feature cards */}
+                <div className="absolute -top-4 -right-4 hidden lg:block">
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center gap-3 rounded-xl bg-white p-4 shadow-lg border border-amber-100 shadow-amber-100/50 animate-float">
+                      <div className="flex size-9 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600">
+                        <Wifi className="size-4" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm text-gray-900">Orders synced</p>
+                        <p className="text-[11px] text-muted-foreground">Real-time across devices</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 rounded-xl bg-white p-4 shadow-lg border border-amber-100 shadow-amber-100/50 animate-float" style={{ animationDelay: "500ms" }}>
+                      <div className="flex size-9 items-center justify-center rounded-lg bg-primary-100 text-primary-600">
+                        <ShieldCheck className="size-4" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm text-gray-900">Staff roles locked</p>
+                        <p className="text-[11px] text-muted-foreground">Secure access control</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bottom floating cards */}
+                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 -translate-y-1/2 flex gap-4 lg:hidden">
+                  <div className="flex items-center gap-2 rounded-xl bg-white px-3 py-2 shadow-lg border border-amber-100">
+                    <Wifi className="size-4 text-green-500" />
+                    <span className="text-sm font-medium">Orders synced</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Gradient orbs for depth */}
         <div
           aria-hidden
           className="pointer-events-none absolute -top-24 left-1/4 size-72 animate-orb-a rounded-full bg-amber-400/50 blur-3xl"
@@ -175,118 +365,6 @@ export default async function LandingPage() {
           aria-hidden
           className="pointer-events-none absolute right-0 top-40 size-80 animate-orb-b rounded-full bg-orange-400/45 blur-3xl"
         />
-        <div className="mx-auto grid max-w-6xl gap-12 px-4 pb-20 pt-16 sm:px-6 lg:grid-cols-2 lg:items-center lg:pt-24">
-          <div>
-            <Badge
-              variant="outline"
-              className="mb-4 animate-fade-up gap-1.5"
-            >
-              <MonitorSmartphone className="size-3.5" />
-              {content.hero.badge}
-            </Badge>
-            <h1 className="animate-fade-up font-heading text-4xl font-semibold leading-tight tracking-tight [animation-delay:100ms] sm:text-5xl">
-              {renderAccent(content.hero.title)}
-            </h1>
-            <p className="mt-4 max-w-lg animate-fade-up text-lg text-muted-foreground [animation-delay:200ms]">
-              {content.hero.subtitle}
-            </p>
-            <div className="mt-8 flex flex-wrap items-center gap-3 [animation-delay:300ms] animate-fade-up">
-              <Link
-                href="/signup"
-                className={cn(
-                  "group",
-                  buttonVariants({ size: "lg" })
-                )}
-              >
-                {content.hero.cta}
-                <ArrowRight className="transition-transform duration-300 group-hover:translate-x-1" />
-              </Link>
-              <Link
-                href="#features"
-                className={cn(buttonVariants({ size: "lg", variant: "outline" }))}
-              >
-                {content.hero.cta2}
-              </Link>
-            </div>
-            <p className="mt-4 animate-fade-up text-sm text-muted-foreground [animation-delay:400ms]">
-              Your menu is set up for you
-            </p>
-          </div>
-
-          {/* App mockup */}
-          <div className="relative mx-auto w-full max-w-md [animation-delay:250ms] animate-fade-up">
-            <div className="animate-float rounded-2xl border bg-card p-4 shadow-2xl">
-              <div className="mb-4 flex items-center gap-2 border-b pb-3">
-                <div className="flex size-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
-                  <UtensilsCrossed className="size-4" />
-                </div>
-                <div className="text-sm font-medium">KAI POS Today</div>
-                <Badge className="ml-auto gap-1.5">
-                  <span className="relative flex size-2">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary-foreground opacity-75" />
-                    <span className="relative inline-flex size-2 rounded-full bg-primary-foreground" />
-                  </span>
-                  Live
-                </Badge>
-              </div>
-              <div className="grid grid-cols-3 gap-3">
-                {[
-                  { label: "Sales", value: 1240, decimals: 0, prefix: "K" },
-                  { label: "Orders", value: 48, decimals: 0, prefix: "" },
-                  { label: "Avg", value: 25.83, decimals: 2, prefix: "K" },
-                ].map((s, i) => (
-                  <div
-                    key={s.label}
-                    className="animate-fade-up rounded-lg bg-muted p-3 text-center"
-                    style={{ animationDelay: `${450 + i * 120}ms` }}
-                  >
-                    <p className="text-[11px] text-muted-foreground">{s.label}</p>
-                    <CountUp
-                      to={s.value}
-                      decimals={s.decimals}
-                      prefix={s.prefix}
-                      duration={1400 + i * 300}
-                      className="font-heading text-sm font-semibold"
-                    />
-                  </div>
-                ))}
-              </div>
-              <div className="mt-3 space-y-2">
-                {[
-                  { name: "Chicken Fried Rice", qty: "2×", price: "K50.00" },
-                  { name: "Fish & Chips", qty: "1×", price: "K32.00" },
-                  { name: "Mango Juice", qty: "3×", price: "K24.00" },
-                ].map((item, i) => (
-                  <div
-                    key={item.name}
-                    className="flex animate-fade-up items-center justify-between rounded-lg border px-3 py-2 text-sm"
-                    style={{ animationDelay: `${700 + i * 130}ms` }}
-                  >
-                    <span>
-                      <span className="font-medium">{item.qty}</span> {item.name}
-                    </span>
-                    <span className="text-muted-foreground">{item.price}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-3 rounded-lg bg-primary p-3 text-center text-sm font-semibold text-primary-foreground [animation-delay:1100ms] animate-fade-up">
-                Total K106.00 · EFTPOS
-              </div>
-            </div>
-            <div className="absolute -bottom-5 -left-6 hidden animate-float-soft rounded-xl border bg-card px-4 py-3 shadow-lg [animation-delay:800ms] sm:block">
-              <div className="flex items-center gap-2 text-sm">
-                <Wifi className="size-4 text-green-500" />
-                <span>Orders synced</span>
-              </div>
-            </div>
-            <div className="absolute -top-4 -right-4 hidden animate-float-soft rounded-xl border bg-card px-4 py-3 shadow-lg sm:block">
-              <div className="flex items-center gap-2 text-sm">
-                <ShieldCheck className="size-4 text-primary" />
-                <span>Staff roles locked</span>
-              </div>
-            </div>
-          </div>
-        </div>
       </section>
 
       {/* Stats strip */}
