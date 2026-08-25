@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { formatKina } from "@/lib/format";
-import { ShoppingCart, UtensilsCrossed, Clock, CheckCircle, Loader2, Truck, X, Plus, Minus, ArrowLeft } from "lucide-react";
+import { ShoppingCart, UtensilsCrossed, Clock, CheckCircle, Loader2, X, Plus, Minus, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -167,7 +167,7 @@ export function MenuClient({
           </p>
           <p className="mt-4 text-sm text-muted-foreground">
             Total: <span className="font-semibold">{formatKina(orderResult.total)}</span>
-            {selectedTable && <span> Â· Table: <span className="font-semibold">{tables.find(t => t.id === selectedTable)?.label ?? selectedTable}</span></span>}
+            {selectedTable && <span> Table: <span className="font-semibold">{tables.find(t => t.id === selectedTable)?.label ?? selectedTable}</span></span>}
           </p>
           <p className="mt-6 text-sm text-muted-foreground">
             Please show this screen to staff when paying on your way out.
@@ -192,7 +192,7 @@ export function MenuClient({
             <UtensilsCrossed className="h-6 w-6 text-primary" />
             <div>
               <h1 className="font-heading font-semibold">{restaurantName}</h1>
-              <p className="text-xs text-muted-foreground">Digital Menu Â· Order from your table</p>
+              <p className="text-xs text-muted-foreground">Digital Menu - Order from your table</p>
             </div>
           </div>
           <Button
@@ -404,11 +404,11 @@ export function MenuClient({
                     {submitting ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Placing Orderâ€¦
+                        Placing Order...
                       </>
                     ) : (
                       <>
-                        <Truck className="mr-2 h-4 w-4" />
+                        <UtensilsCrossed className="mr-2 h-4 w-4" />
                         Place Order &mdash; {formatKina(cartTotal)}
                       </>
                     )}
