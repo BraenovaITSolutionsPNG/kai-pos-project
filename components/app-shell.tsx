@@ -8,11 +8,11 @@ import {
   PanelLeftOpen,
   Menu,
   ShieldCheck,
-  UtensilsCrossed,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { mainNav, laterNav } from "@/components/nav-items";
 import { canAccess, type StaffRole } from "@/lib/permissions";
+import { BrandLogo } from "@/components/brand-logo";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Topbar } from "@/components/topbar";
@@ -104,9 +104,7 @@ function SidebarNav({
 function Brand({ collapsed }: { collapsed: boolean }) {
   return (
     <div className="flex h-14 items-center gap-2 border-b px-4">
-      <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-        <UtensilsCrossed className="size-4" />
-      </div>
+      <BrandLogo className="size-8 shrink-0 rounded-lg bg-white p-1 shadow-sm" />
       {!collapsed && (
         <div className="leading-tight">
           <p className="font-heading text-sm font-semibold">KAI POS</p>

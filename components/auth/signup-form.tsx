@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import Link from "next/link";
-import { UtensilsCrossed } from "lucide-react";
+import { BrandLogo } from "@/components/brand-logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,9 +36,7 @@ export function SignupForm({
   return (
     <div className="w-full max-w-sm rounded-xl border bg-card p-6 shadow-sm">
       <div className="mb-6 flex flex-col items-center gap-2 text-center">
-        <div className="flex size-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-          <UtensilsCrossed className="size-6" />
-        </div>
+        <BrandLogo className="size-12 rounded-xl bg-white p-2 shadow-sm" />
         <h1 className="font-heading text-xl font-semibold">Start your business</h1>
         <p className="text-sm text-muted-foreground">
           Your business and a starter menu are set up automatically.
