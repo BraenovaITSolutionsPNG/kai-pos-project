@@ -164,6 +164,9 @@ export function MenuClient({
   };
 
   if (view === "confirm" && orderResult) {
+    const tableLabel = selectedTable
+      ? (tables.find((t) => t.id === selectedTable)?.label ?? selectedTable)
+      : null;
     return (
       <div className="min-h-screen bg-background p-4 sm:p-8 flex items-center justify-center">
         <div className="w-full max-w-md bg-card rounded-xl border p-8 text-center">
@@ -174,13 +177,26 @@ export function MenuClient({
           <p className="mt-2 text-muted-foreground">
             Your order <span className="font-mono font-semibold">#{orderResult.order_number}</span> has been sent to the kitchen.
           </p>
-          <p className="mt-4 text-sm text-muted-foreground">
-            Total: <span className="font-semibold">{formatKina(orderResult.total)}</span>
-            {selectedTable && <span> Table: <span className="font-semibold">{tables.find(t => t.id === selectedTable)?.label ?? selectedTable}</span></span>}
-          </p>
+
+          <div className="mt-6 flex flex-col items-center gap-3">
+            <span className="inline-flex items-center rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
+              Unpaid - pay at the counter
+            </span>
+            <p className="text-sm text-muted-foreground">
+              Total: <span className="font-semibold text-foreground">{formatKina(orderResult.total)}</span>
+              {tableLabel && (
+                <>
+                  <span className="mx-2 text-muted-foreground">|</span>
+                  Table: <span className="font-semibold text-foreground">{tableLabel}</span>
+                </>
+              )}
+            </p>
+          </div>
+
           <p className="mt-6 text-sm text-muted-foreground">
-            Please show this screen to staff when paying on your way out.
+            Please pay at the counter, or show this screen to staff on your way out.
           </p>
+
           <Button className="mt-8 w-full" onClick={() => { setView("menu"); setOrderResult(null); }}>
             <UtensilsCrossed className="mr-2 h-4 w-4" />
             Order More
