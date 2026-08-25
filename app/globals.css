@@ -187,6 +187,48 @@
       transform: translate(-50px, -20px) scale(1.12);
     }
   }
+  @keyframes kai-food-drift {
+    0% {
+      opacity: 0;
+      transform: translateY(80px) rotate(0deg) scale(0.6);
+    }
+    15% {
+      opacity: 0.45;
+    }
+    85% {
+      opacity: 0.45;
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-120px) rotate(25deg) scale(1);
+    }
+  }
+  @keyframes kai-food-drift-alt {
+    0% {
+      opacity: 0;
+      transform: translateY(60px) rotate(0deg) scale(0.7);
+    }
+    20% {
+      opacity: 0.35;
+    }
+    80% {
+      opacity: 0.35;
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-140px) rotate(-20deg) scale(1.1);
+    }
+  }
+  @keyframes kai-food-pulse {
+    0%, 100% {
+      opacity: 0.15;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.3;
+      transform: scale(1.15);
+    }
+  }
 
   .animate-fade-up {
     animation: kai-fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
@@ -206,6 +248,18 @@
   .animate-orb-b {
     animation: kai-orb-b 18s ease-in-out infinite;
   }
+  .animate-food-drift {
+    animation: kai-food-drift var(--food-duration, 14s) ease-in-out infinite;
+    animation-delay: var(--food-delay, 0s);
+  }
+  .animate-food-drift-alt {
+    animation: kai-food-drift-alt var(--food-duration, 16s) ease-in-out infinite;
+    animation-delay: var(--food-delay, 0s);
+  }
+  .animate-food-pulse {
+    animation: kai-food-pulse 4s ease-in-out infinite;
+    animation-delay: var(--food-delay, 0s);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -215,6 +269,9 @@
   .animate-float-soft,
   .animate-orb-a,
   .animate-orb-b,
+  .animate-food-drift,
+  .animate-food-drift-alt,
+  .animate-food-pulse,
   [class*="animate-ping"] {
     animation: none !important;
   }

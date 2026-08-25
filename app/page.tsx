@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import Pricing from "@/components/landing/pricing";
 import { CountUp } from "@/components/landing/count-up";
+import { FoodAnimation } from "@/components/landing/food-animation";
 import { getSiteContent, getMySubscription } from "@/lib/queries";
 import { resolveSiteContent, renderAccent } from "@/lib/site-content";
 
@@ -162,18 +163,22 @@ export default async function LandingPage() {
 
       {/* Hero */}
       <section className="relative overflow-hidden">
+        {/* Animated food background */}
+        <FoodAnimation />
+
+        {/* Warm gradient base */}
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[600px] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent"
+          className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[700px] bg-gradient-to-b from-amber-100/50 via-orange-50/30 to-transparent"
         />
-        {/* Ambient drifting orbs */}
+        {/* Ambient drifting orbs (warm colors) */}
         <div
           aria-hidden
-          className="pointer-events-none absolute -top-24 left-1/4 -z-10 size-72 animate-orb-a rounded-full bg-primary/10 blur-3xl"
+          className="pointer-events-none absolute -top-24 left-1/4 -z-10 size-72 animate-orb-a rounded-full bg-amber-300/15 blur-3xl"
         />
         <div
           aria-hidden
-          className="pointer-events-none absolute right-0 top-40 -z-10 size-80 animate-orb-b rounded-full bg-primary/5 blur-3xl"
+          className="pointer-events-none absolute right-0 top-40 -z-10 size-80 animate-orb-b rounded-full bg-orange-300/10 blur-3xl"
         />
         <div className="mx-auto grid max-w-6xl gap-12 px-4 pb-20 pt-16 sm:px-6 lg:grid-cols-2 lg:items-center lg:pt-24">
           <div>
@@ -375,7 +380,7 @@ export default async function LandingPage() {
       />
 
       {/* CTA */}
-      <section className="border-t bg-muted/40">
+      <section className="relative overflow-hidden border-t bg-gradient-to-br from-amber-50/60 via-orange-50/40 to-rose-50/50">
         <div className="mx-auto max-w-6xl px-4 py-16 text-center sm:px-6">
           <h2 className="font-heading text-3xl font-semibold tracking-tight">
             {content.cta.heading}
