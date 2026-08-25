@@ -194,7 +194,7 @@ export function MenuClient({
           </div>
 
           <p className="mt-6 text-sm text-muted-foreground">
-            Please pay at the counter, or show this screen to staff on your way out.
+            Please pay at the counter, or request the bill from a waiter.
           </p>
 
           <Button className="mt-8 w-full" onClick={() => { setView("menu"); setOrderResult(null); }}>
