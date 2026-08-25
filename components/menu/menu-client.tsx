@@ -46,6 +46,66 @@ interface CartItem {
   quantity: number;
 }
 
+function PromoSlider({ restaurantName }: { restaurantName: string }) {
+  const slides = [
+    {
+      title: `Today's Specials at ${restaurantName}`,
+      subtitle: "Ask your waiter for the chef's recommendations",
+      gradient: "from-amber-500 to-orange-600",
+    },
+    {
+      title: "Happy Hour 4pm - 6pm",
+      subtitle: "15% off all drinks at the counter",
+      gradient: "from-violet-500 to-fuchsia-600",
+    },
+    {
+      title: "Live Music Fridays",
+      subtitle: "Join us for a great night out",
+      gradient: "from-emerald-500 to-teal-600",
+    },
+  ];
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setIndex((i) => (i + 1) % slides.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [slides.length]);
+
+  return (
+    <div className="relative overflow-hidden bg-muted" aria-roledescription="carousel">
+      <div
+        className="flex transition-transform duration-500 ease-in-out"
+        style={{ transform: `translateX(-${index * 100}%)` }}
+      >
+        {slides.map((slide, i) => (
+          <div
+            key={i}
+            className={`flex min-w-full flex-col justify-center bg-gradient-to-r ${slide.gradient} px-5 py-3 text-white sm:px-8 sm:py-4`}
+          >
+            <h3 className="font-heading text-base font-semibold sm:text-lg">{slide.title}</h3>
+            <p className="mt-0.5 text-xs opacity-90 sm:text-sm">{slide.subtitle}</p>
+          </div>
+        ))}
+      </div>
+      <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1.5">
+        {slides.map((_, i) => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => setIndex(i)}
+            aria-label={`Show slide ${i + 1}`}
+            className={`h-1.5 w-1.5 rounded-full transition-colors ${
+              i === index ? "bg-white" : "bg-white/50"
+            }`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function MenuClient({
   categories,
   products,
@@ -239,6 +299,8 @@ export function MenuClient({
           </Button>
         </div>
       </header>
+
+      <PromoSlider restaurantName={restaurantName} />
 
       <main className="flex-1 flex flex-col overflow-hidden">
         {view === "menu" && (
