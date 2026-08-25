@@ -56,27 +56,27 @@ interface PromoSlide {
 function PromoSlideView({ slide }: { slide: PromoSlide }) {
   if (slide.image_url) {
     return (
-      <div className="relative min-w-full">
+      <div className="relative min-w-full h-56 sm:h-72">
         <img
           src={slide.image_url}
           alt={slide.title}
-          className="h-32 w-full object-cover sm:h-40"
+          className="absolute inset-0 h-full w-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-black/20" />
-        <div className="absolute inset-0 flex flex-col justify-center px-5 text-white sm:px-8">
-          <h3 className="font-heading text-base font-semibold sm:text-lg">{slide.title}</h3>
+        <div className="absolute inset-0 flex flex-col justify-end px-5 pb-6 text-white sm:px-8">
+          <h3 className="font-heading text-xl font-semibold sm:text-3xl">{slide.title}</h3>
           {slide.subtitle && (
-            <p className="mt-0.5 text-xs opacity-90 sm:text-sm">{slide.subtitle}</p>
+            <p className="mt-1 text-sm opacity-90 sm:text-base">{slide.subtitle}</p>
           )}
         </div>
       </div>
     );
   }
   return (
-    <div className="flex min-w-full flex-col justify-center bg-gradient-to-r from-slate-700 to-slate-900 px-5 py-3 text-white sm:px-8 sm:py-4">
-      <h3 className="font-heading text-base font-semibold sm:text-lg">{slide.title}</h3>
+    <div className="flex min-w-full h-56 flex-col justify-end bg-gradient-to-r from-slate-700 to-slate-900 px-5 pb-6 text-white sm:h-72 sm:px-8">
+      <h3 className="font-heading text-xl font-semibold sm:text-3xl">{slide.title}</h3>
       {slide.subtitle && (
-        <p className="mt-0.5 text-xs opacity-90 sm:text-sm">{slide.subtitle}</p>
+        <p className="mt-1 text-sm opacity-90 sm:text-base">{slide.subtitle}</p>
       )}
     </div>
   );

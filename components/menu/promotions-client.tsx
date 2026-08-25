@@ -258,7 +258,7 @@ export function PromotionsClient({
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {promos.map((p) => (
               <Card key={p.id} className="overflow-hidden">
-                <div className="relative h-32 w-full bg-gradient-to-r from-slate-700 to-slate-900">
+                <div className="relative h-44 w-full bg-gradient-to-r from-slate-700 to-slate-900">
                   {p.image_url ? (
                     <img
                       src={p.image_url}
