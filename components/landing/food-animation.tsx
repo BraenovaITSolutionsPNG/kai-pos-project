@@ -49,10 +49,8 @@ export function FoodAnimation({ count = 18 }: { count?: number }) {
   return (
     <div
       aria-hidden
-      className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
+      className="pointer-events-none absolute inset-0 overflow-hidden"
     >
-      {/* Warm food-themed gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-amber-50/40 via-orange-50/25 to-rose-50/30" />
 
       {/* Floating food emoji */}
       {items.map((item) => (
