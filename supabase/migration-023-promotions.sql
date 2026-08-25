@@ -70,7 +70,7 @@ begin
         'price', p.price,
         'image_url', p.image_url,
         'ingredients', p.ingredients,
-        'prep_time', p.preptime,
+        'prep_time', p.prep_time,
         'category_id', p.category_id,
         'is_active', p.is_active,
         'sort_order', p.sort_order
