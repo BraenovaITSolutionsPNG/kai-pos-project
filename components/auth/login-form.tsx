@@ -69,7 +69,7 @@ export function LoginForm({ message }: { message?: string }) {
       <p className="mt-6 text-center text-sm text-muted-foreground">
         New to KAI POS?{" "}
         <Link href="/signup" className="font-medium text-foreground underline">
-          Create your cafe
+          Subscribe now
         </Link>
       </p>
 
