@@ -56,27 +56,27 @@ interface PromoSlide {
 function PromoSlideView({ slide }: { slide: PromoSlide }) {
   if (slide.image_url) {
     return (
-      <div className="relative min-w-full h-56 sm:h-72">
+      <div className="relative min-w-full h-72 shadow-md sm:h-96">
         <img
           src={slide.image_url}
           alt={slide.title}
           className="absolute inset-0 h-full w-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-black/20" />
-        <div className="absolute inset-0 flex flex-col justify-end px-5 pb-6 text-white sm:px-8">
-          <h3 className="font-heading text-xl font-semibold sm:text-3xl">{slide.title}</h3>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+        <div className="absolute inset-0 flex flex-col justify-end px-6 pb-8 text-white sm:px-10">
+          <h3 className="font-heading text-2xl font-bold sm:text-4xl">{slide.title}</h3>
           {slide.subtitle && (
-            <p className="mt-1 text-sm opacity-90 sm:text-base">{slide.subtitle}</p>
+            <p className="mt-2 text-sm opacity-95 sm:text-lg">{slide.subtitle}</p>
           )}
         </div>
       </div>
     );
   }
   return (
-    <div className="flex min-w-full h-56 flex-col justify-end bg-gradient-to-r from-slate-700 to-slate-900 px-5 pb-6 text-white sm:h-72 sm:px-8">
-      <h3 className="font-heading text-xl font-semibold sm:text-3xl">{slide.title}</h3>
+    <div className="flex min-w-full h-72 flex-col justify-end bg-gradient-to-r from-slate-700 to-slate-900 px-6 pb-8 text-white shadow-md sm:h-96 sm:px-10">
+      <h3 className="font-heading text-2xl font-bold sm:text-4xl">{slide.title}</h3>
       {slide.subtitle && (
-        <p className="mt-1 text-sm opacity-90 sm:text-base">{slide.subtitle}</p>
+        <p className="mt-2 text-sm opacity-95 sm:text-lg">{slide.subtitle}</p>
       )}
     </div>
   );
