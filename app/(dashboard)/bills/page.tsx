@@ -37,10 +37,10 @@ export default async function BillsPage() {
       )
     `)
     .eq("restaurant_id", ctx.restaurant.id)
-    .eq("source", "self_service")
-    .eq("order_type", "dine_in")
-    .not("status", "in", "('paid','cancelled')")
-    .order("created_at", { ascending: true });
+      .eq("source", "self_service")
+      .eq("order_type", "dine_in")
+      .in("status", ["open", "sent_to_kitchen", "preparing", "ready", "served"])
+      .order("created_at", { ascending: true });
 
   if (error) {
     console.error("Bills fetch error:", error);
