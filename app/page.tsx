@@ -163,7 +163,7 @@ export default async function LandingPage() {
       </header>
 
       {/* Hero */}
-      <section className="relative overflow-hidden">
+      <section className="relative isolate overflow-hidden">
         {/* Hero background image */}
         <div
           aria-hidden
