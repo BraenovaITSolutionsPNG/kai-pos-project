@@ -181,23 +181,23 @@ export default async function LandingPage() {
           <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/40" />
         </div>
 
-        {/* Warm gradient overlay */}
+        {/* Subtle warm tint (kept low so the photo shows) */}
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-amber-300/40 via-orange-300/30 to-rose-300/40"
+          className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-black/10 via-transparent to-black/20"
         />
 
         {/* Animated food background */}
         <FoodAnimation />
 
-        {/* Ambient drifting orbs (warm colors) */}
+        {/* Ambient drifting orbs (subtle) */}
         <div
           aria-hidden
-          className="pointer-events-none absolute -top-24 left-1/4 size-72 animate-orb-a rounded-full bg-amber-400/50 blur-3xl"
+          className="pointer-events-none absolute -top-24 left-1/4 size-72 animate-orb-a rounded-full bg-amber-300/25 blur-3xl"
         />
         <div
           aria-hidden
-          className="pointer-events-none absolute right-0 top-40 size-80 animate-orb-b rounded-full bg-orange-400/45 blur-3xl"
+          className="pointer-events-none absolute right-0 top-40 size-80 animate-orb-b rounded-full bg-orange-300/20 blur-3xl"
         />
         <div className="mx-auto grid max-w-6xl gap-12 px-4 pb-20 pt-16 sm:px-6 lg:grid-cols-2 lg:items-center lg:pt-24">
           <div>
