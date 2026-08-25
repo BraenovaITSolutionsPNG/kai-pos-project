@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { redirect } from "next/navigation";
 import {
   ArrowRight,
@@ -162,7 +163,30 @@ export default async function LandingPage() {
       </header>
 
       {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-amber-300/60 via-orange-300/50 to-rose-300/50">
+      <section className="relative overflow-hidden">
+        {/* Hero background image */}
+        <div
+          aria-hidden
+          className="absolute inset-0 -z-20"
+        >
+          <Image
+            src="/images/hero-banner.jpg"
+            alt=""
+            fill
+            priority
+            className="object-cover"
+            sizes="100vw"
+          />
+          {/* Dark overlay for text readability */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/40" />
+        </div>
+
+        {/* Warm gradient overlay */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-amber-300/40 via-orange-300/30 to-rose-300/40"
+        />
+
         {/* Animated food background */}
         <FoodAnimation />
 
