@@ -208,7 +208,7 @@ export default async function LandingPage() {
               <MonitorSmartphone className="size-3.5" />
               {content.hero.badge}
             </Badge>
-            <h1 className="animate-fade-up font-heading text-4xl font-semibold leading-tight tracking-tight text-white [animation-delay:100ms] sm:text-5xl">
+            <h1 className="animate-fade-up font-heading text-4xl font-semibold leading-tight tracking-tight text-white [animation-delay:100ms] [&_span]:text-amber-300 sm:text-5xl">
               {renderAccent(content.hero.title)}
             </h1>
             <p className="mt-4 max-w-lg animate-fade-up text-lg text-white/80 [animation-delay:200ms]">
