@@ -203,15 +203,15 @@ export default async function LandingPage() {
           <div>
             <Badge
               variant="outline"
-              className="mb-4 animate-fade-up gap-1.5"
+              className="mb-4 animate-fade-up gap-1.5 border-white/40 bg-white/10 text-white backdrop-blur"
             >
               <MonitorSmartphone className="size-3.5" />
               {content.hero.badge}
             </Badge>
-            <h1 className="animate-fade-up font-heading text-4xl font-semibold leading-tight tracking-tight [animation-delay:100ms] sm:text-5xl">
+            <h1 className="animate-fade-up font-heading text-4xl font-semibold leading-tight tracking-tight text-white [animation-delay:100ms] sm:text-5xl">
               {renderAccent(content.hero.title)}
             </h1>
-            <p className="mt-4 max-w-lg animate-fade-up text-lg text-muted-foreground [animation-delay:200ms]">
+            <p className="mt-4 max-w-lg animate-fade-up text-lg text-white/80 [animation-delay:200ms]">
               {content.hero.subtitle}
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3 [animation-delay:300ms] animate-fade-up">
@@ -232,7 +232,7 @@ export default async function LandingPage() {
                 {content.hero.cta2}
               </Link>
             </div>
-            <p className="mt-4 animate-fade-up text-sm text-muted-foreground [animation-delay:400ms]">
+            <p className="mt-4 animate-fade-up text-sm text-white/70 [animation-delay:400ms]">
               Your menu is set up for you
             </p>
           </div>
