@@ -46,32 +46,80 @@ interface CartItem {
   quantity: number;
 }
 
-function PromoSlider({ restaurantName }: { restaurantName: string }) {
-  const slides = [
+interface PromoSlide {
+  id: string;
+  title: string;
+  subtitle: string | null;
+  image_url: string | null;
+}
+
+function PromoSlideView({ slide }: { slide: PromoSlide }) {
+  if (slide.image_url) {
+    return (
+      <div className="relative min-w-full">
+        <img
+          src={slide.image_url}
+          alt={slide.title}
+          className="h-32 w-full object-cover sm:h-40"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-black/20" />
+        <div className="absolute inset-0 flex flex-col justify-center px-5 text-white sm:px-8">
+          <h3 className="font-heading text-base font-semibold sm:text-lg">{slide.title}</h3>
+          {slide.subtitle && (
+            <p className="mt-0.5 text-xs opacity-90 sm:text-sm">{slide.subtitle}</p>
+          )}
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="flex min-w-full flex-col justify-center bg-gradient-to-r from-slate-700 to-slate-900 px-5 py-3 text-white sm:px-8 sm:py-4">
+      <h3 className="font-heading text-base font-semibold sm:text-lg">{slide.title}</h3>
+      {slide.subtitle && (
+        <p className="mt-0.5 text-xs opacity-90 sm:text-sm">{slide.subtitle}</p>
+      )}
+    </div>
+  );
+}
+
+function PromoSlider({
+  restaurantName,
+  promotions,
+}: {
+  restaurantName: string;
+  promotions?: PromoSlide[];
+}) {
+  const fallback: PromoSlide[] = [
     {
+      id: "fallback-1",
       title: `Today's Specials at ${restaurantName}`,
       subtitle: "Ask your waiter for the chef's recommendations",
-      gradient: "from-amber-500 to-orange-600",
+      image_url: null,
     },
     {
+      id: "fallback-2",
       title: "Happy Hour 4pm - 6pm",
       subtitle: "15% off all drinks at the counter",
-      gradient: "from-violet-500 to-fuchsia-600",
+      image_url: null,
     },
     {
+      id: "fallback-3",
       title: "Live Music Fridays",
       subtitle: "Join us for a great night out",
-      gradient: "from-emerald-500 to-teal-600",
+      image_url: null,
     },
   ];
+
+  const slides = promotions && promotions.length > 0 ? promotions : fallback;
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
+    setIndex(0);
     const timer = setInterval(() => {
       setIndex((i) => (i + 1) % slides.length);
     }, 4000);
     return () => clearInterval(timer);
-  }, [slides.length]);
+  }, [slides]);
 
   return (
     <div className="relative overflow-hidden bg-muted" aria-roledescription="carousel">
@@ -79,20 +127,14 @@ function PromoSlider({ restaurantName }: { restaurantName: string }) {
         className="flex transition-transform duration-500 ease-in-out"
         style={{ transform: `translateX(-${index * 100}%)` }}
       >
-        {slides.map((slide, i) => (
-          <div
-            key={i}
-            className={`flex min-w-full flex-col justify-center bg-gradient-to-r ${slide.gradient} px-5 py-3 text-white sm:px-8 sm:py-4`}
-          >
-            <h3 className="font-heading text-base font-semibold sm:text-lg">{slide.title}</h3>
-            <p className="mt-0.5 text-xs opacity-90 sm:text-sm">{slide.subtitle}</p>
-          </div>
+        {slides.map((slide) => (
+          <PromoSlideView key={slide.id} slide={slide} />
         ))}
       </div>
       <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1.5">
-        {slides.map((_, i) => (
+        {slides.map((slide, i) => (
           <button
-            key={i}
+            key={slide.id}
             type="button"
             onClick={() => setIndex(i)}
             aria-label={`Show slide ${i + 1}`}
@@ -113,6 +155,7 @@ export function MenuClient({
   restaurantName,
   restaurantId,
   preselectedTableId,
+  promotions,
 }: {
   categories: Category[];
   products: MenuProduct[];
@@ -120,6 +163,7 @@ export function MenuClient({
   restaurantName: string;
   restaurantId: string;
   preselectedTableId?: string;
+  promotions?: PromoSlide[];
 }) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -300,7 +344,7 @@ export function MenuClient({
         </div>
       </header>
 
-      <PromoSlider restaurantName={restaurantName} />
+      <PromoSlider restaurantName={restaurantName} promotions={promotions} />
 
       <main className="flex-1 flex flex-col overflow-hidden">
         {view === "menu" && (

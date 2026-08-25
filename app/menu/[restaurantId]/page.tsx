@@ -37,6 +37,7 @@ export default async function MenuPage({
       categories={data.categories ?? []}
       products={data.products ?? []}
       tables={data.tables ?? []}
+      promotions={data.promotions ?? []}
       restaurantName={data.restaurant?.name ?? "Our Restaurant"}
       restaurantId={restaurantId}
       preselectedTableId={table}

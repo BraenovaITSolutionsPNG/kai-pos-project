@@ -48,6 +48,7 @@ export const PLAN_ROLES: Record<PlanName, StaffRole[]> = {
 // digital menu / QR self-service ordering.
 export const PLAN_GATED_ROUTES: Record<string, PlanName[]> = {
   "/digital-menu": ["business", "professional"],
+  "/promotions": ["business", "professional"],
 };
 
 export function isRoleAllowedForPlan(role: StaffRole, plan: PlanName): boolean {

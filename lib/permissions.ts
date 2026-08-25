@@ -17,6 +17,7 @@ const ALL_ROUTES = [
   "/cashup",
   "/staff",
   "/digital-menu",
+  "/promotions",
   "/bills",
   "/settings",
 ];
@@ -37,6 +38,7 @@ export const ROLE_ROUTES: Record<StaffRole, string[]> = {
     "/reports",
     "/cashup",
     "/digital-menu",
+    "/promotions",
     "/bills",
     "/settings",
   ],
