@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import type { StaffRole } from "@/lib/types";
+import { isRouteAllowedForPlan, type PlanName } from "@/lib/plans";
 
 export type { StaffRole };
 
@@ -44,10 +45,12 @@ export const ROLE_ROUTES: Record<StaffRole, string[]> = {
   waiter: ["/dashboard", "/pos", "/orders"],
 };
 
-export function canAccess(role: StaffRole, path: string): boolean {
-  return ROLE_ROUTES[role]?.includes(path) ?? false;
+export function canAccess(role: StaffRole, path: string, plan?: PlanName): boolean {
+  if (!(ROLE_ROUTES[role]?.includes(path) ?? false)) return false;
+  if (plan && !isRouteAllowedForPlan(path, plan)) return false;
+  return true;
 }
 
-export function assertAccess(role: StaffRole, path: string): void {
-  if (!canAccess(role, path)) redirect("/dashboard");
+export function assertAccess(role: StaffRole, path: string, plan?: PlanName): void {
+  if (!canAccess(role, path, plan)) redirect("/dashboard");
 }

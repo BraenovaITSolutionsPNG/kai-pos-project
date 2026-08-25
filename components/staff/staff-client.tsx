@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { ShieldCheck, UserPlus } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { StaffRole } from "@/lib/types";
+import type { PlanName } from "@/lib/plans";
+import { assignableRolesForPlan } from "@/lib/plans";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -55,15 +57,17 @@ const roleBadge: Record<StaffRole, { label: string; className: string }> = {
 function AddStaffDialog({
   onClose,
   onDone,
+  allowedRoles,
 }: {
   onClose: () => void;
   onDone: () => void;
+  allowedRoles: StaffRole[];
 }) {
   const router = useRouter();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<StaffRole>("cashier");
+  const [role, setRole] = useState<StaffRole>(allowedRoles[0] ?? "cashier");
   const [busy, setBusy] = useState(false);
 
   async function submit(e: React.FormEvent) {
@@ -134,15 +138,16 @@ function AddStaffDialog({
           </div>
           <div className="space-y-2">
             <Label>Role</Label>
-            <Select value={role} onValueChange={(v) => setRole((v ?? "cashier") as StaffRole)}>
+            <Select value={role} onValueChange={(v) => setRole((v ?? allowedRoles[0]) as StaffRole)}>
               <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="manager">Manager</SelectItem>
-                <SelectItem value="cashier">Cashier</SelectItem>
-                <SelectItem value="kitchen">Kitchen</SelectItem>
-                <SelectItem value="waiter">Waiter</SelectItem>
+                {allowedRoles.map((r) => (
+                  <SelectItem key={r} value={r}>
+                    {roleBadge[r]?.label ?? r}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -164,16 +169,20 @@ export function StaffClient({
   staff,
   currentRole,
   currentUserId,
+  plan,
 }: {
   staff: StaffRow[];
   currentRole: string;
   currentUserId: string;
+  plan?: PlanName;
 }) {
   const router = useRouter();
   const [rows, setRows] = useState<StaffRow[]>(staff);
   const [adding, setAdding] = useState(false);
   const [busy, setBusy] = useState(false);
   const isOwner = currentRole === "owner";
+  const assignableRoles = assignableRolesForPlan(plan ?? "starter");
+  const canAddStaff = isOwner && assignableRoles.length > 0;
 
   const reload = useCallback(async () => {
     const supabase = createClient();
@@ -254,12 +263,17 @@ export function StaffClient({
               : "View your team."}
           </p>
         </div>
-        {isOwner && (
+        {canAddStaff ? (
           <Button onClick={() => setAdding(true)}>
             <UserPlus />
             Add staff
           </Button>
-        )}
+        ) : isOwner ? (
+          <p className="text-xs text-muted-foreground">
+            Your plan only supports a single owner. Upgrade to add managers,
+            cashiers or kitchen staff.
+          </p>
+        ) : null}
       </div>
 
       <div className="rounded-xl border bg-card">
@@ -299,7 +313,7 @@ export function StaffClient({
                     </TableCell>
                     <TableCell>{r.user_email}</TableCell>
                     <TableCell>
-                      {isOwner && !isSelf && r.role !== "owner" ? (
+                      {isOwner && !isSelf && r.role !== "owner" && assignableRoles.length > 0 ? (
                         <Select
                           value={r.role}
                           onValueChange={(v) => void updateRole(r, (v ?? "cashier") as StaffRole)}
@@ -309,10 +323,13 @@ export function StaffClient({
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="manager">Manager</SelectItem>
-                            <SelectItem value="cashier">Cashier</SelectItem>
-                            <SelectItem value="kitchen">Kitchen</SelectItem>
-                <SelectItem value="waiter">Waiter</SelectItem>
+                            {Array.from(new Set<StaffRole>([...assignableRoles, r.role])).map(
+                              (r2) => (
+                                <SelectItem key={r2} value={r2}>
+                                  {roleBadge[r2]?.label ?? r2}
+                                </SelectItem>
+                              )
+                            )}
                           </SelectContent>
                         </Select>
                       ) : (
@@ -363,6 +380,7 @@ export function StaffClient({
         <AddStaffDialog
           onClose={() => setAdding(false)}
           onDone={() => setAdding(false)}
+          allowedRoles={assignableRoles}
         />
       )}
     </div>

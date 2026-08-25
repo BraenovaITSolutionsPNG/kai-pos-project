@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { getSessionContext, getTables } from "@/lib/queries";
 import { assertAccess } from "@/lib/permissions";
+import type { PlanName } from "@/lib/plans";
 import { DigitalMenuClient } from "@/components/menu/digital-menu-client";
 
 export default async function DigitalMenuPage() {
@@ -8,7 +9,7 @@ export default async function DigitalMenuPage() {
     getSessionContext(),
     getTables(),
   ]);
-  assertAccess(ctx.staff.role, "/digital-menu");
+  assertAccess(ctx.staff.role, "/digital-menu", ctx.business?.plan as PlanName);
 
   const headersList = await headers();
   const host = headersList.get("x-forwarded-host") ?? headersList.get("host") ?? "localhost:3000";

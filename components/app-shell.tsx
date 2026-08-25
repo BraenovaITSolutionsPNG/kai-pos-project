@@ -12,6 +12,7 @@ import {
 import { cn } from "@/lib/utils";
 import { mainNav, laterNav } from "@/components/nav-items";
 import { canAccess, type StaffRole } from "@/lib/permissions";
+import type { PlanName } from "@/lib/plans";
 import { BrandLogo } from "@/components/brand-logo";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -20,17 +21,19 @@ import { Topbar } from "@/components/topbar";
 function SidebarNav({
   collapsed,
   role,
+  plan,
   isPlatformAdmin,
   onNavigate,
 }: {
   collapsed: boolean;
   role: StaffRole;
+  plan?: PlanName;
   isPlatformAdmin: boolean;
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
   const items = [...mainNav, ...laterNav].filter((i) =>
-    canAccess(role, i.href)
+    canAccess(role, i.href, plan)
   );
 
   return (
@@ -122,6 +125,7 @@ export function AppShell({
   userName,
   userRole,
   userEmail,
+  plan,
   isPlatformAdmin = false,
   children,
 }: {
@@ -129,6 +133,7 @@ export function AppShell({
   userName: string;
   userRole: string;
   userEmail: string;
+  plan?: PlanName;
   isPlatformAdmin?: boolean;
   children: React.ReactNode;
 }) {
@@ -148,6 +153,7 @@ export function AppShell({
         <SidebarNav
           collapsed={collapsed}
           role={userRole as StaffRole}
+          plan={plan}
           isPlatformAdmin={isPlatformAdmin}
         />
         <div className="border-t p-3">
@@ -183,6 +189,7 @@ export function AppShell({
           <SidebarNav
             collapsed={false}
             role={userRole as StaffRole}
+            plan={plan}
             isPlatformAdmin={isPlatformAdmin}
             onNavigate={() => setMobileOpen(false)}
           />

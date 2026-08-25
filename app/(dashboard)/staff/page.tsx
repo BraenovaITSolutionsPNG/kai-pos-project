@@ -3,6 +3,7 @@ import { StaffClient } from "@/components/staff/staff-client";
 import { getSessionContext } from "@/lib/queries";
 import { createClient } from "@/lib/supabase/server";
 import { assertAccess } from "@/lib/permissions";
+import type { PlanName } from "@/lib/plans";
 
 export const metadata: Metadata = {
   title: "Staff",
@@ -38,6 +39,7 @@ export default async function StaffPage() {
       staff={rows}
       currentRole={ctx.staff.role}
       currentUserId={ctx.user.id}
+      plan={ctx.business?.plan as PlanName}
     />
   );
 }
