@@ -69,6 +69,13 @@ export function MenuClient({
   const [orderResult, setOrderResult] = useState<{ order_id: string; order_number: number; total: number } | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
 
+  useEffect(() => {
+    if (preselectedTableId && !tables.some((t) => t.id === preselectedTableId)) {
+      const match = tables.find((t) => t.label === preselectedTableId);
+      if (match) setSelectedTable(match.id);
+    }
+  }, [preselectedTableId, tables]);
+
   const filteredProducts = useMemo(() => {
     if (!selectedCategory) return products;
     return products.filter((p) => p.category_id === selectedCategory);
@@ -78,6 +85,7 @@ export function MenuClient({
   const cartCount = useMemo(() => cart.reduce((sum, item) => sum + item.quantity, 0), [cart]);
 
   function addToCart(product: MenuProduct) {
+    if (!product.is_active) return;
     setCart((prev) => {
       const existing = prev.find((i) => i.product.id === product.id);
       if (existing) {
@@ -88,6 +96,7 @@ export function MenuClient({
       return [...prev, { product, quantity: 1 }];
     });
     setCartOpen(true);
+    toast.success(`${product.name} added to cart`);
   }
 
   function updateQuantity(productId: string, delta: number) {
@@ -261,7 +270,16 @@ export function MenuClient({
                   {filteredProducts.map((product) => (
                     <article
                       key={product.id}
-                      className="group flex flex-col rounded-xl border bg-card overflow-hidden hover:shadow-lg transition-shadow"
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => addToCart(product)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          addToCart(product);
+                        }
+                      }}
+                      className="group flex flex-col rounded-xl border bg-card overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
                     >
                       {product.image_url ? (
                         <div className="relative aspect-[4/3] bg-muted overflow-hidden">
@@ -296,15 +314,19 @@ export function MenuClient({
                               {formatTime(product.prep_time)}
                             </Badge>
                           )}
-                          <Button
-                            size="sm"
-                            className="gap-1"
-                            onClick={() => addToCart(product)}
-                            disabled={!product.is_active}
-                          >
-                            <Plus className="h-3.5 w-3.5" />
-                            Add
-                          </Button>
+                            <Button
+                              size="sm"
+                              className="gap-1"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                addToCart(product);
+                              }}
+                              disabled={!product.is_active}
+                              aria-label={`Add ${product.name} to cart`}
+                            >
+                              <Plus className="h-3.5 w-3.5" />
+                              Add
+                            </Button>
                         </div>
                       </div>
                     </article>
@@ -399,7 +421,7 @@ export function MenuClient({
                     className="w-full"
                     size="lg"
                     onClick={submitOrder}
-                    disabled={submitting || !selectedTable}
+                    disabled={submitting || !selectedTable || cart.length === 0}
                   >
                     {submitting ? (
                       <>
