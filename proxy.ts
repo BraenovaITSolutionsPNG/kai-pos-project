@@ -18,7 +18,8 @@ export async function proxy(request: NextRequest) {
   const isPublicPage =
     path === "/" ||
     path.startsWith("/payment-pending") ||
-    path.startsWith("/subscription");
+    path.startsWith("/subscription") ||
+    path.startsWith("/menu");
 
   // MySQL mode: session lives in a kai_session cookie.
   if (isMySqlMode()) {
