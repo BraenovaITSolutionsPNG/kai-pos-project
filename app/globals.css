@@ -316,21 +316,21 @@
   }
 }
 
-/* Hero banner slideshow (crossfade + slide / Ken Burns) */
-@keyframes kai-hero-slide-a {
+/* Hero banner slideshow (3-image crossfade + slide / Ken Burns) */
+@keyframes kai-hero-slide-1 {
   0% {
     opacity: 1;
     transform: scale(1.05) translateX(0);
   }
-  45% {
+  27% {
     opacity: 1;
     transform: scale(1.08) translateX(0);
   }
-  55% {
+  33% {
     opacity: 0;
     transform: scale(1.1) translateX(-3%);
   }
-  95% {
+  94% {
     opacity: 0;
     transform: scale(1.1) translateX(-3%);
   }
@@ -340,22 +340,26 @@
   }
 }
 
-@keyframes kai-hero-slide-b {
+@keyframes kai-hero-slide-2 {
   0% {
     opacity: 0;
     transform: scale(1.05) translateX(3%);
   }
-  45% {
+  27% {
     opacity: 0;
     transform: scale(1.08) translateX(3%);
   }
-  55% {
+  33% {
     opacity: 1;
     transform: scale(1.1) translateX(0);
   }
-  95% {
+  60% {
     opacity: 1;
     transform: scale(1.08) translateX(0);
+  }
+  66% {
+    opacity: 0;
+    transform: scale(1.1) translateX(3%);
   }
   100% {
     opacity: 0;
@@ -363,12 +367,43 @@
   }
 }
 
-.animate-hero-slide-a {
-  animation: kai-hero-slide-a 14s ease-in-out infinite;
+@keyframes kai-hero-slide-3 {
+  0% {
+    opacity: 0;
+    transform: scale(1.05) translateX(-3%);
+  }
+  60% {
+    opacity: 0;
+    transform: scale(1.08) translateX(-3%);
+  }
+  66% {
+    opacity: 1;
+    transform: scale(1.1) translateX(0);
+  }
+  93% {
+    opacity: 1;
+    transform: scale(1.08) translateX(0);
+  }
+  99% {
+    opacity: 0;
+    transform: scale(1.1) translateX(-3%);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.05) translateX(-3%);
+  }
 }
 
-.animate-hero-slide-b {
-  animation: kai-hero-slide-b 14s ease-in-out infinite;
+.animate-hero-slide-1 {
+  animation: kai-hero-slide-1 21s ease-in-out infinite;
+}
+
+.animate-hero-slide-2 {
+  animation: kai-hero-slide-2 21s ease-in-out infinite;
+}
+
+.animate-hero-slide-3 {
+  animation: kai-hero-slide-3 21s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -383,8 +418,9 @@
   .animate-food-pulse,
   .animate-gradient-wave,
   .animate-gradient-shift,
-  .animate-hero-slide-a,
-  .animate-hero-slide-b,
+  .animate-hero-slide-1,
+  .animate-hero-slide-2,
+  .animate-hero-slide-3,
   [class*="animate-ping"] {
     animation: none !important;
   }
