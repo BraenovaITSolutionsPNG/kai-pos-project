@@ -169,16 +169,16 @@ export default async function LandingPage() {
         {/* Warm gradient base */}
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[700px] bg-gradient-to-b from-amber-100/50 via-orange-50/30 to-transparent"
+          className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[700px] bg-gradient-to-b from-amber-100/70 via-orange-100/50 to-rose-50/40"
         />
         {/* Ambient drifting orbs (warm colors) */}
         <div
           aria-hidden
-          className="pointer-events-none absolute -top-24 left-1/4 -z-10 size-72 animate-orb-a rounded-full bg-amber-300/15 blur-3xl"
+          className="pointer-events-none absolute -top-24 left-1/4 -z-10 size-72 animate-orb-a rounded-full bg-amber-200/30 blur-3xl"
         />
         <div
           aria-hidden
-          className="pointer-events-none absolute right-0 top-40 -z-10 size-80 animate-orb-b rounded-full bg-orange-300/10 blur-3xl"
+          className="pointer-events-none absolute right-0 top-40 -z-10 size-80 animate-orb-b rounded-full bg-orange-200/25 blur-3xl"
         />
         <div className="mx-auto grid max-w-6xl gap-12 px-4 pb-20 pt-16 sm:px-6 lg:grid-cols-2 lg:items-center lg:pt-24">
           <div>
