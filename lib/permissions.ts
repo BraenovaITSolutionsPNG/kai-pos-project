@@ -20,6 +20,7 @@ const ALL_ROUTES = [
   "/promotions",
   "/bills",
   "/settings",
+  "/messages",
 ];
 
 // Which routes each role may access. Everyone keeps /dashboard so the
@@ -41,6 +42,7 @@ export const ROLE_ROUTES: Record<StaffRole, string[]> = {
     "/promotions",
     "/bills",
     "/settings",
+    "/messages",
   ],
   cashier: ["/dashboard", "/pos", "/orders", "/bills"],
   kitchen: ["/dashboard", "/orders", "/kitchen"],

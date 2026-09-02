@@ -63,7 +63,7 @@ function PromoSlideView({ slide }: { slide: PromoSlide }) {
           className="absolute inset-0 h-full w-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-        <div className="absolute inset-0 flex flex-col justify-end px-6 pb-8 text-white sm:px-10">
+        <div className="absolute inset-0 flex flex-col justify-end px-6 pb-16 text-white sm:px-10">
           <h3 className="font-heading text-2xl font-bold sm:text-4xl">{slide.title}</h3>
           {slide.subtitle && (
             <p className="mt-2 text-sm opacity-95 sm:text-lg">{slide.subtitle}</p>
@@ -73,7 +73,7 @@ function PromoSlideView({ slide }: { slide: PromoSlide }) {
     );
   }
   return (
-    <div className="flex min-w-full h-72 flex-col justify-end bg-gradient-to-r from-slate-700 to-slate-900 px-6 pb-8 text-white shadow-md sm:h-96 sm:px-10">
+        <div className="flex min-w-full h-72 flex-col justify-end bg-gradient-to-r from-slate-700 to-slate-900 px-6 pb-16 text-white shadow-md sm:h-96 sm:px-10">
       <h3 className="font-heading text-2xl font-bold sm:text-4xl">{slide.title}</h3>
       {slide.subtitle && (
         <p className="mt-2 text-sm opacity-95 sm:text-lg">{slide.subtitle}</p>
@@ -350,7 +350,7 @@ export function MenuClient({
         {view === "menu" && (
           <>
             {categories.length > 1 && (
-              <nav className="border-b bg-card px-2 py-2 sticky top-[60px] z-10" aria-label="Menu categories">
+              <nav className="-mt-14 border-b bg-card px-2 py-2 sticky top-[60px] z-10" aria-label="Menu categories">
                 <div className="h-12 overflow-x-auto flex gap-2 pb-2">
                   <div className="flex gap-2 min-w-max pb-2">
                     <button

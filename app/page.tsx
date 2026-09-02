@@ -415,6 +415,12 @@ export default async function LandingPage() {
             >
               Sign in
             </Link>
+            <Link
+              href="/contact"
+              className={cn(buttonVariants({ variant: "outline", size: "lg" }))}
+            >
+              Contact
+            </Link>
           </div>
         </div>
       </section>
