@@ -138,7 +138,7 @@ export function SubscriptionClient({
   }
 
   const due =
-    subscription.status === "pending"
+    subscription.status === "pending" || subscription.status === "expired"
       ? `K ${PLAN_PRICES[subscription.plan][subscription.billing_cycle].toLocaleString()}`
       : null;
 
@@ -199,6 +199,8 @@ export function SubscriptionClient({
           <p className="mt-3 rounded-lg bg-primary/5 px-3 py-2 text-sm text-primary">
             {subscription.status === "pending"
               ? "Your payment is awaiting approval. Access to the platform is granted as soon as the KAI POS team confirms your payment."
+              : subscription.status === "expired"
+              ? "Your subscription period has ended. Submit a renewal payment below to restore access."
               : "Your subscription is not active. Settle the amount below to regain access."}
           </p>
         )}

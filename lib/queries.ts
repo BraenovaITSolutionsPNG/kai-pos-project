@@ -98,7 +98,8 @@ export const getSessionContext = cache(async (): Promise<SessionContext> => {
   // subscription use the service. Owners are still signed in so they can
   // land on the subscription page and submit their payment proof.
   const subscription = await getMySubscription();
-  if (subscription && subscription.status !== "active")
+  // Redirect owners whose subscription is pending approval or has expired
+  if (subscription && (subscription.status === "pending" || subscription.status === "expired"))
     redirect("/subscription");
 
   return {
