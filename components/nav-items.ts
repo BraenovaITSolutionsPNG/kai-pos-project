@@ -15,6 +15,7 @@ import {
   Receipt,
   Megaphone,
   MessageSquare,
+  Calendar,
 } from "lucide-react";
 
 export interface NavItem {
@@ -40,6 +41,7 @@ export const laterNav: NavItem[] = [
   { title: "Cashup", href: "/cashup", icon: Calculator },
   { title: "Staff", href: "/staff", icon: Users },
   { title: "Digital Menu", href: "/digital-menu", icon: QrCode },
+  { title: "Shift Schedule", href: "/shifts", icon: Calendar },
   { title: "Promotions", href: "/promotions", icon: Megaphone },
   { title: "Bills", href: "/bills", icon: Receipt },
   { title: "Settings", href: "/settings", icon: Settings },
