@@ -206,12 +206,14 @@ function cashupsToCsv(cashups: Cashup[], shifts: Shift[]): string {
     const shift = shiftMap.get(c.shift_id);
     const expectedCash = Number(c.cash_total) + Number(c.eftpos_total) + Number(c.bank_transfer_total) - Number(c.refunds);
     const variance = Number(c.net_sales) - expectedCash;
-    const clockIn = shift && shift.clock_in ? shift.clock_in : "";
-    const clockOut = shift && shift.clock_out ? shift.clock_out : "";
+    const clockIn = shift?.clock_in ?? "";
+    const clockOut = shift?.clock_out ?? "";
+    const hasClockIn = clockIn.length > 0;
+    const hasClockOut = clockOut.length > 0;
     
     return [
-      clockIn ? formatDate(clockIn) : "",
-      clockIn ? `${formatTime(clockIn)} - ${clockOut ? formatTime(clockOut) : "Open"}` : "",
+      hasClockIn ? formatDate(clockIn) : "",
+      hasClockIn ? `${formatTime(clockIn)} - ${hasClockOut ? formatTime(clockOut) : "Open"}` : "",
       shift?.staff?.full_name || "",
       formatKina(c.cash_total),
       formatKina(c.eftpos_total),
