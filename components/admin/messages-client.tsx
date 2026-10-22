@@ -199,7 +199,7 @@ export function MessagesClient({ messages: initialMessages }: MessagesClientProp
           <DialogHeader>
             <DialogTitle>{selectedMessage?.subject}</DialogTitle>
             <DialogDescription>
-              From {selectedMessage?.name} <{selectedMessage?.email}> · {formatDateTime(selectedMessage?.created_at)}
+              From {selectedMessage?.name} {String.fromCharCode(60)}{selectedMessage?.email}{String.fromCharCode(62)} · {formatDateTime(selectedMessage?.created_at)}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
