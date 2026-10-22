@@ -243,22 +243,22 @@ function shiftsToCsv(shifts: Shift[]): string {
   ];
   
 const rows = shifts.map((s) => {
-    const clockIn = s.clock_in ? new Date(s.clock_in) : null;
-    const clockOut = s.clock_out ? new Date(s.clock_out) : null;
-    const duration = clockIn && clockOut 
-      ? ((clockOut.getTime() - clockIn.getTime()) / 3600000).toFixed(2)
-      : clockIn && !clockOut
+    const clockInDate = s.clock_in ? new Date(s.clock_in) : null;
+    const clockOutDate = s.clock_out ? new Date(s.clock_out) : null;
+    const duration = clockInDate && clockOutDate 
+      ? ((clockOutDate.getTime() - clockInDate.getTime()) / 3600000).toFixed(2)
+      : clockInDate && !clockOutDate
         ? "In progress"
         : "";
     
     return [
-      clockIn ? formatDate(s.clock_in) : "",
-      clockIn ? formatTime(s.clock_in) : "",
-      clockOut ? formatTime(s.clock_out) : "",
+      clockInDate ? formatDate(s.clock_in!) : "",
+      clockInDate ? formatTime(s.clock_in!) : "",
+      clockOutDate ? formatTime(s.clock_out!) : "",
       s.staff?.full_name || "",
       s.staff?.role || "",
       duration,
-      clockOut ? "Completed" : clockIn ? "Active" : "Not started",
+      clockOutDate ? "Completed" : clockInDate ? "Active" : "Not started",
     ];
   });
   
