@@ -14,7 +14,7 @@ import {
   QrCode,
   Receipt,
   Megaphone,
-  Message,
+  MessageSquare,
 } from "lucide-react";
 
 export interface NavItem {
@@ -43,5 +43,5 @@ export const laterNav: NavItem[] = [
   { title: "Promotions", href: "/promotions", icon: Megaphone },
   { title: "Bills", href: "/bills", icon: Receipt },
   { title: "Settings", href: "/settings", icon: Settings },
-  { title: "Contact", href: "/contact", icon: Message },
+  { title: "Contact", href: "/contact", icon: MessageSquare },
 ];

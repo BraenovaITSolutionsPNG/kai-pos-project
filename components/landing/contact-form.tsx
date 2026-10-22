@@ -1,10 +1,12 @@
+"use client";
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
 
 export default function ContactForm() {
   const [name, setName] = useState("");
@@ -19,7 +21,7 @@ export default function ContactForm() {
     e.preventDefault();
     setLoading(true);
     const { error } = await supabase
-      .from("public.messages")
+      .from("messages")
       .insert([{ name, email, subject, message, status: "new" }]);
 
     if (error) {

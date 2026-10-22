@@ -1,97 +1,134 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Table } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase";
-import { assertAccess } from "@/lib/permissions";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { createClient } from "@/lib/supabase/client";
 
-export default function AdminMessagesPage() {
-  assertAccess(role, "/messages", "professional"); // will refine
+export interface ContactMessage {
+  id: string;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  status: "new" | "read" | "archived";
+  created_at: string;
+}
 
-  const [messages, setMessages] = useState([]);
-  const [loading, setLoading] = useState(true);
+interface MessagesClientProps {
+  initialMessages: ContactMessage[];
+}
+
+export function MessagesClient({ initialMessages }: MessagesClientProps) {
+  const [messages, setMessages] = useState<ContactMessage[]>(initialMessages);
   const supabase = createClient();
-  const router = useRouter();
-
-  useEffect(() => {
-    fetchMessages();
-  }, []);
-
-  async function fetchMessages() {
-    const { data, error } = await supabase
-      .from("public.messages")
-      .select("*")
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      console.error(error);
-      setMessages([]);
-    } else {
-      setMessages(data);
-    }
-    setLoading(false);
-  }
 
   async function handleRead(id: string) {
-    await supabase.from("public.messages").update({ status: "read", read_at: new Date() }).eq("id", id);
-    fetchMessages();
+    const { error } = await supabase
+      .from("messages")
+      .update({ status: "read", read_at: new Date().toISOString() })
+      .eq("id", id);
+
+    if (!error) {
+      setMessages((prev) =>
+        prev.map((m) => (m.id === id ? { ...m, status: "read" } : m))
+      );
+    }
   }
 
   async function handleDelete(id: string) {
-    await supabase.from("public.messages").delete().eq("id", id);
-    fetchMessages();
+    const { error } = await supabase.from("messages").delete().eq("id", id);
+    if (!error) {
+      setMessages((prev) => prev.filter((m) => m.id !== id));
+    }
   }
-
-  if (loading) return <p>Loading messages…</p>;
 
   return (
     <section className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
-      <h1 className="font-heading text-2xl font-semibold mb-6">Messages</h1>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="font-heading text-2xl font-semibold">Messages</h1>
+          <p className="text-sm text-muted-foreground">
+            Inquiries and messages submitted through the website contact form.
+          </p>
+        </div>
+        <Badge variant="outline">{messages.length} messages</Badge>
+      </div>
 
-      <Table
-        columns={[
-          { accessorKey: "id", header: "ID" },
-          { accessorKey: "name", header: "Name" },
-          { accessorKey: "email", header: "Email" },
-          { accessorKey: "subject", header: "Subject" },
-          { accessorKey: "status", header: "Status" },
-          { accessorKey: "created_at", header: "Date" },
-          { accessorKey: "actions", header: "Actions" },
-        ]}
-        data={messages}
-      >
-        {({ row }) => (
-          <tr>
-            <td>{row.id}</td>
-            <td>{row.name}</td>
-            <td>{row.email}</td>
-            <td>{row.subject}</td>
-            <td>
-              {row.status === "read" ? "Read" : <span className="text-primary">Unread</span>}
-            </td>
-            <td>{new Date(row.created_at).toLocaleDateString()}</td>
-            <td>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => handleRead(row.id)}
-              >
-                Mark Read
-              </Button>
-              <Button
-                size="sm"
-                variant="destructive"
-                onClick={() => handleDelete(row.id)}
-              >
-                Delete
-              </Button>
-            </td>
-          </tr>
-        )}
-      </Table>
+      <div className="rounded-xl border bg-card overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Date</TableHead>
+              <TableHead>Name</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Subject</TableHead>
+              <TableHead>Message</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {messages.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                  No messages received yet.
+                </TableCell>
+              </TableRow>
+            ) : (
+              messages.map((m) => (
+                <TableRow key={m.id}>
+                  <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
+                    {new Date(m.created_at).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell className="font-medium">{m.name}</TableCell>
+                  <TableCell>
+                    <a href={`mailto:${m.email}`} className="text-primary hover:underline">
+                      {m.email}
+                    </a>
+                  </TableCell>
+                  <TableCell className="max-w-[180px] truncate">{m.subject}</TableCell>
+                  <TableCell className="max-w-[260px] truncate text-muted-foreground">
+                    {m.message}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={m.status === "new" ? "default" : "secondary"}>
+                      {m.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right space-x-2 whitespace-nowrap">
+                    {m.status !== "read" && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleRead(m.id)}
+                      >
+                        Mark Read
+                      </Button>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => handleDelete(m.id)}
+                    >
+                      Delete
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
     </section>
   );
 }
+export default MessagesClient;
