@@ -46,11 +46,39 @@ interface CartItem {
   quantity: number;
 }
 
-interface PromoSlide {
-  id: string;
-  title: string;
-  subtitle: string | null;
-  image_url: string | null;
+interface ProductDescriptionProps {
+  description: string;
+}
+
+function ProductDescription({ description }: ProductDescriptionProps) {
+  const [expanded, setExpanded] = useState(false);
+  const maxLength = 80;
+  const needsTruncation = description.length > maxLength;
+
+  if (!needsTruncation) {
+    return (
+      <p className="mt-1.5 text-sm text-muted-foreground">
+        {description}
+      </p>
+    );
+  }
+
+  return (
+    <div className="mt-1.5">
+      <p className={`text-sm text-muted-foreground ${expanded ? '' : 'line-clamp-3'}`}>
+        {description}
+      </p>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          setExpanded(!expanded);
+        }}
+        className="mt-1 text-xs font-medium text-primary hover:underline"
+      >
+        {expanded ? 'Read less' : 'Read more'}
+      </button>
+    </div>
+  );
 }
 
 function PromoSlideView({ slide }: { slide: PromoSlide }) {
@@ -425,9 +453,7 @@ export function MenuClient({
                           </span>
                         </div>
                         {product.ingredients && (
-                          <p className="mt-1.5 text-sm text-muted-foreground line-clamp-2">
-                            {product.ingredients}
-                          </p>
+                          <ProductDescription description={product.ingredients} />
                         )}
                         <div className="mt-auto flex items-center justify-between pt-2">
                           {product.prep_time > 0 && (
