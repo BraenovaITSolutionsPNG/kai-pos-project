@@ -173,6 +173,19 @@ export interface InventoryTransaction {
   created_at: string;
 }
 
+export interface LoyaltyTransaction {
+  id: string;
+  restaurant_id: string;
+  customer_id: string;
+  order_id: string | null;
+  type: "earned" | "redeemed" | "expired" | "adjusted" | "bonus";
+  points: integer;
+  balance_after: integer;
+  description: string | null;
+  created_by: string | null;
+  created_at: string;
+}
+
 export interface Expense {
   id: string;
   restaurant_id: string;

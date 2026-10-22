@@ -49,6 +49,8 @@ export const PLAN_ROLES: Record<PlanName, StaffRole[]> = {
 export const PLAN_GATED_ROUTES: Record<string, PlanName[]> = {
   "/digital-menu": ["business", "professional"],
   "/promotions": ["business", "professional"],
+  "/accounting": ["business", "professional"],
+  "/loyalty": ["business", "professional"],
 };
 
 export function isRoleAllowedForPlan(role: StaffRole, plan: PlanName): boolean {
@@ -62,6 +64,18 @@ export function isRouteAllowedForPlan(path: string, plan: PlanName): boolean {
 }
 
 export function planHasDigitalMenu(plan: PlanName): boolean {
+  return plan !== "starter";
+}
+
+export function planHasOnlineOrdering(plan: PlanName): boolean {
+  return plan !== "starter";
+}
+
+export function planHasAccounting(plan: PlanName): boolean {
+  return plan !== "starter";
+}
+
+export function planHasLoyalty(plan: PlanName): boolean {
   return plan !== "starter";
 }
 

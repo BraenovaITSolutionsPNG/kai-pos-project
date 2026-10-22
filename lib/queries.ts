@@ -110,6 +110,69 @@ export const getSessionContext = cache(async (): Promise<SessionContext> => {
   };
 });
 
+export interface RestaurantWithStats {
+  id: string;
+  name: string;
+  address: string;
+  currency: string;
+  logo_url: string | null;
+  created_at: string;
+  today_orders: number;
+  today_revenue: number;
+  active_shifts: number;
+}
+
+export const getBusinessRestaurants = cache(async (): Promise<RestaurantWithStats[]> => {
+  const ctx = await getSessionContext();
+  const supabase = await createClient();
+
+  const { data: restaurants } = await supabase
+    .from("restaurants")
+    .select("*")
+    .eq("business_id", ctx.business.id)
+    .order("created_at");
+
+  if (!restaurants || restaurants.length === 0) return [];
+
+  const today = new Date().toISOString().slice(0, 10);
+
+  const restaurantIds = (restaurants as unknown as Restaurant[]).map((r) => r.id);
+
+  const [ordersRes, shiftsRes] = await Promise.all([
+    supabase
+      .from("orders")
+      .select("restaurant_id, total, status")
+      .in("restaurant_id", restaurantIds)
+      .gte("created_at", `${today}T00:00:00`)
+      .lte("created_at", `${today}T23:59:59`),
+    supabase
+      .from("shifts")
+      .select("restaurant_id, clock_out")
+      .in("restaurant_id", restaurantIds)
+      .is("clock_out", null),
+  ]);
+
+  const ordersByRestaurant = new Map<string, { orders: number; revenue: number }>();
+  for (const o of (ordersRes.data ?? []) as unknown as { restaurant_id: string; total: number; status: string }[]) {
+    const current = ordersByRestaurant.get(o.restaurant_id) ?? { orders: 0, revenue: 0 };
+    current.orders += 1;
+    if (o.status === "paid") current.revenue += Number(o.total);
+    ordersByRestaurant.set(o.restaurant_id, current);
+  }
+
+  const activeShiftsByRestaurant = new Map<string, number>();
+  for (const s of (shiftsRes.data ?? []) as unknown as { restaurant_id: string }[]) {
+    activeShiftsByRestaurant.set(s.restaurant_id, (activeShiftsByRestaurant.get(s.restaurant_id) ?? 0) + 1);
+  }
+
+  return (restaurants as unknown as Restaurant[]).map((r) => ({
+    ...r,
+    today_orders: ordersByRestaurant.get(r.id)?.orders ?? 0,
+    today_revenue: ordersByRestaurant.get(r.id)?.revenue ?? 0,
+    active_shifts: activeShiftsByRestaurant.get(r.id) ?? 0,
+  }));
+});
+
 export const getCategories = cache(async (): Promise<Category[]> => {
   const supabase = await createClient();
   const ctx = await getSessionContext();

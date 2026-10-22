@@ -260,12 +260,14 @@ function StockDialog({
   );
 }
 
-function RecipeEditor({
+export function RecipeEditor({
+  restaurantId,
   products,
   ingredients,
   recipes,
   onClose,
 }: {
+  restaurantId: string;
   products: Product[];
   ingredients: Ingredient[];
   recipes: Recipe[];
@@ -285,7 +287,7 @@ function RecipeEditor({
     setBusy(true);
     const supabase = createClient();
     const { error } = await supabase.from("recipes").insert({
-      restaurant_id: "",
+      restaurant_id: restaurantId,
       product_id: productId,
       ingredient_id: selIngredient,
       quantity_required: Number(selQty),
@@ -691,14 +693,15 @@ export function InventoryClient({
         />
       )}
 
-      {recipeOpen && (
-        <RecipeEditor
-          products={products}
-          ingredients={items}
-          recipes={recipes}
-          onClose={() => setRecipeOpen(false)}
-        />
-      )}
+       {recipeOpen && (
+         <RecipeEditor
+           restaurantId={restaurantId}
+           products={products}
+           ingredients={items}
+           recipes={recipes}
+           onClose={() => setRecipeOpen(false)}
+         />
+       )}
 
       <Dialog open={editing !== null} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent>

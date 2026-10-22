@@ -13,7 +13,11 @@ const ALL_ROUTES = [
   "/tables",
   "/kitchen",
   "/inventory",
+  "/recipes",
   "/reports",
+  "/accounting",
+  "/owner",
+  "/loyalty",
   "/cashup",
   "/staff",
   "/digital-menu",
@@ -27,7 +31,7 @@ const ALL_ROUTES = [
 // post-login redirect never lands on a forbidden page.
 export const ROLE_ROUTES: Record<StaffRole, string[]> = {
   owner: ALL_ROUTES,
-  manager: [
+manager: [
     "/dashboard",
     "/pos",
     "/orders",
@@ -36,7 +40,10 @@ export const ROLE_ROUTES: Record<StaffRole, string[]> = {
     "/tables",
     "/kitchen",
     "/inventory",
+    "/recipes",
     "/reports",
+    "/accounting",
+    "/loyalty",
     "/cashup",
     "/digital-menu",
     "/promotions",
