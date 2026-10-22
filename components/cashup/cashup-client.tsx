@@ -498,9 +498,20 @@ function ReconciliationTab({
           </CardHeader>
           <CardContent>
             {shifts.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">
-                No shifts recorded yet.
-              </p>
+              <div className="text-center py-8">
+                <p className="text-muted-foreground mb-4">
+                  No shifts recorded yet.
+                </p>
+                <p className="text-sm text-muted-foreground mb-2">
+                  Staff clock in through the POS to create shift records.
+                </p>
+                <a
+                  href="/shifts"
+                  className="text-primary hover:underline text-sm"
+                >
+                  View or schedule shifts
+                </a>
+              </div>
             ) : (
               <Table>
                 <TableHeader>
