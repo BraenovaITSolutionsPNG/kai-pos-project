@@ -15,6 +15,17 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Trash2, X, Edit } from "lucide-react";
+import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const statusLabel: Record<string, string> = {
   open: "Open",
@@ -43,6 +54,8 @@ export function OrdersClient({
   role: StaffRole;
 }) {
   const [orders, setOrders] = useState<Order[]>(initialOrders);
+  const [cancelDialog, setCancelDialog] = useState<Order | null>(null);
+  const [cancelling, setCancelling] = useState(false);
 
   // Waiters only see orders that are ready to serve / pick up.
   const visibleOrders =
@@ -73,6 +86,24 @@ export function OrdersClient({
     };
   }, [from, to]);
 
+  async function cancelOrder(order: Order) {
+    setCancelling(true);
+    const supabase = createClient();
+    const { error } = await supabase
+      .from("orders")
+      .update({ status: "cancelled", updated_at: new Date().toISOString() })
+      .eq("id", order.id);
+
+    setCancelling(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(`Order #${order.order_number} cancelled`);
+    setOrders((prev) => prev.map((o) => o.id === order.id ? { ...o, status: "cancelled" } : o));
+    setCancelDialog(null);
+  }
+
   const totalSales = visibleOrders
     .filter((o) => o.status !== "cancelled")
     .reduce((sum, o) => sum + Number(o.total), 0);
@@ -102,13 +133,14 @@ export function OrdersClient({
               <TableHead>Payment</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Total</TableHead>
+              {(role === "cashier" || role === "owner" || role === "manager") && <TableHead className="text-right">Actions</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
             {visibleOrders.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={6}
+                  colSpan={(role === "cashier" || role === "owner" || role === "manager") ? 7 : 6}
                   className="py-10 text-center text-muted-foreground"
                 >
                   {role === "waiter"
@@ -153,12 +185,51 @@ export function OrdersClient({
                   <TableCell className="text-right font-semibold">
                     {formatKina(Number(o.total))}
                   </TableCell>
+                  {(role === "cashier" || role === "owner" || role === "manager") && (
+                    <TableCell className="text-right">
+                      {o.status !== "cancelled" && o.status !== "paid" && o.status !== "served" ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 px-2 text-destructive hover:text-destructive"
+                          onClick={() => setCancelDialog(o)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+                  )}
                 </TableRow>
               ))
             )}
           </TableBody>
         </Table>
       </div>
+
+      <Dialog open={!!cancelDialog} onOpenChange={(o) => !o && setCancelDialog(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cancel Order</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to cancel Order #{cancelDialog?.order_number}? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCancelDialog(null)} disabled={cancelling}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => cancelDialog && cancelOrder(cancelDialog)}
+              disabled={cancelling}
+            >
+              {cancelling ? "Cancelling..." : "Cancel Order"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
