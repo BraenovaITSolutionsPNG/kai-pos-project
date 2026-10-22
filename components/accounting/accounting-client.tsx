@@ -203,7 +203,7 @@ function cashupsToCsv(cashups: Cashup[], shifts: Shift[]): string {
   const shiftMap = new Map(shifts.map((s) => [s.id, s]));
   
   const rows = cashups.map((c) => {
-    const shift = shiftMap.get(c.shift_id);
+    const shift = c.shift_id ? shiftMap.get(c.shift_id) : undefined;
     const expectedCash = Number(c.cash_total) + Number(c.eftpos_total) + Number(c.bank_transfer_total) - Number(c.refunds);
     const variance = Number(c.net_sales) - expectedCash;
     const clockIn = shift?.clock_in ?? "";
