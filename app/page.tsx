@@ -141,6 +141,12 @@ export default async function LandingPage() {
             <a href="#pricing" className="transition-colors hover:text-foreground">
               Pricing
             </a>
+            <Link
+              href="/contact"
+              className="transition-colors hover:text-foreground"
+            >
+              Contact
+            </Link>
           </nav>
           <div className="flex items-center gap-2">
             <Link
