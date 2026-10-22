@@ -46,6 +46,13 @@ interface CartItem {
   quantity: number;
 }
 
+interface PromoSlide {
+  id: string;
+  title: string;
+  subtitle: string | null;
+  image_url: string | null;
+}
+
 interface ProductDescriptionProps {
   description: string;
 }
