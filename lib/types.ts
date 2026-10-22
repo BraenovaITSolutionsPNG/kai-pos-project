@@ -244,6 +244,20 @@ export interface Notification {
   created_at: string;
 }
 
+export interface Message {
+  id: string;
+  restaurant_id: string | null;
+  user_id: string | null;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  status: "new" | "read" | "archived";
+  created_at: string;
+  read_at: string | null;
+  restaurant?: { name: string } | null;
+}
+
 export interface SiteContent {
   id: string;
   key: string;

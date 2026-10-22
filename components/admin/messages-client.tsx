@@ -1,7 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { formatDateTime } from "@/lib/format";
+import type { Message } from "@/lib/types";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -10,117 +14,177 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { createClient } from "@/lib/supabase/client";
-
-export interface ContactMessage {
-  id: string;
-  name: string;
-  email: string;
-  subject: string;
-  message: string;
-  status: "new" | "read" | "archived";
-  created_at: string;
-}
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
+import { Mail, Eye, Trash2, Archive } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface MessagesClientProps {
-  initialMessages: ContactMessage[];
+  messages: Message[];
 }
 
-export function MessagesClient({ initialMessages }: MessagesClientProps) {
-  const [messages, setMessages] = useState<ContactMessage[]>(initialMessages);
-  const supabase = createClient();
+export function MessagesClient({ messages: initialMessages }: MessagesClientProps) {
+  const [messages, setMessages] = useState<Message[]>(initialMessages);
+  const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
 
-  async function handleRead(id: string) {
+  const getStatusBadge = (status: string) => {
+    return (
+      <Badge variant={cn(
+        status === "new" && "bg-blue-100 text-blue-800",
+        status === "read" && "bg-green-100 text-green-800",
+        status === "archived" && "bg-gray-100 text-gray-800"
+      )}>
+        {status.charAt(0).toUpperCase() + status.slice(1)}
+      </Badge>
+    );
+  };
+
+  async function updateStatus(messageId: string, newStatus: "read" | "archived") {
+    const supabase = createClient();
+    const updates: { status: string; read_at?: string } = { status: newStatus };
+    if (newStatus === "read") {
+      updates.read_at = new Date().toISOString();
+    }
+
     const { error } = await supabase
       .from("messages")
-      .update({ status: "read", read_at: new Date().toISOString() })
-      .eq("id", id);
+      .update(updates)
+      .eq("id", messageId);
 
-    if (!error) {
-      setMessages((prev) =>
-        prev.map((m) => (m.id === id ? { ...m, status: "read" } : m))
-      );
+    if (error) {
+      toast.error("Failed to update status");
+      return;
     }
+
+    toast.success(`Message marked as ${newStatus}`);
+    setMessages((prev) =>
+      prev.map((m) =>
+        m.id === messageId ? { ...m, status: newStatus, read_at: newStatus === "read" ? new Date().toISOString() : m.read_at } : m
+      )
+    );
   }
 
-  async function handleDelete(id: string) {
-    const { error } = await supabase.from("messages").delete().eq("id", id);
-    if (!error) {
-      setMessages((prev) => prev.filter((m) => m.id !== id));
+  async function deleteMessage(messageId: string) {
+    if (!confirm("Are you sure you want to delete this message?")) return;
+
+    const supabase = createClient();
+    const { error } = await supabase.from("messages").delete().eq("id", messageId);
+
+    if (error) {
+      toast.error("Failed to delete message");
+      return;
+    }
+
+    toast.success("Message deleted");
+    setMessages((prev) => prev.filter((m) => m.id !== messageId));
+    setViewDialogOpen(false);
+  }
+
+  function openView(message: Message) {
+    setSelectedMessage(message);
+    setViewDialogOpen(true);
+    if (message.status === "new") {
+      updateStatus(message.id, "read");
     }
   }
 
   return (
-    <section className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
-      <div className="flex items-center justify-between mb-6">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-heading text-2xl font-semibold">Messages</h1>
+          <h1 className="font-heading text-2xl font-semibold tracking-tight">Messages</h1>
           <p className="text-sm text-muted-foreground">
-            Inquiries and messages submitted through the website contact form.
+            Contact form submissions from the website
           </p>
         </div>
-        <Badge variant="outline">{messages.length} messages</Badge>
+        <div className="flex gap-2">
+          <Badge variant="outline" className="text-blue-600 border-blue-200 bg-blue-50">
+            New: {messages.filter((m) => m.status === "new").length}
+          </Badge>
+          <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50">
+            Read: {messages.filter((m) => m.status === "read").length}
+          </Badge>
+          <Badge variant="outline" className="text-gray-600 border-gray-200 bg-gray-50">
+            Archived: {messages.filter((m) => m.status === "archived").length}
+          </Badge>
+        </div>
       </div>
 
-      <div className="rounded-xl border bg-card overflow-hidden">
+      <div className="rounded-xl border bg-card">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Date</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
+              <TableHead className="w-10"></TableHead>
+              <TableHead>From</TableHead>
               <TableHead>Subject</TableHead>
-              <TableHead>Message</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>Date</TableHead>
+              <TableHead className="w-48">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {messages.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
-                  No messages received yet.
+                <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
+                  No messages yet.
                 </TableCell>
               </TableRow>
             ) : (
-              messages.map((m) => (
-                <TableRow key={m.id}>
-                  <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
-                    {new Date(m.created_at).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell className="font-medium">{m.name}</TableCell>
+              messages.map((message) => (
+                <TableRow key={message.id} className={cn(message.status === "new" && "bg-blue-50/50")}>
                   <TableCell>
-                    <a href={`mailto:${m.email}`} className="text-primary hover:underline">
-                      {m.email}
-                    </a>
-                  </TableCell>
-                  <TableCell className="max-w-[180px] truncate">{m.subject}</TableCell>
-                  <TableCell className="max-w-[260px] truncate text-muted-foreground">
-                    {m.message}
+                    <Mail className={cn("size-4 mx-auto", message.status === "new" && "text-blue-600", message.status !== "new" && "text-muted-foreground")} />
                   </TableCell>
                   <TableCell>
-                    <Badge variant={m.status === "new" ? "default" : "secondary"}>
-                      {m.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right space-x-2 whitespace-nowrap">
-                    {m.status !== "read" && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleRead(m.id)}
-                      >
-                        Mark Read
-                      </Button>
+                    <p className="font-medium">{message.name}</p>
+                    <p className="text-sm text-muted-foreground">{message.email}</p>
+                    {message.restaurant && (
+                      <p className="text-xs text-muted-foreground">From: {message.restaurant.name}</p>
                     )}
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => handleDelete(m.id)}
-                    >
-                      Delete
-                    </Button>
+                  </TableCell>
+                  <TableCell className="max-w-xs truncate">{message.subject}</TableCell>
+                  <TableCell>{getStatusBadge(message.status)}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{formatDateTime(message.created_at)}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => openView(message)}
+                        className="h-8 w-8"
+                        title="View"
+                      >
+                        <Eye className="size-4" />
+                      </Button>
+                      {message.status !== "archived" && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => updateStatus(message.id, "archived")}
+                          className="h-8 w-8"
+                          title="Archive"
+                        >
+                          <Archive className="size-4" />
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => deleteMessage(message.id)}
+                        className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                        title="Delete"
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
@@ -128,7 +192,45 @@ export function MessagesClient({ initialMessages }: MessagesClientProps) {
           </TableBody>
         </Table>
       </div>
-    </section>
+
+      {/* View Dialog */}
+      <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{selectedMessage?.subject}</DialogTitle>
+            <DialogDescription>
+              From {selectedMessage?.name} <{selectedMessage?.email}> · {formatDateTime(selectedMessage?.created_at)}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="rounded-lg border bg-muted p-4 whitespace-pre-wrap text-sm">
+              {selectedMessage?.message}
+            </div>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span>Status: </span>
+              {getStatusBadge(selectedMessage?.status ?? "new")}
+              {selectedMessage?.restaurant && (
+                <>
+                  <span className="mx-1">|</span>
+                  <span>Restaurant: {selectedMessage.restaurant.name}</span>
+                </>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            {selectedMessage?.status !== "archived" && (
+              <Button variant="outline" onClick={() => updateStatus(selectedMessage!.id, "archived")}>
+                <Archive className="mr-2 size-4" />
+                Archive
+              </Button>
+            )}
+            <Button variant="destructive" onClick={() => deleteMessage(selectedMessage!.id)}>
+              <Trash2 className="mr-2 size-4" />
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }
-export default MessagesClient;

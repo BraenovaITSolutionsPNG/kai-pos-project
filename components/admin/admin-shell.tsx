@@ -8,6 +8,7 @@ import {
   CreditCard,
   LayoutDashboard,
   LogOut,
+  Mail,
   PenLine,
   ShieldCheck,
   Users,
@@ -23,6 +24,7 @@ const navItems = [
   { title: "Businesses", href: "/admin/businesses", icon: Building2 },
   { title: "Subscriptions", href: "/admin/subscriptions", icon: CreditCard },
   { title: "Users", href: "/admin/users", icon: Users },
+  { title: "Messages", href: "/admin/messages", icon: Mail },
   { title: "Content", href: "/admin/content", icon: PenLine },
 ];
 

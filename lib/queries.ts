@@ -602,6 +602,15 @@ export const getAdminUsers = cache(async (): Promise<AdminUserRow[]> => {
   return (data as unknown as AdminUserRow[]) ?? [];
 });
 
+export const getAdminMessages = cache(async (): Promise<Message[]> => {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("messages")
+    .select("*, restaurant:restaurants(name)")
+    .order("created_at", { ascending: false });
+  return (data as unknown as Message[]) ?? [];
+});
+
 export interface AdminSubscriptionRow {
   id: string;
   business_id: string;
