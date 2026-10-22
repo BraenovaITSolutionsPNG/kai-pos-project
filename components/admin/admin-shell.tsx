@@ -16,6 +16,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { logout } from "@/lib/auth-actions";
+import { useFormStatus } from "react-dom";
 
 const navItems = [
   { title: "Overview", href: "/admin", icon: LayoutDashboard },
@@ -24,6 +25,31 @@ const navItems = [
   { title: "Users", href: "/admin/users", icon: Users },
   { title: "Content", href: "/admin/content", icon: PenLine },
 ];
+
+function LogoutButton() {
+  const { pending } = useFormStatus();
+
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      disabled={pending}
+      form="logout-form"
+      type="submit"
+    >
+      <LogOut className="size-4" />
+      <span className="hidden sm:inline">{pending ? "Signing out…" : "Sign out"}</span>
+    </Button>
+  );
+}
+
+function LogoutForm() {
+  return (
+    <form id="logout-form" action={logout} className="inline">
+      <LogoutButton />
+    </form>
+  );
+}
 
 export function AdminShell({
   userName,
@@ -35,7 +61,6 @@ export function AdminShell({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const [busy, setBusy] = useState(false);
 
   return (
     <div className="flex min-h-svh flex-col bg-muted/30">
@@ -82,18 +107,7 @@ export function AdminShell({
             <UtensilsCrossed className="size-4" />
             <span className="hidden sm:inline">POS app</span>
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            disabled={busy}
-            onClick={async () => {
-              setBusy(true);
-              await logout();
-            }}
-          >
-            <LogOut className="size-4" />
-            <span className="hidden sm:inline">{busy ? "Signing out…" : "Sign out"}</span>
-          </Button>
+          <LogoutForm />
         </div>
       </header>
       <main className="mx-auto w-full max-w-6xl grow p-4 sm:p-6">{children}</main>

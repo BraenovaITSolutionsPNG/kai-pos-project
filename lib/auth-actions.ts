@@ -63,8 +63,9 @@ export async function signup(
   return { message: "Check your email to confirm your account, then log in." };
 }
 
-export async function logout(): Promise<void> {
+export async function logout(): Promise<{ error?: string }> {
   const supabase = await createClient();
-  await supabase.auth.signOut();
+  const { error } = await supabase.auth.signOut();
+  if (error) return { error: error.message };
   redirect("/login");
 }
