@@ -36,15 +36,13 @@ export function MessagesClient({ messages: initialMessages }: MessagesClientProp
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
 
   const getStatusBadge = (status: string) => {
-    return (
-      <Badge variant={cn(
-        status === "new" && "bg-blue-100 text-blue-800",
-        status === "read" && "bg-green-100 text-green-800",
-        status === "archived" && "bg-gray-100 text-gray-800"
-      )}>
-        {status.charAt(0).toUpperCase() + status.slice(1)}
-      </Badge>
+    const baseClass = "capitalize";
+    const variantClass = cn(
+      status === "new" && "bg-blue-100 text-blue-800",
+      status === "read" && "bg-green-100 text-green-800",
+      status === "archived" && "bg-gray-100 text-gray-800"
     );
+    return <Badge className={cn(baseClass, variantClass)}>{status}</Badge>;
   };
 
   async function updateStatus(messageId: string, newStatus: "read" | "archived") {

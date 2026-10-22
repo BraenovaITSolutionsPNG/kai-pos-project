@@ -24,6 +24,7 @@ import type {
   Expense,
   Ingredient,
   InventoryTransaction,
+  Message,
   Order,
   Product,
   Recipe,
