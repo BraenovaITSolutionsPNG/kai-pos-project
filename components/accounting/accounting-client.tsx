@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { formatDate, formatDateTime, formatKina, paymentMethodLabel } from "@/lib/format";
+import { formatDate, formatDateTime, formatKina, formatTime, paymentMethodLabel } from "@/lib/format";
 import type { Order, Payment, Expense, Cashup, Shift } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -208,8 +208,8 @@ function cashupsToCsv(cashups: Cashup[], shifts: Shift[]): string {
     const variance = Number(c.net_sales) - expectedCash;
     
     return [
-      shift ? formatDate(shift.clock_in) : "",
-      shift ? `${formatTime(shift.clock_in)} - ${shift.clock_out ? formatTime(shift.clock_out) : "Open"}` : "",
+      shift?.clock_in ? formatDate(shift.clock_in) : "",
+      shift?.clock_in ? `${formatTime(shift.clock_in)} - ${shift.clock_out ? formatTime(shift.clock_out) : "Open"}` : "",
       shift?.staff?.full_name || "",
       formatKina(c.cash_total),
       formatKina(c.eftpos_total),
@@ -238,7 +238,7 @@ function shiftsToCsv(shifts: Shift[]): string {
     "Status",
   ];
   
-  const rows = shifts.map((s) => {
+const rows = shifts.map((s) => {
     const clockIn = s.clock_in ? new Date(s.clock_in) : null;
     const clockOut = s.clock_out ? new Date(s.clock_out) : null;
     const duration = clockIn && clockOut 
@@ -248,11 +248,11 @@ function shiftsToCsv(shifts: Shift[]): string {
         : "";
     
     return [
-      clockIn ? formatDate(clockIn) : "",
+      clockIn ? formatDate(s.clock_in) : "",
+      clockIn ? formatTime(s.clock_in) : "",
+      clockOut ? formatTime(s.clock_out) : "",
       s.staff?.full_name || "",
       s.staff?.role || "",
-      clockIn ? formatTime(clockIn) : "",
-      clockOut ? formatTime(clockOut) : "",
       duration,
       clockOut ? "Completed" : clockIn ? "Active" : "Not started",
     ];
@@ -282,7 +282,7 @@ export function AccountingClient({ restaurantId }: { restaurantId: string }) {
     const supabase = createClient();
     const { data } = await supabase
       .from("orders")
-      .select("*, order_items(*), payments(*), tables(label)")
+      .select("*, order_items(*), payments(*), tables(label), customer_name, customer_phone, customer_notes")
       .eq("restaurant_id", restaurantId)
       .gte("created_at", `${from}T00:00:00`)
       .lte("created_at", `${to}T23:59:59`)

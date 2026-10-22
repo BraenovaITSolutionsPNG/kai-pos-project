@@ -113,7 +113,7 @@ export const getSessionContext = cache(async (): Promise<SessionContext> => {
 export interface RestaurantWithStats {
   id: string;
   name: string;
-  address: string;
+  address: string | null;
   currency: string;
   logo_url: string | null;
   created_at: string;

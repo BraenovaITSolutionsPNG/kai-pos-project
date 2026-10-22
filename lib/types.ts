@@ -109,6 +109,10 @@ export interface Order {
   order_items?: OrderItem[];
   payments?: Payment[];
   tables?: { label: string | null } | null;
+  customer_name?: string | null;
+  customer_phone?: string | null;
+  customer_notes?: string | null;
+  estimated_ready_at?: string | null;
 }
 
 export interface Payment {
@@ -179,8 +183,8 @@ export interface LoyaltyTransaction {
   customer_id: string;
   order_id: string | null;
   type: "earned" | "redeemed" | "expired" | "adjusted" | "bonus";
-  points: integer;
-  balance_after: integer;
+  points: number;
+  balance_after: number;
   description: string | null;
   created_by: string | null;
   created_at: string;
@@ -204,6 +208,7 @@ export interface Shift {
   clock_out: string | null;
   scheduled_shift_id: string | null;
   created_at: string;
+  staff?: { full_name: string; role: string } | null;
 }
 
 export interface Cashup {

@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
+import { toast } from "sonner";
 
 interface Category {
   id: string;
@@ -249,6 +250,7 @@ export function OrderClient({
   const [submitting, setSubmitting] = useState(false);
   const [orderResult, setOrderResult] = useState<OrderResult | null>(null);
   const [editingNotes, setEditingNotes] = useState<CartItem | null>(null);
+  const [cartOpen, setCartOpen] = useState(false);
 
   // Customer info
   const [customerName, setCustomerName] = useState("");

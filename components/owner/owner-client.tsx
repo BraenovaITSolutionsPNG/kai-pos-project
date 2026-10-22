@@ -25,6 +25,7 @@ export function OwnerClient({ businessName, initialRestaurants }: OwnerClientPro
   const router = useRouter();
   const [restaurants] = useState<RestaurantWithStats[]>(initialRestaurants);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [loading, setLoading] = useState(false);
 
   const totalOrders = restaurants.reduce((sum, r) => sum + r.today_orders, 0);
   const totalRevenue = restaurants.reduce((sum, r) => sum + r.today_revenue, 0);
@@ -35,7 +36,9 @@ export function OwnerClient({ businessName, initialRestaurants }: OwnerClientPro
   };
 
   const refresh = () => {
+    setLoading(true);
     router.refresh();
+    setTimeout(() => setLoading(false), 1000);
   };
 
   const toggleExpand = (id: string) => {
