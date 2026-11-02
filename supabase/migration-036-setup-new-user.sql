@@ -10,8 +10,7 @@ create or replace function public.setup_new_user(
 returns void
 language plpgsql
 security definer
-set search_path = public
-as 
+as $$
 declare
   v_business_id uuid;
   v_restaurant_id uuid;
@@ -68,4 +67,4 @@ begin
     (v_restaurant_id, v_snacks,  'Chicken Roll',              12.00, 2),
     (v_restaurant_id, v_desserts,'Ice Cream Sundae',           8.00, 1);
 end;
-;
+$$;
