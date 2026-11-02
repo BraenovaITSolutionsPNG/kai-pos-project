@@ -125,6 +125,12 @@ export default async function LandingPage() {
 
   return (
     <div className="min-h-svh bg-background">
+      <a
+        href="#main-content"
+        className="sr-only z-[100] rounded-md bg-background px-4 py-2 text-foreground shadow-lg focus:not-sr-only focus:fixed focus:left-4 focus:top-4"
+      >
+        Skip to content
+      </a>
       {/* Nav */}
       <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur animate-slide-down">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
@@ -135,7 +141,7 @@ export default async function LandingPage() {
               <p className="text-[11px] text-muted-foreground">by BraeNova IT Solutions</p>
             </div>
           </div>
-          <nav className="hidden items-center gap-6 text-sm font-medium text-muted-foreground md:flex">
+          <nav aria-label="Main navigation" className="hidden items-center gap-6 text-sm font-medium text-muted-foreground md:flex">
             <a href="#features" className="transition-colors hover:text-foreground">
               Features
             </a>
@@ -168,8 +174,9 @@ export default async function LandingPage() {
         </div>
       </header>
 
+      <main id="main-content" tabIndex={-1}>
       {/* Hero */}
-      <section className="relative isolate overflow-hidden">
+      <section className="relative isolate overflow-hidden bg-neutral-950">
         {/* Hero background slideshow */}
         <div
           aria-hidden
@@ -177,7 +184,8 @@ export default async function LandingPage() {
         >
           <HeroSlideshow />
           {/* Dark overlay for text readability */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/40" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/45 to-black/30" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/45" />
         </div>
 
         {/* Subtle warm tint (kept low so the photo shows) */}
@@ -198,8 +206,8 @@ export default async function LandingPage() {
           aria-hidden
           className="pointer-events-none absolute right-0 top-40 size-80 animate-orb-b rounded-full bg-orange-300/20 blur-3xl"
         />
-        <div className="mx-auto grid max-w-6xl gap-12 px-4 pb-20 pt-16 sm:px-6 lg:grid-cols-2 lg:items-center lg:pt-24">
-          <div>
+        <div className="mx-auto grid max-w-6xl gap-12 px-4 pb-20 pt-16 sm:px-6 lg:grid-cols-2 lg:items-center lg:gap-16 lg:pb-24 lg:pt-20">
+          <div className="max-w-xl">
             <Badge
               variant="outline"
               className="mb-4 animate-fade-up gap-1.5 border-white/40 bg-white/10 text-white backdrop-blur"
@@ -207,10 +215,10 @@ export default async function LandingPage() {
               <MonitorSmartphone className="size-3.5" />
               {content.hero.badge}
             </Badge>
-            <h1 className="animate-fade-up font-heading text-4xl font-semibold leading-tight tracking-tight text-white [animation-delay:100ms] [&_span]:text-amber-300 sm:text-5xl">
+            <h1 className="animate-fade-up text-balance font-heading text-4xl font-semibold leading-[1.08] tracking-[-0.04em] text-white [animation-delay:100ms] [&_span]:text-amber-300 sm:text-5xl lg:text-6xl">
               {renderAccent(content.hero.title)}
             </h1>
-            <p className="mt-4 max-w-lg animate-fade-up text-lg text-white/80 [animation-delay:200ms]">
+            <p className="mt-5 max-w-xl animate-fade-up text-base leading-7 text-white/85 [animation-delay:200ms] sm:text-lg">
               {content.hero.subtitle}
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3 [animation-delay:300ms] animate-fade-up">
@@ -234,21 +242,32 @@ export default async function LandingPage() {
             <p className="mt-4 animate-fade-up text-sm text-white/70 [animation-delay:400ms]">
               Your menu is set up for you
             </p>
+            <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-xs font-medium text-white/80 sm:text-sm">
+              <span className="inline-flex items-center gap-2">
+                <CreditCard className="size-4 text-amber-300" />
+                Kina-first payments
+              </span>
+              <span className="inline-flex items-center gap-2">
+                <MonitorSmartphone className="size-4 text-amber-300" />
+                Phone, tablet or PC
+              </span>
+              <span className="inline-flex items-center gap-2">
+                <ShieldCheck className="size-4 text-amber-300" />
+                Staff access by role
+              </span>
+            </div>
           </div>
 
           {/* App mockup */}
           <div className="relative mx-auto w-full max-w-md [animation-delay:250ms] animate-fade-up">
-            <div className="animate-float rounded-2xl border bg-card p-4 shadow-2xl">
+            <div className="animate-float rounded-2xl border border-white/70 bg-card p-4 shadow-2xl shadow-black/30 ring-1 ring-white/20 sm:p-5">
               <div className="mb-4 flex items-center gap-2 border-b pb-3">
                 <BrandLogo className="size-7 rounded-md bg-white p-0.5 shadow-sm" />
-                <div className="text-sm font-medium">KAI POS Today</div>
-                <Badge className="ml-auto gap-1.5">
-                  <span className="relative flex size-2">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary-foreground opacity-75" />
-                    <span className="relative inline-flex size-2 rounded-full bg-primary-foreground" />
-                  </span>
-                  Live
-                </Badge>
+                <div>
+                  <div className="text-sm font-semibold">KAI POS dashboard</div>
+                  <div className="text-[11px] text-muted-foreground">A sample day at a glance</div>
+                </div>
+                <Badge variant="secondary" className="ml-auto">Preview</Badge>
               </div>
               <div className="grid grid-cols-3 gap-3">
                 {[
@@ -258,10 +277,10 @@ export default async function LandingPage() {
                 ].map((s, i) => (
                   <div
                     key={s.label}
-                    className="animate-fade-up rounded-lg bg-muted p-3 text-center"
+                    className="animate-fade-up rounded-xl border bg-muted/60 p-3 text-left"
                     style={{ animationDelay: `${450 + i * 120}ms` }}
                   >
-                    <p className="text-[11px] text-muted-foreground">{s.label}</p>
+                    <p className="text-[11px] font-medium text-muted-foreground">{s.label}</p>
                     <CountUp
                       to={s.value}
                       decimals={s.decimals}
@@ -280,7 +299,7 @@ export default async function LandingPage() {
                 ].map((item, i) => (
                   <div
                     key={item.name}
-                    className="flex animate-fade-up items-center justify-between rounded-lg border px-3 py-2 text-sm"
+                    className="flex animate-fade-up items-center justify-between rounded-lg border bg-background/80 px-3 py-2.5 text-sm"
                     style={{ animationDelay: `${700 + i * 130}ms` }}
                   >
                     <span>
@@ -314,10 +333,10 @@ export default async function LandingPage() {
       <section className="border-y bg-gradient-to-br from-amber-50/50 via-orange-50/40 to-rose-50/50">
         <div className="mx-auto grid max-w-6xl grid-cols-2 gap-6 px-4 py-10 sm:px-6 md:grid-cols-4">
           {[
+            { value: "K", label: "Prices and receipts in Kina" },
             { value: "8+", label: "Payment methods supported" },
-            { value: "10+", label: "Modules included" },
-            { value: "PGK", label: "Priced in Papua New Guinea Kina" },
-            { value: "1", label: "Setup, your cafe ready today" },
+            { value: "All-in-one", label: "Sales, stock, staff and reports" },
+            { value: "Any screen", label: "Phone, tablet or desktop" },
           ].map((s) => (
             <div key={s.label} className="text-center">
               <p className="font-heading text-2xl font-semibold text-primary">{s.value}</p>
@@ -328,9 +347,10 @@ export default async function LandingPage() {
       </section>
 
       {/* Features */}
-      <section id="features" className="relative mx-auto max-w-6xl px-4 py-20 sm:px-6">
+      <section id="features" className="relative mx-auto max-w-6xl px-4 py-24 sm:px-6">
         <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-br from-amber-50/40 via-orange-50/30 to-rose-50/40 rounded-3xl blur-2xl" />
         <div className="mx-auto max-w-2xl text-center">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-primary">Built for the way you sell</p>
           <h2 className="font-heading text-3xl font-semibold tracking-tight">
             {content.features.heading}
           </h2>
@@ -342,13 +362,13 @@ export default async function LandingPage() {
           {features.map((f) => (
             <div
               key={f.title}
-              className="rounded-xl border bg-card p-5 transition-shadow hover:shadow-md"
+              className="group rounded-2xl border border-border/70 bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg"
             >
-              <div className="mb-3 flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <f.icon className="size-5" />
+              <div className="mb-4 flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors duration-300 group-hover:bg-primary group-hover:text-primary-foreground">
+                <f.icon className="size-5" aria-hidden="true" />
               </div>
               <h3 className="font-heading font-semibold">{f.title}</h3>
-              <p className="mt-1.5 text-sm text-muted-foreground">{f.text}</p>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{f.text}</p>
             </div>
           ))}
         </div>
@@ -438,6 +458,8 @@ export default async function LandingPage() {
           </div>
         </div>
       </section>
+
+      </main>
 
       {/* Footer */}
       <footer className="relative border-t bg-gradient-to-br from-amber-50/60 via-orange-50/40 to-rose-50/50">

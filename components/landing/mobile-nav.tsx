@@ -12,13 +12,19 @@ export function MobileNav() {
 
   return (
     <div className="md:hidden">
-      <Button variant="ghost" size="icon" onClick={() => setOpen(!open)}>
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        aria-controls="mobile-primary-navigation"
+      >
         {open ? <X className="size-5" /> : <Menu className="size-5" />}
         <span className="sr-only">Toggle menu</span>
       </Button>
       {open && (
-        <div className="absolute left-0 right-0 top-16 z-40 border-b bg-background/95 backdrop-blur p-4 shadow-lg">
-          <nav className="flex flex-col gap-3 text-sm font-medium text-muted-foreground">
+        <div id="mobile-primary-navigation" className="absolute left-0 right-0 top-16 z-40 border-b bg-background/95 backdrop-blur p-4 shadow-lg">
+          <nav aria-label="Mobile navigation" className="flex flex-col gap-3 text-sm font-medium text-muted-foreground">
             <a href="#features" onClick={() => setOpen(false)} className="transition-colors hover:text-foreground py-2">
               Features
             </a>
