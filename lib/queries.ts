@@ -654,7 +654,7 @@ export const getAdminUsers = async (): Promise<AdminUserRow[]> => {
     }));
   }
   return (data as unknown as AdminUserRow[]) ?? [];
-});
+};
 
 export const getAdminMessages = cache(async (): Promise<Message[]> => {
   const supabase = await createClient();
