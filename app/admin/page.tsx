@@ -9,20 +9,24 @@ import {
   UtensilsCrossed,
 } from "lucide-react";
 import { formatKina } from "@/lib/format";
-import { getAdminOverview } from "@/lib/queries";
+import { getAdminOverview, getAdminBusinesses } from "@/lib/queries";
+import { AdminOverviewCharts } from "@/components/admin/admin-overview-charts";
 
 export const metadata: Metadata = {
   title: "Platform overview",
 };
 
 export default async function AdminOverviewPage() {
-  const stats = await getAdminOverview();
+  const [stats, businesses] = await Promise.all([
+    getAdminOverview(),
+    getAdminBusinesses(),
+  ]);
 
   const cards = [
     {
       label: "Businesses",
       value: String(stats.businesses),
-      sub: `${stats.active_businesses} active Â· ${stats.businesses - stats.active_businesses} suspended`,
+      sub: `${stats.active_businesses} active · ${stats.businesses - stats.active_businesses} suspended`,
       icon: Building2,
     },
     {
@@ -89,11 +93,14 @@ export default async function AdminOverviewPage() {
         })}
       </div>
 
+      <AdminOverviewCharts businesses={businesses} />
+
       <div className="flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm">
         <ShieldCheck className="size-4 text-primary" />
-        You have platform-wide access. Use the nav above to manage businesses
-        and users.
+        You have platform-wide access. Use the nav on the left to manage
+        businesses and users.
       </div>
     </div>
   );
 }
+
