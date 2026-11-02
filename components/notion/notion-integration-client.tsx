@@ -43,9 +43,9 @@ interface ChangelogEntry {
 }
 
 export function NotionIntegrationClient({ defaultMarketingDb, defaultFeedbackDb, defaultChangelogDb }: { defaultMarketingDb?: string; defaultFeedbackDb?: string; defaultChangelogDb?: string; }) {
-  const [marketingDb, setMarketingDb] = useState(defaultMarketingDb || "");
-  const [feedbackDb, setFeedbackDb] = useState(defaultFeedbackDb || "");
-  const [changelogDb, setChangelogDb] = useState(defaultChangelogDb || "");
+  const [marketingDb, setMarketingDb] = useState(defaultMarketingDb || "68a9db62-c3b3-423d-aa89-a443c82c443b");
+  const [feedbackDb, setFeedbackDb] = useState(defaultFeedbackDb || "0a3c86a5-0620-4d17-aaef-5457530771ef");
+  const [changelogDb, setChangelogDb] = useState(defaultChangelogDb || "e1507779-7a24-4a52-84c7-71ed7e899a14");
   
   const [marketing, setMarketing] = useState<MarketingContent[]>([]);
   const [feedback, setFeedback] = useState<ClientFeedback[]>([]);
