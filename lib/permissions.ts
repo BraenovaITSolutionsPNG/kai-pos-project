@@ -25,6 +25,7 @@ const ALL_ROUTES = [
   '/bills',
   '/settings',
   '/messages',
+  '/year-end-close',
 ];
 
 export const ROLE_ROUTES: Record<StaffRole, string[]> = {
@@ -48,6 +49,7 @@ export const ROLE_ROUTES: Record<StaffRole, string[]> = {
     '/bills',
     '/settings',
     '/messages',
+    '/year-end-close',
   ],
   cashier: ['/dashboard', '/pos', '/orders', '/bills'],
   kitchen: ['/dashboard', '/orders', '/kitchen'],

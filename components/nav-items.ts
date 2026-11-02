@@ -6,6 +6,7 @@ import {
   Package,
   Tags,
   Settings,
+  Download,
   Table,
   ChefHat,
   Boxes,
@@ -54,5 +55,6 @@ export const laterNav: NavItem[] = [
   { title: "Promotions", href: "/promotions", icon: Megaphone },
   { title: "Bills", href: "/bills", icon: Receipt },
   { title: "Settings", href: "/settings", icon: Settings },
+  { title: "Year-End Close", href: "/year-end-close", icon: Download },
   { title: "Contact", href: "/contact", icon: MessageSquare },
 ];
