@@ -25,14 +25,14 @@ export interface SiteContent {
 export const DEFAULT_CONTENT: SiteContent = {
   hero: {
     badge: "Built for Papua New Guinea",
-    title: "Run your restaurant & cafe the {accent}smart way{/accent}, in Kina.",
+    title: "Run your shop, cafe or restaurant the {accent}smart way{/accent}, in Kina.",
     subtitle:
-      "KAI POS is an all-in-one point of sale, kitchen, inventory and reporting platform made for PNG restaurants & cafes. Say goodbye to paper receipts and the calculator.",
+      "KAI POS is an all-in-one point of sale, kitchen, inventory and reporting platform for PNG businesses of all sizes - cafes, restaurants, takeaways, retail shops and more. Say goodbye to paper receipts and the calculator.",
     cta: "Get started",
     cta2: "See what's inside",
   },
   features: {
-    heading: "Everything your restaurant & cafe needs",
+    heading: "Everything your business needs",
     subtext:
       "From the cashier to the kitchen to the owner's office, one platform, one source of truth.",
   },
@@ -48,9 +48,9 @@ export const DEFAULT_CONTENT: SiteContent = {
       "All plans include product setup support and PNG payment methods.",
   },
   cta: {
-    heading: "Ready to run your restaurant & cafe the smart way?",
+    heading: "Ready to run your business the smart way?",
     subtext:
-      "Create your cafe, add your menu and start taking orders, in Kina, on any tablet or phone.",
+      "Create your business, add your products and start taking orders, in Kina, on any tablet or phone.",
   },
   bank_details: {
     bank_name: "BSP (Bank South Pacific)",

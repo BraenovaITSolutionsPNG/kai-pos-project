@@ -29,9 +29,9 @@ import { getSiteContent, getMySubscription } from "@/lib/queries";
 import { resolveSiteContent, renderAccent } from "@/lib/site-content";
 
 export const metadata: Metadata = {
-  title: "Restaurant & Cafe POS for Papua New Guinea",
+  title: "POS for Papua New Guinea",
   description:
-    "KAI POS is the all-in-one restaurant & cafe operating system for PNG with POS, tables, kitchen display, inventory, staff and reports, built around the Kina.",
+    "KAI POS is the all-in-one operating system for PNG businesses with POS, tables, kitchen display, inventory, staff and reports, built around the Kina.",
 };
 
 export const dynamic = "force-dynamic";
@@ -82,8 +82,8 @@ const features = [
 const steps = [
   {
     step: "1",
-    title: "Create your cafe",
-    text: "Sign up and your business, restaurant or cafe, and owner account are set up automatically.",
+    title: "Create your business",
+    text: "Sign up and your business and owner account are set up automatically.",
   },
   {
     step: "2",
@@ -440,7 +440,7 @@ export default async function LandingPage() {
             <div className="leading-tight">
               <p className="font-heading text-sm font-semibold">KAI POS</p>
               <p className="text-[11px] text-muted-foreground">
-                Restaurant & Cafe platform · Papua New Guinea
+                Business platform · Papua New Guinea
               </p>
             </div>
           </div>
