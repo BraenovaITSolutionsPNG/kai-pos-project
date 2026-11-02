@@ -55,6 +55,19 @@ export async function signup(
 
   if (error) return { error: error.message };
 
+  // If the auth trigger is disabled, set up the user manually
+  if (data.user) {
+    await supabase.rpc("setup_new_user", {
+      p_user_id: data.user.id,
+      p_email: email,
+      p_full_name: fullName,
+      p_business_name: businessName || fullName + "'s Cafe",
+      p_plan: ["starter", "business", "professional"].includes(plan)
+        ? plan
+        : "starter",
+    });
+  }
+
   // New businesses start inactive: send owners straight to billing so
   // they can submit their first payment for approval.
   if (data.session) redirect("/subscription");
