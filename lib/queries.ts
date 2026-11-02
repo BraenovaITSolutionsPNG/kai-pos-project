@@ -622,34 +622,37 @@ export const getAdminBusinesses = cache(
   }
 );
 
-export const getAdminUsers = async (): Promise<AdminUserRow[]> => {
+export const getAdminUsers = cache(async (): Promise<AdminUserRow[]> => {
   if (isMySqlMode()) {
     const { data } = await execAdminUsers();
     return (data as AdminUserRow[]) ?? [];
   }
   const supabase = await createClient();
-  const { data: authUser } = await supabase.auth.getUser();
-  console.log("getAdminUsers: auth user =", authUser?.user?.id, authUser?.user?.email);
-  // Direct query (RLS allows platform admins to see all users)
-  const { data: directData, error: directError } = await supabase
-    .from("users")
-    .select("id, email, full_name, is_platform_admin, created_at")
-    .order("created_at", { ascending: false });
-  if (directError) {
-    console.error("Direct users query error:", directError.message);
-    return [];
+  // Try RPC first
+  const { data, error } = await supabase.rpc("get_admin_users");
+  if (error) {
+    console.error("get_admin_users RPC error:", error.message, error.code);
+    // Fallback: direct query (bypasses assert_platform_admin)
+    const { data: directData, error: directError } = await supabase
+      .from("users")
+      .select("id, email, full_name, is_platform_admin, created_at")
+      .order("created_at", { ascending: false });
+    if (directError) {
+      console.error("Direct users query error:", directError.message);
+      return [];
+    }
+    return (directData ?? []).map((u: any) => ({
+      id: u.id,
+      email: u.email,
+      full_name: u.full_name,
+      phone: null,
+      is_platform_admin: u.is_platform_admin,
+      memberships: null,
+      created_at: u.created_at,
+    }));
   }
-  console.log("Direct query returned", directData?.length, "users");
-  return (directData ?? []).map((u: any) => ({
-    id: u.id,
-    email: u.email,
-    full_name: u.full_name,
-    phone: null,
-    is_platform_admin: u.is_platform_admin,
-    memberships: null,
-    created_at: u.created_at,
-  }));
-};
+  return (data as unknown as AdminUserRow[]) ?? [];
+});
 
 export const getAdminMessages = cache(async (): Promise<Message[]> => {
   const supabase = await createClient();
