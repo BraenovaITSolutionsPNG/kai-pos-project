@@ -35,7 +35,7 @@ export interface ChangelogEntry {
 export async function getMarketingContent(databaseId?: string): Promise<MarketingContent[]> {
   if (!databaseId) return [];
   try {
-    const response = await notion.databases.query({
+    const response: any = await (notion.databases as any).query({
       database_id: databaseId,
     });
 
@@ -56,7 +56,7 @@ export async function getMarketingContent(databaseId?: string): Promise<Marketin
 export async function getClientFeedback(databaseId?: string): Promise<ClientFeedback[]> {
   if (!databaseId) return [];
   try {
-    const response = await notion.databases.query({
+    const response: any = await (notion.databases as any).query({
       database_id: databaseId,
       sorts: [
         {
@@ -86,7 +86,7 @@ export async function getClientFeedback(databaseId?: string): Promise<ClientFeed
 export async function getChangelog(databaseId?: string): Promise<ChangelogEntry[]> {
   if (!databaseId) return [];
   try {
-    const response = await notion.databases.query({
+    const response: any = await (notion.databases as any).query({
       database_id: databaseId,
       sorts: [
         {
