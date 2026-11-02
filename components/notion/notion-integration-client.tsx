@@ -253,7 +253,7 @@ export function NotionIntegrationClient() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="priority">Priority</Label>
-                    <Select value={feedbackForm.priority} onValueChange={(v) => setFeedbackForm({ ...feedbackForm, priority: v })}>
+                    <Select value={feedbackForm.priority} onValueChange={(v: string | null) => setFeedbackForm({ ...feedbackForm, priority: v ?? "medium" })}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -306,10 +306,10 @@ export function NotionIntegrationClient() {
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <h4 className="font-medium">{item.title}</h4>
-                      <Badge className={`${getPriorityColor(item.priority)} text-white text-xs`}>
+                      <Badge className={getPriorityColor(item.priority) + " text-white text-xs"}>
                         {item.priority}
                       </Badge>
-                      <Badge className={`${getStatusColor(item.status)} text-white text-xs`}>
+                      <Badge className={getStatusColor(item.status) + " text-white text-xs"}>
                         {item.status}
                       </Badge>
                     </div>
@@ -325,10 +325,8 @@ export function NotionIntegrationClient() {
                     )}
                   </div>
                   {item.url && (
-                    <Button variant="ghost" size="sm" asChild>
-                      <a href={item.url} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="size-4" />
-                      </a>
+                    <Button variant="ghost" size="sm" onClick={() => window.open(item.url, "_blank")}>
+                      <ExternalLink className="size-4" />
                     </Button>
                   )}
                 </div>
@@ -359,10 +357,8 @@ export function NotionIntegrationClient() {
                     <p className="text-sm text-muted-foreground">{item.type} {item.status && `• ${item.status}`}</p>
                   </div>
                   {item.url && (
-                    <Button variant="ghost" size="sm" asChild>
-                      <a href={item.url} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="size-4" />
-                      </a>
+                    <Button variant="ghost" size="sm" onClick={() => window.open(item.url, "_blank")}>
+                      <ExternalLink className="size-4" />
                     </Button>
                   )}
                 </div>
@@ -392,7 +388,7 @@ export function NotionIntegrationClient() {
                     <div className="flex items-center gap-2">
                       <h4 className="font-medium">{item.title}</h4>
                       {item.version && <Badge variant="outline">{item.version}</Badge>}
-                      <Badge className={`${getStatusColor(item.type)} text-white text-xs`}>
+                      <Badge className={getStatusColor(item.type) + " text-white text-xs"}>
                         {item.type}
                       </Badge>
                     </div>
@@ -404,10 +400,8 @@ export function NotionIntegrationClient() {
                     )}
                   </div>
                   {item.url && (
-                    <Button variant="ghost" size="sm" asChild>
-                      <a href={item.url} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="size-4" />
-                      </a>
+                    <Button variant="ghost" size="sm" onClick={() => window.open(item.url, "_blank")}>
+                      <ExternalLink className="size-4" />
                     </Button>
                   )}
                 </div>
