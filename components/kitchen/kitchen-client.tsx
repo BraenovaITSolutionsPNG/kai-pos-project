@@ -13,8 +13,6 @@ import { toast } from "sonner";
 
 type ColumnId = "new" | "preparing" | "ready";
 
-const POLL_MS = 8000;
-
 function itemStage(item: OrderItem): ColumnId {
   return item.status;
 }
@@ -139,9 +137,6 @@ export function KitchenClient({ initialOrders }: { initialOrders: Order[] }) {
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>(initialOrders);
   const [busy, setBusy] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const scheduleRef = useRef<() => void>(() => {});
-
   const load = useCallback(async () => {
     const supabase = createClient();
     const { data } = await supabase
@@ -151,25 +146,22 @@ export function KitchenClient({ initialOrders }: { initialOrders: Order[] }) {
     if (data) setOrders(data as unknown as Order[]);
   }, []);
 
-  const schedule = useCallback(() => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(async () => {
-      await load();
-      scheduleRef.current?.();
-    }, POLL_MS);
-  }, [load]);
-
-  // Initialize scheduleRef after schedule is defined
   useEffect(() => {
-    scheduleRef.current = schedule;
-  }, [schedule]);
+    const supabase = createClient();
+    const channel = supabase
+      .channel("kitchen-orders")
+      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => {
+        void load();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "order_items" }, () => {
+        void load();
+      })
+      .subscribe();
 
-  useEffect(() => {
-    schedule();
     return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
+      supabase.removeChannel(channel);
     };
-  }, [schedule]);
+  }, [load]);
 
   async function advance(order: Order, action: "preparing" | "ready" | "served") {
     setBusy(true);
