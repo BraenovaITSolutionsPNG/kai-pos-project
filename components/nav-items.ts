@@ -54,4 +54,5 @@ export const laterNav: NavItem[] = [
   { title: "Bills", href: "/bills", icon: Receipt },
   { title: "Settings", href: "/settings", icon: Settings },
   { title: "Contact", href: "/contact", icon: MessageSquare },
+  { title: "Notion", href: "/notion", icon: FileText },
 ];
