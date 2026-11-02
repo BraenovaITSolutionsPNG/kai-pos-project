@@ -1,7 +1,7 @@
--- KAI POS production rollout: migrations 041, 042, and 043
+-- KAI POS production rollout: migration 030 plus migrations 041, 042, and 043
 -- Run this entire file once against the intended production database, after
 -- applying it successfully to staging and taking a restorable production backup.
--- All migration DDL is in one transaction; any raised error aborts the rollout.
+-- Migration 030 and migrations 041–043 run in one transaction; any raised error aborts the rollout.
 -- This script does not alter platform-admin flags.
 
 BEGIN;
@@ -11,6 +11,7 @@ SET LOCAL statement_timeout = '90s';
 DO $preflight$
 DECLARE
   v_missing text;
+  v_res_missing text;
 BEGIN
   IF to_regclass('public.site_content') IS NULL THEN
     RAISE EXCEPTION 'Preflight failed: public.site_content is missing';
@@ -24,8 +25,31 @@ BEGIN
   ) THEN
     RAISE EXCEPTION 'Preflight failed: public.site_content.key needs a unique constraint/index';
   END IF;
-  IF to_regclass('public.reservations') IS NULL THEN
-    RAISE EXCEPTION 'Preflight failed: public.reservations is missing; apply/verify migration 030 first';
+  IF to_regclass('public.reservations') IS NOT NULL THEN
+    SELECT string_agg(req.column_name, ', ')
+      INTO v_res_missing
+    FROM (VALUES
+      ('id'), ('restaurant_id'), ('table_id'), ('customer_name'), ('customer_phone'),
+      ('customer_email'), ('party_size'), ('reservation_date'), ('reservation_time'),
+      ('duration_minutes'), ('status'), ('notes'), ('created_by'), ('created_at'), ('updated_at')
+    ) AS req(column_name)
+    WHERE NOT EXISTS (
+      SELECT 1 FROM information_schema.columns c
+      WHERE c.table_schema = 'public'
+        AND c.table_name = 'reservations'
+        AND c.column_name = req.column_name
+    );
+    IF v_res_missing IS NOT NULL THEN
+      RAISE EXCEPTION 'Preflight failed: existing public.reservations is missing columns: %', v_res_missing;
+    END IF;
+    IF EXISTS (
+      SELECT 1 FROM pg_policies p
+      WHERE p.schemaname = 'public'
+        AND p.tablename = 'reservations'
+        AND p.policyname NOT IN ('reservations_select','reservations_insert','reservations_update','reservations_delete')
+    ) THEN
+      RAISE EXCEPTION 'Preflight failed: unexpected reservations policies exist; review them before rollout';
+    END IF;
   END IF;
   IF to_regprocedure('public.assert_platform_admin()') IS NULL THEN
     RAISE EXCEPTION 'Preflight failed: public.assert_platform_admin() is missing';
@@ -51,7 +75,6 @@ BEGIN
     ('users','id'), ('users','email'), ('users','full_name'), ('users','is_platform_admin'), ('users','created_at'),
     ('staff','user_id'), ('staff','restaurant_id'), ('staff','is_active'), ('staff','role'),
     ('restaurants','id'), ('restaurants','tax_rate'),
-    ('reservations','restaurant_id'),
     ('orders','restaurant_id'), ('orders','order_number'), ('orders','status'), ('orders','subtotal'),
     ('orders','tax'), ('orders','total'), ('orders','created_by'), ('orders','order_type'),
     ('orders','table_id'), ('orders','source'), ('orders','updated_at'),
@@ -81,6 +104,57 @@ FROM public.users
 WHERE is_platform_admin = true
 ORDER BY created_at;
 
+
+-- ======================================================================
+-- 030 — reservations prerequisite
+-- These initially permissive policies are temporary within this transaction;
+-- migration 042 replaces them with tenant-scoped policies before COMMIT.
+-- Never commit migration 030's broad policies by itself in production.
+-- ======================================================================
+
+-- Table reservations
+create table if not exists public.reservations (
+  id uuid primary key default gen_random_uuid(),
+  restaurant_id uuid not null,
+  table_id uuid,
+  customer_name text not null,
+  customer_phone text,
+  customer_email text,
+  party_size integer not null default 2,
+  reservation_date date not null,
+  reservation_time time not null,
+  duration_minutes integer not null default 90,
+  status text not null default 'pending',
+  notes text,
+  created_by uuid,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists reservations_restaurant_date_idx on public.reservations (restaurant_id, reservation_date);
+create index if not exists reservations_table_idx on public.reservations (table_id);
+
+alter table public.reservations enable row level security;
+
+drop policy if exists "reservations_select" on public.reservations;
+create policy "reservations_select" on public.reservations
+  for select to authenticated
+  using (true);
+
+drop policy if exists "reservations_insert" on public.reservations;
+create policy "reservations_insert" on public.reservations
+  for insert to authenticated
+  with check (true);
+
+drop policy if exists "reservations_update" on public.reservations;
+create policy "reservations_update" on public.reservations
+  for update to authenticated
+  using (true);
+
+drop policy if exists "reservations_delete" on public.reservations;
+create policy "reservations_delete" on public.reservations
+  for delete to authenticated
+  using (true);
 
 -- ======================================================================
 -- 041 — keyed site content
