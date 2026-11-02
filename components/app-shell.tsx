@@ -175,14 +175,6 @@ export function AppShell({
 
       {/* Mobile drawer */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetTrigger
-          render={
-            <Button variant="ghost" size="icon" className="lg:hidden">
-              <Menu className="size-5" />
-              <span className="sr-only">Open menu</span>
-            </Button>
-          }
-        />
         <SheetContent side="left" className="w-64 p-0">
           <SheetTitle className="sr-only">Navigation</SheetTitle>
           <Brand collapsed={false} />

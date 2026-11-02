@@ -163,14 +163,6 @@ export function AdminShell({
 
       {/* Mobile drawer */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetTrigger
-          render={
-            <Button variant="ghost" size="icon" className="lg:hidden">
-              <Menu className="size-5" />
-              <span className="sr-only">Open menu</span>
-            </Button>
-          }
-        />
         <SheetContent side="left" className="w-64 p-0">
           <SheetTitle className="sr-only">Navigation</SheetTitle>
           <div className="flex h-14 items-center gap-2 border-b px-4">
@@ -203,6 +195,13 @@ export function AdminShell({
 
       {/* Main column */}
       <div className="flex min-w-0 flex-1 flex-col">
+        <header className="flex h-14 items-center gap-2 border-b bg-card/80 px-4 backdrop-blur lg:hidden">
+          <Button variant="ghost" size="icon" onClick={() => setMobileOpen(true)}>
+            <Menu className="size-5" />
+            <span className="sr-only">Open menu</span>
+          </Button>
+          <span className="font-heading text-sm font-semibold">KAI Platform Admin</span>
+        </header>
         <main className="grow p-4 sm:p-6 lg:p-8">{children}</main>
       </div>
     </div>
