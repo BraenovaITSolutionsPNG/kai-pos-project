@@ -11,7 +11,7 @@ returns table (
 language plpgsql
 security definer
 set search_path = public
-as 
+as $$
 begin
   return query
   select
@@ -29,4 +29,4 @@ begin
   from public.users u
   order by u.created_at desc;
 end;
-;
+$$;
