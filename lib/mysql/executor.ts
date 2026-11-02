@@ -1408,6 +1408,29 @@ export async function execAdminUpdateSubscription(args: {
   return { data: { ok: true }, error: null };
 }
 
+export async function execAdminCancelSubscription(args: {
+  subscription_id: string;
+}): Promise<{ data: unknown; error: null }> {
+  await requirePlatformAdmin();
+  const [rows] = await query<{ business_id: string }[]>(
+    "SELECT business_id FROM subscriptions WHERE id = ?",
+    [args.subscription_id]
+  );
+  if (!rows) throw new Error("Subscription not found.");
+
+  await withTransaction(async (conn) => {
+    await conn.query(
+      "UPDATE subscriptions SET status = 'cancelled', current_period_end = ? WHERE id = ?",
+      [nowIso().slice(0, 10), args.subscription_id]
+    );
+    await conn.query(
+      "UPDATE businesses SET is_active = false WHERE id = ?",
+      [rows.business_id]
+    );
+  });
+  return { data: { ok: true }, error: null };
+}
+
 export async function execAdminSendReminder(args: {
   subscription_id: string;
   message: string;

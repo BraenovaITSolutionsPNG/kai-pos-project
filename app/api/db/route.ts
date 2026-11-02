@@ -9,6 +9,7 @@ import {
   execAdminSendReminder,
   execAdminSubscriptionPayments,
   execAdminUpdateSubscription,
+  execAdminCancelSubscription,
   execCreateOrder,
   execDelete,
   execInsert,
@@ -114,6 +115,11 @@ export async function POST(request: Request) {
         if (body.name === "update_subscription") {
           return NextResponse.json(
             await execAdminUpdateSubscription(body.args as never)
+          );
+        }
+        if (body.name === "cancel_subscription") {
+          return NextResponse.json(
+            await execAdminCancelSubscription(body.args as never)
           );
         }
         if (body.name === "send_reminder") {

@@ -457,6 +457,19 @@ export function SubscriptionsClient({
                           <Bell />
                           Remind
                         </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive"
+                          disabled={busyId !== null}
+                          onClick={() => {
+                            if (!confirm("Cancel subscription for " + sub.business_name + "?")) return;
+                            void run("cancel_subscription", { subscription_id: sub.id });
+                          }}
+                        >
+                          <X />
+                          Cancel
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
