@@ -444,7 +444,7 @@ export default async function LandingPage() {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-5 text-sm text-muted-foreground">
+          <div className="flex flex-col items-center gap-3 text-sm text-muted-foreground sm:flex-row sm:gap-5">
             <span className="flex items-center gap-1.5">
               <CreditCard className="size-4" />
               Billed in PGK
