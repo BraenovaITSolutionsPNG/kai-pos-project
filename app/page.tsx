@@ -125,14 +125,13 @@ export default async function LandingPage() {
       {/* Nav */}
       <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur animate-slide-down">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-            <div className="hidden items-center gap-2 md:flex">
+          <div className="flex items-center gap-2">
               <BrandLogo className="size-9 rounded-lg bg-white p-1 shadow-sm transition-transform duration-300 hover:rotate-12 hover:scale-110" />
               <div className="leading-tight">
               <p className="font-heading text-sm font-semibold">KAI POS</p>
               <p className="text-[11px] text-muted-foreground">by BraeNova IT Solutions</p>
             </div>
           </div>
-          <MobileNav />
           <nav className="hidden items-center gap-6 text-sm font-medium text-muted-foreground md:flex">
             <a href="#features" className="transition-colors hover:text-foreground">
               Features
@@ -150,6 +149,7 @@ export default async function LandingPage() {
               Contact
             </Link>
           </nav>
+          <MobileNav />
           <div className="hidden items-center gap-2 md:flex">
             <Link
               href="/login"
