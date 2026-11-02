@@ -20,8 +20,7 @@ export async function proxy(request: NextRequest) {
     path.startsWith("/payment-pending") ||
     path.startsWith("/subscription") ||
     path.startsWith("/menu") ||
-    path.startsWith("/order") ||
-    path.startsWith("/contact");
+    path.startsWith("/order");
 
   // MySQL mode: session lives in a kai_session cookie.
   if (isMySqlMode()) {

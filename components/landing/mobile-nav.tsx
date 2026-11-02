@@ -31,9 +31,6 @@ export function MobileNav() {
             <a href="#faq" onClick={() => setOpen(false)} className="transition-colors hover:text-foreground py-2">
               FAQ
             </a>
-            <Link href="/contact" onClick={() => setOpen(false)} className="transition-colors hover:text-foreground py-2">
-              Contact
-            </Link>
             <div className="flex gap-2 pt-2 border-t">
               <Link href="/login" className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "flex-1")}>
                 Sign in
