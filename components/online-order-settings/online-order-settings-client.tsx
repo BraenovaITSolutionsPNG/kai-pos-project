@@ -88,11 +88,9 @@ export function OnlineOrderSettingsClient({
               <Share2 className="size-4" />
               Share
             </Button>
-            <Button variant="outline" asChild>
-              <a href={orderUrl} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="size-4" />
-                Preview
-              </a>
+            <Button variant="outline" onClick={() => window.open(orderUrl, "_blank")}>
+              <ExternalLink className="size-4" />
+              Preview
             </Button>
           </div>
         </CardContent>
