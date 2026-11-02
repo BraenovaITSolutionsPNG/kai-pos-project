@@ -4,7 +4,7 @@ import { useEffect } from "react";
 
 export function PageViewTracker() {
   useEffect(() => {
-    const visitorId = localStorage.getItem("visitor_id") || crypto.randomUUID();
+    const visitorId = localStorage.getItem("visitor_id") || (typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now().toString(36));
     if (!localStorage.getItem("visitor_id")) {
       localStorage.setItem("visitor_id", visitorId);
     }
