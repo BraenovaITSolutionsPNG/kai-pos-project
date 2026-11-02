@@ -622,12 +622,14 @@ export const getAdminBusinesses = cache(
   }
 );
 
-export const getAdminUsers = cache(async (): Promise<AdminUserRow[]> => {
+export const getAdminUsers = async (): Promise<AdminUserRow[]> => {
   if (isMySqlMode()) {
     const { data } = await execAdminUsers();
     return (data as AdminUserRow[]) ?? [];
   }
   const supabase = await createClient();
+  const { data: authUser } = await supabase.auth.getUser();
+  console.log("getAdminUsers: auth user =", authUser?.user?.id, authUser?.user?.email);
   // Try RPC first
   const { data, error } = await supabase.rpc("get_admin_users");
   if (error) {
