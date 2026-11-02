@@ -51,6 +51,7 @@ export const PLAN_GATED_ROUTES: Record<string, PlanName[]> = {
   "/promotions": ["business", "professional"],
   "/accounting": ["business", "professional"],
   "/loyalty": ["business", "professional"],
+  "/online-order-settings": ["business", "professional"],
 };
 
 export function isRoleAllowedForPlan(role: StaffRole, plan: PlanName): boolean {
