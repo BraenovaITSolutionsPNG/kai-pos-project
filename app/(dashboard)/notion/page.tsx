@@ -8,6 +8,13 @@ export const metadata: Metadata = {
 
 export default async function NotionPage() {
   const ctx = await getSessionContext();
-  
-  return <NotionIntegrationClient />;
+
+  return (
+    <NotionIntegrationClient
+      defaultMarketingDb={process.env.NOTION_MARKETING_DB}
+      defaultFeedbackDb={process.env.NOTION_FEEDBACK_DB}
+      defaultChangelogDb={process.env.NOTION_CHANGELOG_DB}
+    />
+  );
 }
+

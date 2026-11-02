@@ -42,10 +42,10 @@ interface ChangelogEntry {
   url?: string;
 }
 
-export function NotionIntegrationClient() {
-  const [marketingDb, setMarketingDb] = useState("");
-  const [feedbackDb, setFeedbackDb] = useState("");
-  const [changelogDb, setChangelogDb] = useState("");
+export function NotionIntegrationClient({ defaultMarketingDb, defaultFeedbackDb, defaultChangelogDb }: { defaultMarketingDb?: string; defaultFeedbackDb?: string; defaultChangelogDb?: string; }) {
+  const [marketingDb, setMarketingDb] = useState(defaultMarketingDb || "");
+  const [feedbackDb, setFeedbackDb] = useState(defaultFeedbackDb || "");
+  const [changelogDb, setChangelogDb] = useState(defaultChangelogDb || "");
   
   const [marketing, setMarketing] = useState<MarketingContent[]>([]);
   const [feedback, setFeedback] = useState<ClientFeedback[]>([]);
