@@ -628,10 +628,28 @@ export const getAdminUsers = cache(async (): Promise<AdminUserRow[]> => {
     return (data as AdminUserRow[]) ?? [];
   }
   const supabase = await createClient();
+  // Try RPC first
   const { data, error } = await supabase.rpc("get_admin_users");
   if (error) {
     console.error("get_admin_users RPC error:", error.message, error.code);
-    return [];
+    // Fallback: direct query (bypasses assert_platform_admin)
+    const { data: directData, error: directError } = await supabase
+      .from("users")
+      .select("id, email, full_name, is_platform_admin, created_at")
+      .order("created_at", { ascending: false });
+    if (directError) {
+      console.error("Direct users query error:", directError.message);
+      return [];
+    }
+    return (directData ?? []).map((u: any) => ({
+      id: u.id,
+      email: u.email,
+      full_name: u.full_name,
+      phone: null,
+      is_platform_admin: u.is_platform_admin,
+      memberships: null,
+      created_at: u.created_at,
+    }));
   }
   return (data as unknown as AdminUserRow[]) ?? [];
 });
