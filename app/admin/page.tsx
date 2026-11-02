@@ -9,7 +9,7 @@ import {
   UtensilsCrossed,
 } from "lucide-react";
 import { formatKina } from "@/lib/format";
-import { getAdminOverview, getAdminBusinesses } from "@/lib/queries";
+import { getAdminOverview, getAdminBusinesses, getPageViewStats } from "@/lib/queries";
 import { AdminOverviewCharts } from "@/components/admin/admin-overview-charts";
 
 export const metadata: Metadata = {
@@ -17,9 +17,10 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminOverviewPage() {
-  const [stats, businesses] = await Promise.all([
+  const [stats, businesses, pageViews] = await Promise.all([
     getAdminOverview(),
     getAdminBusinesses(),
+    getPageViewStats(),
   ]);
 
   const cards = [
@@ -58,6 +59,18 @@ export default async function AdminOverviewPage() {
       value: formatKina(stats.revenue),
       sub: "Excluding cancelled orders",
       icon: Wallet,
+    },
+    {
+      label: "Total page views",
+      value: String(pageViews.total_views),
+      sub: pageViews.unique_visitors + " unique visitors",
+      icon: Users,
+    },
+    {
+      label: "Today views",
+      value: String(pageViews.today_views),
+      sub: pageViews.today_unique + " unique today",
+      icon: Users,
     },
   ];
 

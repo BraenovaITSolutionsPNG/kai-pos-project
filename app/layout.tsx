@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { PwaRegister } from "@/components/pwa-register";
+import { PageViewTracker } from "@/components/page-view-tracker";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -51,6 +52,7 @@ export default function RootLayout({
         {children}
         <Toaster />
         <PwaRegister />
+        <PageViewTracker />
       </body>
     </html>
   );

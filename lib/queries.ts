@@ -581,6 +581,35 @@ export const getAdminOverview = cache(async (): Promise<AdminOverview> => {
   return (data as unknown as AdminOverview) ?? ({} as AdminOverview);
 });
 
+export interface PageViewStats {
+  total_views: number;
+  unique_visitors: number;
+  today_views: number;
+  today_unique: number;
+}
+
+export const getPageViewStats = cache(async (): Promise<PageViewStats> => {
+  const supabase = await createClient();
+  const today = new Date().toISOString().slice(0, 10);
+
+  const [totalRes, todayRes, uniqueRes, todayUniqueRes] = await Promise.all([
+    supabase.from("page_views").select("id", { count: "exact", head: true }),
+    supabase.from("page_views").select("id", { count: "exact", head: true }).gte("created_at", today + "T00:00:00"),
+    supabase.from("page_views").select("visitor_id").not("visitor_id", "is", null),
+    supabase.from("page_views").select("visitor_id").not("visitor_id", "is", null).gte("created_at", today + "T00:00:00"),
+  ]);
+
+  const uniqueVisitors = new Set((uniqueRes.data || []).map((r: any) => r.visitor_id)).size;
+  const todayUnique = new Set((todayUniqueRes.data || []).map((r: any) => r.visitor_id)).size;
+
+  return {
+    total_views: totalRes.count || 0,
+    unique_visitors: uniqueVisitors,
+    today_views: todayRes.count || 0,
+    today_unique: todayUnique,
+  };
+});
+
 export const getAdminBusinesses = cache(
   async (): Promise<AdminBusinessRow[]> => {
     if (isMySqlMode()) {
