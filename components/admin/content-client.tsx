@@ -92,20 +92,26 @@ export function ContentClient({
 
   async function save() {
     setBusy(true);
-    const supabase = createClient();
-    const { error } = await supabase.rpc("update_site_content", {
-      items: SECTIONS.map((s) => ({
-        id: s.id,
-        value: values[s.id] ?? {},
-      })),
-    });
-    setBusy(false);
-    if (error) {
-      toast.error(error.message);
-      return;
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.rpc("update_site_content", {
+        items: SECTIONS.map((s) => ({
+          id: s.id,
+          key: s.id,
+          value: values[s.id] ?? {},
+        })),
+      });
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+      toast.success("Landing page content saved");
+      router.refresh();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to save content");
+    } finally {
+      setBusy(false);
     }
-    toast.success("Landing page content saved");
-    router.refresh();
   }
 
   return (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,17 +19,13 @@ export function PaymentMethodsAdminClient() {
   const [loading, setLoading] = useState(true);
   const [newName, setNewName] = useState("");
   const [uploading, setUploading] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadTarget, setUploadTarget] = useState<string | null>(null);
 
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
-  useEffect(() => {
-    loadMethods();
-  }, []);
-
-  async function loadMethods() {
-    setLoading(true);
+  const loadMethods = useCallback(async () => {
     const { data } = await supabase
       .from("site_content")
       .select("value")
@@ -49,15 +45,34 @@ export function PaymentMethodsAdminClient() {
       ]);
     }
     setLoading(false);
-  }
+  }, [supabase]);
 
-  async function saveMethods(updated: PaymentMethod[]) {
+  useEffect(() => {
+    // The state updates happen after the asynchronous database read resolves.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadMethods();
+  }, [loadMethods]);
+
+  async function saveMethods(updated: PaymentMethod[]): Promise<boolean> {
+    const previous = methods;
+    setSaving(true);
     setMethods(updated);
-    const { error } = await supabase
-      .from("site_content")
-      .upsert({ key: "payment_methods", value: updated }, { onConflict: "key" });
-    if (error) {
-      toast.error(error.message);
+    try {
+      const { error } = await supabase.rpc("update_site_content", {
+        items: [{ id: "payment_methods", key: "payment_methods", value: updated }],
+      });
+      if (error) {
+        setMethods(previous);
+        toast.error(error.message);
+        return false;
+      }
+      return true;
+    } catch (error) {
+      setMethods(previous);
+      toast.error(error instanceof Error ? error.message : "Failed to save payment methods");
+      return false;
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -79,15 +94,13 @@ export function PaymentMethodsAdminClient() {
     const updated = methods.map((m) =>
       m.name === methodName ? { ...m, logo_url: urlData.publicUrl } : m
     );
-    await saveMethods(updated);
-    toast.success("Logo uploaded");
+    if (await saveMethods(updated)) toast.success("Logo uploaded");
     setUploading(null);
   }
 
   async function handleRemove(methodName: string) {
     const updated = methods.filter((m) => m.name !== methodName);
-    await saveMethods(updated);
-    toast.success("Payment method removed");
+    if (await saveMethods(updated)) toast.success("Payment method removed");
   }
 
   async function handleAdd() {
@@ -97,9 +110,10 @@ export function PaymentMethodsAdminClient() {
       return;
     }
     const updated = [...methods, { name: newName.trim(), logo_url: null }];
-    await saveMethods(updated);
-    setNewName("");
-    toast.success("Payment method added");
+    if (await saveMethods(updated)) {
+      setNewName("");
+      toast.success("Payment method added");
+    }
   }
 
   if (loading) {
@@ -129,7 +143,7 @@ export function PaymentMethodsAdminClient() {
               placeholder="e.g. BSP, ANZ, Cash"
               onKeyDown={(e) => e.key === "Enter" && handleAdd()}
             />
-            <Button onClick={handleAdd}>
+            <Button onClick={handleAdd} disabled={saving}>
               <Plus className="size-4" />
               Add
             </Button>
@@ -153,7 +167,7 @@ export function PaymentMethodsAdminClient() {
                 <Button
                   size="sm"
                   variant="outline"
-                  disabled={uploading === m.name}
+                  disabled={saving || uploading !== null}
                   onClick={() => {
                     setUploadTarget(m.name);
                     fileInputRef.current?.click();
@@ -170,6 +184,7 @@ export function PaymentMethodsAdminClient() {
                   size="sm"
                   variant="outline"
                   className="text-destructive"
+                  disabled={saving}
                   onClick={() => handleRemove(m.name)}
                 >
                   <Trash2 className="size-4" />

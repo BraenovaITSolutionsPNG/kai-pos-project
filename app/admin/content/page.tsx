@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 export default async function AdminContentPage() {
   const rows = await getSiteContent();
   const content = Object.fromEntries(
-    rows.map((r) => [r.id, r.value ?? {}])
+    rows.map((r) => [r.key || r.id, r.value ?? {}])
   );
 
   return <ContentClient initial={content} />;

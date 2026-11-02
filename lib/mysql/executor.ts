@@ -1524,9 +1524,9 @@ export async function execGetSiteContent(): Promise<{
   );
   const parsed = (rows ?? []).map((r) => {
     try {
-      return { id: r.id, value: JSON.parse(r.value) };
+      return { id: r.id, key: r.id, value: JSON.parse(r.value) };
     } catch {
-      return { id: r.id, value: null };
+      return { id: r.id, key: r.id, value: null };
     }
   });
   return { data: parsed, error: null };

@@ -38,6 +38,13 @@ interface CartItem {
 interface Restaurant {
   id: string;
   name: string;
+  tax_rate: number;
+}
+
+interface OnlineOrderResult {
+  order_number: string | number;
+  total: number;
+  estimated_delivery: string | null;
 }
 
 export function OnlineOrderClient() {
@@ -56,14 +63,14 @@ export function OnlineOrderClient() {
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [deliveryNotes, setDeliveryNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [orderResult, setOrderResult] = useState<any>(null);
+  const [orderResult, setOrderResult] = useState<OnlineOrderResult | null>(null);
 
   const supabase = createClient();
 
   useEffect(() => {
     async function loadMenu() {
       setLoading(true);
-      let query = supabase.from("restaurants").select("id, name");
+      let query = supabase.from("restaurants").select("id, name, tax_rate");
       if (restaurantId) {
         query = query.eq("id", restaurantId);
       } else {
@@ -110,7 +117,8 @@ export function OnlineOrderClient() {
   };
 
   const subtotal = cart.reduce((sum, i) => sum + i.unit_price * i.quantity, 0);
-  const tax = subtotal * 0.1;
+  const taxRate = Number(restaurant?.tax_rate ?? 0) || 0;
+  const tax = Math.round((subtotal * taxRate / 100 + Number.EPSILON) * 100) / 100;
   const total = subtotal + tax;
 
   async function submitOrder() {
@@ -270,7 +278,7 @@ export function OnlineOrderClient() {
                   <span>{formatKina(subtotal)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span>Tax (10%)</span>
+                  <span>Tax ({taxRate}%)</span>
                   <span>{formatKina(tax)}</span>
                 </div>
                 <div className="flex justify-between font-semibold">

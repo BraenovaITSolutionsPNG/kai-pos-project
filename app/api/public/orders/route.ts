@@ -1,88 +1,143 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
+type PublicOrderItemInput = {
+  product_id: string;
+  quantity: number;
+  notes: string | null;
+};
+
+type PublicOrderProduct = {
+  id: string;
+  name: string;
+  price: number | string;
+  is_active: boolean;
+};
+
+function parseOrderItems(value: unknown): PublicOrderItemInput[] | null {
+  if (!Array.isArray(value) || value.length === 0) return null;
+
+  const parsed: PublicOrderItemInput[] = [];
+  for (const entry of value) {
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)) return null;
+    const item = entry as Record<string, unknown>;
+    if (
+      typeof item.product_id !== "string" ||
+      !item.product_id.trim() ||
+      !Number.isSafeInteger(item.quantity) ||
+      Number(item.quantity) < 1
+    ) {
+      return null;
+    }
+    parsed.push({
+      product_id: item.product_id.trim(),
+      quantity: Number(item.quantity),
+      notes: typeof item.notes === "string" ? item.notes.trim() || null : null,
+    });
+  }
+  return parsed;
+}
+
+const roundMoney = (value: number) => Math.round((value + Number.EPSILON) * 100) / 100;
+
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const {
-      restaurant_id,
-      customer_name,
-      customer_phone,
-      customer_email,
-      delivery_address,
-      delivery_notes,
-      items,
-      order_type = "takeaway",
-    } = body;
-
-    if (!restaurant_id || !customer_name || !items || !Array.isArray(items) || items.length === 0) {
+    const body: unknown = await request.json();
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
+    const payload = body as Record<string, unknown>;
+    const restaurantId = typeof payload.restaurant_id === "string" ? payload.restaurant_id : "";
+    const customerName = typeof payload.customer_name === "string" ? payload.customer_name.trim() : "";
+    const orderType = payload.order_type === undefined ? "takeaway" : payload.order_type;
+    const deliveryAddress = typeof payload.delivery_address === "string" ? payload.delivery_address.trim() : "";
+    const items = parseOrderItems(payload.items);
+
+    if (!restaurantId || !customerName || !items) {
+      return NextResponse.json({ error: "Enter your name and add valid items to the order" }, { status: 400 });
+    }
+    if (orderType !== "takeaway" && orderType !== "delivery") {
+      return NextResponse.json({ error: "Invalid order type" }, { status: 400 });
+    }
+    if (orderType === "delivery" && !deliveryAddress) {
+      return NextResponse.json({ error: "Delivery address is required" }, { status: 400 });
     }
 
     const supabase = await createClient();
 
-    // Verify restaurant exists
-    const { data: restaurant } = await supabase
+    // Load the restaurant's configured tax rate on the server.
+    const { data: restaurant, error: restaurantError } = await supabase
       .from("restaurants")
-      .select("id, name")
-      .eq("id", restaurant_id)
+      .select("id, name, tax_rate")
+      .eq("id", restaurantId)
       .single();
 
-    if (!restaurant) {
+    if (restaurantError || !restaurant) {
       return NextResponse.json({ error: "Restaurant not found" }, { status: 404 });
     }
 
-    // Fetch products to get prices
-    const productIds = items.map((i: any) => i.product_id);
-    const { data: products } = await supabase
+    // Only accept active products belonging to the selected restaurant.
+    const productIds = [...new Set(items.map((item) => item.product_id))];
+    const { data: products, error: productsError } = await supabase
       .from("products")
       .select("id, name, price, is_active")
+      .eq("restaurant_id", restaurantId)
+      .eq("is_active", true)
       .in("id", productIds);
 
-    if (!products || products.length === 0) {
-      return NextResponse.json({ error: "No valid products" }, { status: 400 });
+    if (productsError) {
+      return NextResponse.json({ error: "Could not validate menu items" }, { status: 500 });
     }
 
-    const productMap = new Map(products.map((p: any) => [p.id, p]));
+    const validProducts = (products ?? []) as PublicOrderProduct[];
+    const productMap = new Map(validProducts.map((product) => [product.id, product]));
+    if (productMap.size !== productIds.length) {
+      return NextResponse.json({ error: "One or more items are unavailable" }, { status: 400 });
+    }
 
-    // Calculate totals
     let subtotal = 0;
-    const orderItems = items.map((item: any) => {
+    const orderItems = items.map((item) => {
       const product = productMap.get(item.product_id);
-      if (!product || !product.is_active) throw new Error("Invalid product: " + item.product_id);
+      if (!product || !product.is_active) return null;
       const unitPrice = Number(product.price);
-      const qty = Number(item.quantity) || 1;
-      const lineTotal = unitPrice * qty;
+      if (!Number.isFinite(unitPrice) || unitPrice < 0) return null;
+      const lineTotal = unitPrice * item.quantity;
       subtotal += lineTotal;
       return {
         product_id: product.id,
         product_name: product.name,
-        quantity: qty,
+        quantity: item.quantity,
         unit_price: unitPrice,
-        notes: item.notes || null,
+        notes: item.notes,
       };
     });
+    if (orderItems.some((item) => item === null)) {
+      return NextResponse.json({ error: "One or more items are unavailable" }, { status: 400 });
+    }
 
-    const tax = subtotal * 0.1; // 10% tax
-    const total = subtotal + tax;
+    const cleanOrderItems = orderItems.filter((item) => item !== null);
+    subtotal = roundMoney(subtotal);
+    const taxRate = Number(restaurant.tax_rate) || 0;
+    const tax = roundMoney((subtotal * taxRate) / 100);
+    const total = roundMoney(subtotal + tax);
 
     // Create order
     const { data: order, error: orderError } = await supabase
       .from("orders")
       .insert({
-        restaurant_id,
+        restaurant_id: restaurantId,
         order_source: "online",
-        order_type,
+        order_type: orderType,
         status: "open",
         subtotal,
         tax,
         total,
-        customer_name,
-        customer_phone: customer_phone || null,
-        customer_email: customer_email || null,
-        delivery_address: delivery_address || null,
-        delivery_notes: delivery_notes || null,
-        delivery_status: order_type === "delivery" ? "pending" : null,
+        customer_name: customerName,
+        customer_phone: typeof payload.customer_phone === "string" ? payload.customer_phone.trim() || null : null,
+        customer_email: typeof payload.customer_email === "string" ? payload.customer_email.trim() || null : null,
+        delivery_address: deliveryAddress || null,
+        delivery_notes: typeof payload.delivery_notes === "string" ? payload.delivery_notes.trim() || null : null,
+        delivery_status: orderType === "delivery" ? "pending" : null,
       })
       .select()
       .single();
@@ -92,7 +147,7 @@ export async function POST(request: Request) {
     }
 
     // Create order items
-    const itemsWithOrderId = orderItems.map((oi: any) => ({
+    const itemsWithOrderId = cleanOrderItems.map((oi) => ({
       ...oi,
       order_id: order.id,
     }));
@@ -106,8 +161,11 @@ export async function POST(request: Request) {
       success: true,
       order_id: order.id,
       order_number: order.order_number,
-      total,
-      estimated_delivery: order_type === "delivery" ? "30-45 minutes" : null,
+      subtotal: Number(order.subtotal ?? subtotal),
+      tax: Number(order.tax ?? tax),
+      tax_rate: taxRate,
+      total: Number(order.total ?? total),
+      estimated_delivery: orderType === "delivery" ? "30-45 minutes" : null,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to create order";

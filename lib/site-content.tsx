@@ -78,7 +78,7 @@ function pick<T extends Record<string, unknown>>(
 }
 
 export function resolveSiteContent(rows: SiteContentRow[]): SiteContent {
-  const map = new Map(rows.map((r) => [r.id, r.value]));
+  const map = new Map(rows.map((r) => [r.key || r.id, r.value]));
   return {
     hero: pick(map.get("hero"), DEFAULT_CONTENT.hero),
     features: pick(map.get("features"), DEFAULT_CONTENT.features),

@@ -741,6 +741,7 @@ export const getNotifications = cache(async (): Promise<NotificationRow[]> => {
 
 export interface SiteContentRow {
   id: string;
+  key: string;
   value: Record<string, unknown> | null;
 }
 
