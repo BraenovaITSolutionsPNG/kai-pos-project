@@ -11,7 +11,7 @@ export default async function ReservationsPage() {
   const ctx = await getSessionContext();
   assertAccess(ctx.staff.role, "/tables");
 
-  const tables = await getTables(ctx.restaurant.id);
+  const tables = await getTables();
 
   return (
     <ReservationsClient
