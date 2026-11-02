@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { formatKina } from "@/lib/format";
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,8 @@ interface Restaurant {
 }
 
 export function OnlineOrderClient() {
+  const params = useParams();
+  const restaurantId = params?.id as string | undefined;
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -60,11 +63,13 @@ export function OnlineOrderClient() {
   useEffect(() => {
     async function loadMenu() {
       setLoading(true);
-      // For demo, load first restaurant
-      const { data: restaurants } = await supabase
-        .from("restaurants")
-        .select("id, name")
-        .limit(1);
+      let query = supabase.from("restaurants").select("id, name");
+      if (restaurantId) {
+        query = query.eq("id", restaurantId);
+      } else {
+        query = query.limit(1);
+      }
+      const { data: restaurants } = await query;
       if (restaurants && restaurants.length > 0) {
         const r = restaurants[0];
         setRestaurant(r);
@@ -78,7 +83,7 @@ export function OnlineOrderClient() {
       setLoading(false);
     }
     loadMenu();
-  }, []);
+  }, [restaurantId]);
 
   const addToCart = (product: Product) => {
     setCart((prev) => {
