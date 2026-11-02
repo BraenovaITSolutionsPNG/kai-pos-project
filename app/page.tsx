@@ -25,6 +25,7 @@ import { CountUp } from "@/components/landing/count-up";
 import { FoodAnimation } from "@/components/landing/food-animation";
 import { HeroSlideshow } from "@/components/landing/hero-slideshow";
 import { BrandLogo } from "@/components/brand-logo";
+import { MobileNav } from "@/components/landing/mobile-nav";
 import { getSiteContent, getMySubscription } from "@/lib/queries";
 import { resolveSiteContent, renderAccent } from "@/lib/site-content";
 
@@ -124,13 +125,14 @@ export default async function LandingPage() {
       {/* Nav */}
       <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur animate-slide-down">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-            <div className="flex items-center gap-2">
+            <div className="hidden items-center gap-2 md:flex">
               <BrandLogo className="size-9 rounded-lg bg-white p-1 shadow-sm transition-transform duration-300 hover:rotate-12 hover:scale-110" />
               <div className="leading-tight">
               <p className="font-heading text-sm font-semibold">KAI POS</p>
               <p className="text-[11px] text-muted-foreground">by BraeNova IT Solutions</p>
             </div>
           </div>
+          <MobileNav />
           <nav className="hidden items-center gap-6 text-sm font-medium text-muted-foreground md:flex">
             <a href="#features" className="transition-colors hover:text-foreground">
               Features
@@ -148,7 +150,7 @@ export default async function LandingPage() {
               Contact
             </Link>
           </nav>
-          <div className="flex items-center gap-2">
+          <div className="hidden items-center gap-2 md:flex">
             <Link
               href="/login"
               className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
@@ -435,7 +437,7 @@ export default async function LandingPage() {
       <footer className="relative border-t bg-gradient-to-br from-amber-50/60 via-orange-50/40 to-rose-50/50">
         <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-t from-amber-100/30 via-transparent to-rose-100/30" />
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 px-4 py-10 sm:flex-row sm:px-6">
-          <div className="flex items-center gap-2">
+          <div className="hidden items-center gap-2 md:flex">
             <BrandLogo className="size-8 rounded-lg bg-white p-1 shadow-sm" />
             <div className="leading-tight">
               <p className="font-heading text-sm font-semibold">KAI POS</p>
