@@ -496,19 +496,112 @@ export async function execCreateOrder(args: {
     notes: string | null;
   }[];
   v_method: PaymentMethod;
+  v_order_type?: "dine_in" | "takeaway";
+  v_table_id?: string | null;
 }): Promise<{ data: unknown; error: null }> {
+  const user = await requireUser();
+  if (args.v_created_by !== user.id) {
+    throw new Error("Order creator must match the signed-in user.");
+  }
+  if (!Array.isArray(args.p_items) || args.p_items.length === 0) {
+    throw new Error("At least one order item is required.");
+  }
+
+  const orderType = args.v_order_type ?? "dine_in";
+  const tableId = args.v_table_id ?? null;
+  if (orderType !== "dine_in" && orderType !== "takeaway") {
+    throw new Error("Unsupported order type.");
+  }
+  if (orderType === "dine_in" && !tableId) {
+    throw new Error("A table is required for dine-in orders.");
+  }
+  if (orderType === "takeaway" && tableId) {
+    throw new Error("Takeaway orders cannot reference a table.");
+  }
+  const allowedMethods: PaymentMethod[] = [
+    "cash", "eftpos", "bank_transfer", "bsp", "kina_bank", "anz", "westpac", "other",
+  ];
+  if (!allowedMethods.includes(args.v_method)) {
+    throw new Error("Unsupported payment method.");
+  }
+
   const order = await withTransaction(async (conn) => {
+    const [staffRows] = await conn.query(
+      `SELECT role FROM staff
+       WHERE user_id = ? AND restaurant_id = ? AND is_active = 1
+       LIMIT 1`,
+      [user.id, args.v_restaurant_id]
+    ) as unknown as [{ role: string }[]];
+    if (!staffRows[0] || !["owner", "manager", "cashier", "waiter"].includes(staffRows[0].role)) {
+      throw new Error("You do not have POS access to this restaurant.");
+    }
+
     const [taxRows] = await conn.query(
       "SELECT tax_rate FROM restaurants WHERE id = ?",
       [args.v_restaurant_id]
     ) as unknown as [Record<string, unknown>[]];
-    const taxRate = Number(taxRows[0]?.tax_rate ?? 0);
+    if (!taxRows[0]) throw new Error("Restaurant not found.");
+    const taxRate = Number(taxRows[0].tax_rate ?? 0);
+    if (!Number.isFinite(taxRate) || taxRate < 0) {
+      throw new Error("Restaurant tax rate is invalid.");
+    }
 
-    const subtotal = args.p_items.reduce(
-      (sum, i) => sum + Number(i.quantity) * Number(i.unit_price),
+    if (tableId) {
+      const [tableRows] = await conn.query(
+        `SELECT id FROM tables
+         WHERE id = ? AND restaurant_id = ?
+         FOR UPDATE`,
+        [tableId, args.v_restaurant_id]
+      ) as unknown as [{ id: string }[]];
+      if (!tableRows[0]) throw new Error("Table not found for this restaurant.");
+    }
+
+    const normalizedItems: {
+      product_id: string;
+      product_name: string;
+      quantity: number;
+      unit_price: number;
+      notes: string | null;
+    }[] = [];
+
+    for (const item of args.p_items) {
+      if (!item || typeof item.product_id !== "string" || !item.product_id) {
+        throw new Error("Invalid order item.");
+      }
+      const quantity = Number(item.quantity);
+      if (!Number.isSafeInteger(quantity) || quantity <= 0) {
+        throw new Error("Order quantities must be positive integers.");
+      }
+      const notes = item.notes ?? null;
+      if (notes !== null && (typeof notes !== "string" || notes.length > 500)) {
+        throw new Error("Order item notes are invalid.");
+      }
+
+      const [productRows] = await conn.query(
+        `SELECT id, name, price FROM products
+         WHERE id = ? AND restaurant_id = ? AND is_active = 1
+         LIMIT 1`,
+        [item.product_id, args.v_restaurant_id]
+      ) as unknown as [{ id: string; name: string; price: number | string }[]];
+      const product = productRows[0];
+      if (!product) {
+        throw new Error("Product is invalid, inactive, or belongs to another restaurant.");
+      }
+
+      normalizedItems.push({
+        product_id: product.id,
+        product_name: product.name,
+        quantity,
+        unit_price: Number(product.price),
+        notes,
+      });
+    }
+
+    const subtotal = normalizedItems.reduce(
+      (sum, item) => sum + item.quantity * item.unit_price,
       0
     );
-    const tax = Math.round(subtotal * taxRate * 100) / 100;
+    const tax = Math.round((subtotal * taxRate / 100) * 100) / 100;
     const total = Math.round((subtotal + tax) * 100) / 100;
 
     // Next order number (monotonic per restaurant; daily view is by created_at).
@@ -528,74 +621,55 @@ export async function execCreateOrder(args: {
     const now = nowIso();
     await conn.query(
       `INSERT INTO orders
-        (id, restaurant_id, table_id, order_number, status, subtotal, tax, total, created_by, created_at, updated_at)
-       VALUES (?, ?, NULL, ?, 'paid', ?, ?, ?, ?, ?, ?)`,
+        (id, restaurant_id, table_id, order_number, status, order_type, subtotal, tax, total, created_by, created_at, updated_at)
+       VALUES (?, ?, ?, ?, 'paid', ?, ?, ?, ?, ?, ?, ?)`,
       [
         orderId,
         args.v_restaurant_id,
+        tableId,
         orderNumber,
+        orderType,
         subtotal,
         tax,
         total,
-        args.v_created_by,
+        user.id,
         now,
         now,
       ]
     );
 
-    for (const item of args.p_items) {
-      const itemId = newId();
+    for (const item of normalizedItems) {
       await conn.query(
         `INSERT INTO order_items
           (id, order_id, product_id, product_name, quantity, unit_price, notes, status, created_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, 'new', ?)`,
-        [
-          itemId,
-          orderId,
-          item.product_id,
-          item.product_name,
-          Number(item.quantity),
-          Number(item.unit_price),
-          item.notes ?? null,
-          now,
-        ]
+        [newId(), orderId, item.product_id, item.product_name, item.quantity, item.unit_price, item.notes, now]
       );
 
       // Automatic stock deduction for recipe items.
-      if (item.product_id) {
-        const [recipeRows] = await conn.query(
-          `SELECT ingredient_id, quantity_required
-           FROM recipes WHERE product_id = ?`,
-          [item.product_id]
+      const [recipeRows] = await conn.query(
+        `SELECT ingredient_id, quantity_required
+         FROM recipes WHERE product_id = ?`,
+        [item.product_id]
+      ) as unknown as [Record<string, unknown>[]];
+      for (const recipe of recipeRows) {
+        const deduct = Number(recipe.quantity_required) * item.quantity;
+        const [ingRows] = await conn.query(
+          `SELECT id FROM ingredients WHERE id = ? AND restaurant_id = ?`,
+          [recipe.ingredient_id, args.v_restaurant_id]
         ) as unknown as [Record<string, unknown>[]];
-        for (const recipe of recipeRows) {
-          const deduct =
-            Number(recipe.quantity_required) * Number(item.quantity);
-          const [ingRows] = await conn.query(
-            `SELECT id FROM ingredients WHERE id = ? AND restaurant_id = ?`,
-            [recipe.ingredient_id, args.v_restaurant_id]
-          ) as unknown as [Record<string, unknown>[]];
-          if (ingRows.length === 0) continue;
-          await conn.query(
-            `UPDATE ingredients SET current_stock = current_stock - ?
-             WHERE id = ? AND restaurant_id = ?`,
-            [deduct, recipe.ingredient_id, args.v_restaurant_id]
-          );
-          await conn.query(
-            `INSERT INTO inventory_transactions
-              (id, restaurant_id, ingredient_id, type, quantity, reference, created_by, created_at)
-             VALUES (?, ?, ?, 'sale', ?, ?, ?, ?)`,
-            [
-              newId(),
-              args.v_restaurant_id,
-              recipe.ingredient_id,
-              deduct,
-              `Order #${orderNumber}`,
-              args.v_created_by,
-              now,
-            ]
-          );
-        }
+        if (ingRows.length === 0) continue;
+        await conn.query(
+          `UPDATE ingredients SET current_stock = current_stock - ?
+           WHERE id = ? AND restaurant_id = ?`,
+          [deduct, recipe.ingredient_id, args.v_restaurant_id]
+        );
+        await conn.query(
+          `INSERT INTO inventory_transactions
+            (id, restaurant_id, ingredient_id, type, quantity, reference, created_by, created_at)
+           VALUES (?, ?, ?, 'sale', ?, ?, ?, ?)`,
+          [newId(), args.v_restaurant_id, recipe.ingredient_id, deduct, `Order #${orderNumber}`, user.id, now]
+        );
       }
     }
 
@@ -605,11 +679,15 @@ export async function execCreateOrder(args: {
       [newId(), orderId, args.v_method, total, now]
     );
 
-    return {
-      id: orderId,
-      order_number: orderNumber,
-      created_at: now,
-    };
+    if (tableId) {
+      await conn.query(
+        `UPDATE tables SET status = 'occupied'
+         WHERE id = ? AND restaurant_id = ?`,
+        [tableId, args.v_restaurant_id]
+      );
+    }
+
+    return { id: orderId, order_number: orderNumber, created_at: now };
   });
 
   return { data: order, error: null };

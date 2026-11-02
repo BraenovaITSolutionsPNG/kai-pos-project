@@ -163,6 +163,19 @@ create table public.expenses (
   created_at timestamptz not null default now()
 );
 
+-- Scheduled shifts are declared before shifts because shifts references them.
+create table public.shift_schedules (
+  id uuid primary key default gen_random_uuid(),
+  restaurant_id uuid not null references public.restaurants (id) on delete cascade,
+  staff_id uuid not null references public.staff (id) on delete cascade,
+  schedule_date date not null,
+  start_time time not null,
+  end_time time not null,
+  notes text not null default '''',
+  created_by uuid references auth.users (id) on delete set null,
+  created_at timestamptz not null default now()
+);
+
 -- Shifts for staff clock-in/out.
 create table public.shifts (
   id uuid primary key default gen_random_uuid(),
@@ -767,24 +780,119 @@ set search_path = public
 as $$
 declare
   v_order public.orders;
+  v_actor uuid := auth.uid();
   v_item jsonb;
+  v_clean_items jsonb := '[]'::jsonb;
+  v_product record;
+  v_quantity integer;
+  v_note text;
   v_subtotal numeric(10, 2) := 0;
   v_tax_rate numeric(10, 2);
   v_tax numeric(10, 2);
   v_total numeric(10, 2);
   v_eff_type text := coalesce(v_order_type, 'dine_in');
 begin
+  if v_actor is null then
+    raise exception 'Authentication required' using errcode = '28000';
+  end if;
+
+  if v_created_by is distinct from v_actor then
+    raise exception 'Order creator must match the signed-in user' using errcode = '42501';
+  end if;
+
+  if not exists (
+    select 1 from public.staff s
+    where s.user_id = v_actor
+      and s.restaurant_id = v_restaurant_id
+      and s.is_active = true
+      and s.role in ('owner', 'manager', 'cashier', 'waiter')
+  ) then
+    raise exception 'You do not have POS access to this restaurant' using errcode = '42501';
+  end if;
+
   select tax_rate into v_tax_rate
   from public.restaurants
   where id = v_restaurant_id;
 
+  if not found then
+    raise exception 'Restaurant not found' using errcode = '23503';
+  end if;
+
   select coalesce(v_tax_rate, 0) into v_tax_rate;
 
-  for v_item in select * from jsonb_array_elements(p_items)
+  if v_eff_type not in ('dine_in', 'takeaway') then
+    raise exception 'Unsupported order type' using errcode = '22023';
+  end if;
+
+  if v_eff_type = 'dine_in' and v_table_id is null then
+    raise exception 'A table is required for dine-in orders' using errcode = '22023';
+  end if;
+
+  if v_eff_type = 'takeaway' and v_table_id is not null then
+    raise exception 'Takeaway orders cannot reference a table' using errcode = '22023';
+  end if;
+
+  if v_table_id is not null then
+    perform 1 from public.tables t
+    where t.id = v_table_id and t.restaurant_id = v_restaurant_id
+    for update;
+    if not found then
+      raise exception 'Table not found for this restaurant' using errcode = '23503';
+    end if;
+  end if;
+
+  if v_method is null or v_method not in (
+    'cash', 'eftpos', 'bank_transfer', 'bsp', 'kina_bank', 'anz', 'westpac', 'other'
+  ) then
+    raise exception 'Unsupported payment method' using errcode = '22023';
+  end if;
+
+  if p_items is null or jsonb_typeof(p_items) <> 'array' or jsonb_array_length(p_items) = 0 then
+    raise exception 'At least one order item is required' using errcode = '22023';
+  end if;
+
+  for v_item in select value from jsonb_array_elements(p_items) as item(value)
   loop
-    v_subtotal := v_subtotal +
-      ((v_item ->> 'quantity')::numeric * (v_item ->> 'unit_price')::numeric);
+    if jsonb_typeof(v_item) <> 'object'
+      or nullif(v_item ->> 'product_id', '') is null
+      or nullif(v_item ->> 'quantity', '') is null then
+      raise exception 'Invalid order item' using errcode = '22023';
+    end if;
+
+    v_quantity := (v_item ->> 'quantity')::integer;
+    if v_quantity <= 0 then
+      raise exception 'Order quantities must be positive integers' using errcode = '22023';
+    end if;
+
+    v_note := v_item ->> 'notes';
+    if length(v_note) > 500 then
+      raise exception 'Order item notes are too long' using errcode = '22023';
+    end if;
+
+    select p.id, p.name, p.price into v_product
+    from public.products p
+    where p.id = (v_item ->> 'product_id')::uuid
+      and p.restaurant_id = v_restaurant_id
+      and p.is_active = true
+    for share;
+
+    if not found then
+      raise exception 'Product is invalid, inactive, or belongs to another restaurant' using errcode = '23503';
+    end if;
+
+    v_subtotal := v_subtotal + (v_quantity * v_product.price);
+    v_clean_items := v_clean_items || jsonb_build_array(jsonb_build_object(
+      'product_id', v_product.id,
+      'product_name', v_product.name,
+      'quantity', v_quantity,
+      'unit_price', v_product.price,
+      'notes', v_note
+    ));
   end loop;
+
+  if jsonb_array_length(v_clean_items) = 0 then
+    raise exception 'At least one valid order item is required' using errcode = '22023';
+  end if;
 
   v_tax := round(v_subtotal * v_tax_rate / 100, 2);
   v_total := v_subtotal + v_tax;
@@ -793,11 +901,11 @@ begin
     (restaurant_id, order_number, status, subtotal, tax, total, created_by, order_type, table_id)
   values
     (v_restaurant_id, public.next_order_number(v_restaurant_id),
-     'open', v_subtotal, v_tax, v_total, v_created_by,
+     'open', v_subtotal, v_tax, v_total, v_actor,
      v_eff_type, v_table_id)
   returning * into v_order;
 
-  for v_item in select * from jsonb_array_elements(p_items)
+  for v_item in select value from jsonb_array_elements(v_clean_items) as item(value)
   loop
     insert into public.order_items
       (order_id, product_id, product_name, quantity, unit_price, notes)
@@ -814,7 +922,7 @@ begin
   values (v_order.id, v_method, v_total);
 
   -- A dine-in order occupies its table.
-  if v_eff_type = 'dine_in' and v_table_id is not null then
+  if v_eff_type = 'dine_in' then
     update public.tables
     set status = 'occupied'
     where id = v_table_id
@@ -824,6 +932,9 @@ begin
   return v_order;
 end;
 $$;
+
+revoke all on function public.create_order(uuid, uuid, jsonb, text, text, uuid) from PUBLIC, anon;
+grant execute on function public.create_order(uuid, uuid, jsonb, text, text, uuid) to authenticated;
 
 -- Advance kitchen order status (used by KDS)
 create or replace function public.advance_kitchen(
@@ -2189,18 +2300,6 @@ create policy "users visible to co-tenant staff"
   );
 
 -- Migration 009: shift scheduling (roster)
-create table if not exists public.shift_schedules (
-  id uuid primary key default gen_random_uuid(),
-  restaurant_id uuid not null references public.restaurants (id) on delete cascade,
-  staff_id uuid not null references public.staff (id) on delete cascade,
-  schedule_date date not null,
-  start_time time not null,
-  end_time time not null,
-  notes text not null default '''',
-  created_by uuid references auth.users (id) on delete set null,
-  created_at timestamptz not null default now()
-);
-
 create index if not exists shift_schedules_restaurant_idx
   on public.shift_schedules (restaurant_id);
 create index if not exists shift_schedules_date_idx
