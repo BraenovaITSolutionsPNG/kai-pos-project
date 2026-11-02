@@ -4,7 +4,7 @@ returns void
 language plpgsql
 security definer
 set search_path = public
-as 
+as $$
 begin
   perform public.assert_platform_admin();
 
@@ -17,4 +17,4 @@ begin
     raise exception 'Subscription not found';
   end if;
 end;
-;
+$$;
