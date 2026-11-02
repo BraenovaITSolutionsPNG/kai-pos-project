@@ -26,7 +26,7 @@ export default async function AdminOverviewPage() {
     {
       label: "Businesses",
       value: String(stats.businesses),
-      sub: `${stats.active_businesses} active · ${stats.businesses - stats.active_businesses} suspended`,
+      sub: stats.active_businesses + " active - " + (stats.businesses - stats.active_businesses) + " suspended",
       icon: Building2,
     },
     {
@@ -38,7 +38,7 @@ export default async function AdminOverviewPage() {
     {
       label: "Users",
       value: String(stats.users),
-      sub: `${stats.platform_admins} platform admin(s)`,
+      sub: stats.platform_admins + " platform admin(s)",
       icon: Users,
     },
     {
