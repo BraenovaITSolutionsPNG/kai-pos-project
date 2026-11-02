@@ -628,7 +628,11 @@ export const getAdminUsers = cache(async (): Promise<AdminUserRow[]> => {
     return (data as AdminUserRow[]) ?? [];
   }
   const supabase = await createClient();
-  const { data } = await supabase.rpc("get_admin_users");
+  const { data, error } = await supabase.rpc("get_admin_users");
+  if (error) {
+    console.error("get_admin_users RPC error:", error.message, error.code);
+    return [];
+  }
   return (data as unknown as AdminUserRow[]) ?? [];
 });
 
