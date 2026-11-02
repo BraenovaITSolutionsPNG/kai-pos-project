@@ -28,7 +28,7 @@ returns table (
 language plpgsql
 security definer
 set search_path = public
-as 
+as $$
 begin
   perform public.assert_platform_admin();
   return query
@@ -47,4 +47,4 @@ begin
   from public.users u
   order by u.created_at desc;
 end;
-;
+$$;
