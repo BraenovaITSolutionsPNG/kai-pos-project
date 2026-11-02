@@ -10,6 +10,7 @@ import {
   LogOut,
   Mail,
   PenLine,
+  FileText,
   ShieldCheck,
   Users,
   UtensilsCrossed,
@@ -26,6 +27,7 @@ const navItems = [
   { title: "Users", href: "/admin/users", icon: Users },
   { title: "Messages", href: "/admin/messages", icon: Mail },
   { title: "Content", href: "/admin/content", icon: PenLine },
+  { title: "Notion", href: "/admin/notion", icon: FileText },
 ];
 
 function LogoutButton() {
