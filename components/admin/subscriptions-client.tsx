@@ -463,7 +463,7 @@ export function SubscriptionsClient({
                           className="text-destructive"
                           disabled={busyId !== null}
                           onClick={() => {
-                            if (!confirm("Cancel subscription for " + sub.business_name + "?")) return;
+                            if (!confirm("Cancel subscription for " + (sub.business_name || sub.owner_email || "this business") + "?")) return;
                             void run("cancel_subscription", { subscription_id: sub.id });
                           }}
                         >
