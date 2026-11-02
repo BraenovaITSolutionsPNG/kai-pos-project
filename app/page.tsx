@@ -21,6 +21,9 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import Pricing from "@/components/landing/pricing";
+import { TrustBadges } from "@/components/landing/trust-badges";
+import { PaymentMethods } from "@/components/landing/payment-methods";
+import { FAQ } from "@/components/landing/faq";
 import { CountUp } from "@/components/landing/count-up";
 import { FoodAnimation } from "@/components/landing/food-animation";
 import { HeroSlideshow } from "@/components/landing/hero-slideshow";
@@ -141,6 +144,9 @@ export default async function LandingPage() {
             </a>
             <a href="#pricing" className="transition-colors hover:text-foreground">
               Pricing
+            </a>
+            <a href="#faq" className="transition-colors hover:text-foreground">
+              FAQ
             </a>
             <Link
               href="/contact"
@@ -388,6 +394,12 @@ export default async function LandingPage() {
           </div>
         </div>
       </section>
+
+      <TrustBadges />
+      <PaymentMethods />
+
+      {/* FAQ */}
+      <FAQ />
 
       {/* Pricing */}
       <section className="relative">

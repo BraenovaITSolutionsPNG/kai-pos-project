@@ -28,6 +28,9 @@ export function MobileNav() {
             <a href="#pricing" onClick={() => setOpen(false)} className="transition-colors hover:text-foreground py-2">
               Pricing
             </a>
+            <a href="#faq" onClick={() => setOpen(false)} className="transition-colors hover:text-foreground py-2">
+              FAQ
+            </a>
             <Link href="/contact" onClick={() => setOpen(false)} className="transition-colors hover:text-foreground py-2">
               Contact
             </Link>
