@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Building2 } from "lucide-react";
+import { Building2, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { AdminBusinessRow } from "@/lib/queries";
 import { Button } from "@/components/ui/button";
@@ -45,6 +45,27 @@ export function BusinessesClient({
       prev.map((b) => (b.id === id ? { ...b, ...payload } : b))
     );
     toast.success("Business updated");
+    router.refresh();
+  }
+
+  async function deleteBusiness(id: string, name: string) {
+    if (
+      !confirm(
+        `Are you sure you want to delete "${name}"? This will permanently remove the business, all its restaurants, products, orders, and subscription payments. This cannot be undone.`
+      )
+    ) {
+      return;
+    }
+    setBusyId(id);
+    const supabase = createClient();
+    const { error } = await supabase.from("businesses").delete().eq("id", id);
+    setBusyId(null);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setRows((prev) => prev.filter((b) => b.id !== id));
+    toast.success("Business deleted");
     router.refresh();
   }
 
@@ -91,7 +112,7 @@ export function BusinessesClient({
                       {b.name}
                     </span>
                   </TableCell>
-                  <TableCell>{b.owner_email ?? "—"}</TableCell>
+                  <TableCell>{b.owner_email ?? "-"}</TableCell>
                   <TableCell>{b.restaurant_count}</TableCell>
                   <TableCell>
                     <Badge variant="outline" className="capitalize">
@@ -104,19 +125,31 @@ export function BusinessesClient({
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      disabled={busyId === b.id}
-                      className={b.is_active ? "text-destructive" : ""}
-                      onClick={() =>
-                        void updateBusiness(b.id, {
-                          is_active: !b.is_active,
-                        })
-                      }
-                    >
-                      {b.is_active ? "Suspend" : "Activate"}
-                    </Button>
+                    <div className="flex items-center justify-end gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={busyId === b.id}
+                        className={b.is_active ? "text-destructive" : ""}
+                        onClick={() =>
+                          void updateBusiness(b.id, {
+                            is_active: !b.is_active,
+                          })
+                        }
+                      >
+                        {b.is_active ? "Suspend" : "Activate"}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={busyId === b.id}
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => void deleteBusiness(b.id, b.name)}
+                        title="Delete business"
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
@@ -126,7 +159,8 @@ export function BusinessesClient({
       </div>
 
       <p className="text-sm text-muted-foreground">
-        Suspended businesses can&apos;t sign in until reactivated.
+        Suspended businesses can&apos;t sign in until reactivated. Deleting a
+        business permanently removes it and all associated data.
       </p>
     </div>
   );
