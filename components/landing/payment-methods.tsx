@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { CreditCard } from "lucide-react";
+import { Icon } from "@/components/ui/icon";
 
 interface PaymentMethod {
   name: string;
@@ -46,7 +46,7 @@ export async function PaymentMethods() {
               {m.logo_url ? (
                 <img src={m.logo_url} alt={m.name} className="h-6 object-contain" />
               ) : (
-                <CreditCard className="size-4 text-muted-foreground" />
+                <Icon name="CreditCard" className="size-4 text-muted-foreground" />
               )}
               {m.name}
             </span>

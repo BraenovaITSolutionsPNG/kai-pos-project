@@ -1,13 +1,5 @@
 import type { Metadata } from "next";
-import {
-  Building2,
-  MapPin,
-  ShoppingBag,
-  Users,
-  Wallet,
-  ShieldCheck,
-  UtensilsCrossed,
-} from "lucide-react";
+import { Icon } from "@/components/ui/icon";
 import { formatKina } from "@/lib/format";
 import { getAdminOverview, getAdminBusinesses } from "@/lib/queries";
 import { AdminOverviewCharts } from "@/components/admin/admin-overview-charts";
@@ -27,37 +19,37 @@ export default async function AdminOverviewPage() {
       label: "Businesses",
       value: String(stats.businesses),
       sub: stats.active_businesses + " active - " + (stats.businesses - stats.active_businesses) + " suspended",
-      icon: Building2,
+      icon: "Building2",
     },
     {
       label: "Restaurants",
       value: String(stats.restaurants),
       sub: "Across all businesses",
-      icon: MapPin,
+      icon: "MapPin",
     },
     {
       label: "Users",
       value: String(stats.users),
       sub: stats.platform_admins + " platform admin(s)",
-      icon: Users,
+      icon: "Users",
     },
     {
       label: "Active staff",
       value: String(stats.staff),
       sub: "Working today",
-      icon: UtensilsCrossed,
+      icon: "UtensilsCrossed",
     },
     {
       label: "Orders placed",
       value: String(stats.orders),
       sub: "All time",
-      icon: ShoppingBag,
+      icon: "ShoppingBag",
     },
     {
       label: "Total revenue",
       value: formatKina(stats.revenue),
       sub: "Excluding cancelled orders",
-      icon: Wallet,
+      icon: "Wallet",
     },
   ];
 
@@ -74,14 +66,13 @@ export default async function AdminOverviewPage() {
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
         {cards.map((c) => {
-          const Icon = c.icon;
           return (
             <div
               key={c.label}
               className="rounded-xl border bg-card p-4 shadow-sm"
             >
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Icon className="size-4" />
+                <Icon name={c.icon} className="size-4" />
                 {c.label}
               </div>
               <p className="mt-2 font-heading text-2xl font-semibold tracking-tight">
@@ -96,7 +87,7 @@ export default async function AdminOverviewPage() {
       <AdminOverviewCharts businesses={businesses} />
 
       <div className="flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm">
-        <ShieldCheck className="size-4 text-primary" />
+        <Icon name="ShieldCheck" className="size-4 text-primary" />
         You have platform-wide access. Use the nav on the left to manage
         businesses and users.
       </div>

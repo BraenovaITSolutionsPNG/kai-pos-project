@@ -7,7 +7,7 @@ import { PLAN_LABELS, CYCLE_LABELS, PLAN_PRICES } from "@/lib/plans";
 import { logout } from "@/lib/auth-actions";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { CreditCard, Home, LogOut, ShieldCheck } from "lucide-react";
+import { Icon } from "@/components/ui/icon";
 
 export const metadata: Metadata = {
   title: "Payment pending",
@@ -33,12 +33,12 @@ export default async function PaymentPendingPage() {
             href="/"
             className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
           >
-            <Home />
+            <Icon name="Home" />
             Back to home
           </Link>
         </div>
         <div className="flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-          <CreditCard className="size-6" />
+          <Icon name="CreditCard" className="size-6" />
         </div>
         <h1 className="mt-4 font-heading text-2xl font-semibold tracking-tight">
           {sub.status === "pending"
@@ -71,7 +71,7 @@ export default async function PaymentPendingPage() {
         </div>
 
         <p className="mt-4 flex items-start gap-2 text-xs text-muted-foreground">
-          <ShieldCheck className="mt-0.5 size-4 shrink-0 text-primary" />
+          <Icon name="ShieldCheck" className="mt-0.5 size-4 shrink-0 text-primary" />
           Access is granted automatically the moment the admin approves your
           payment. Refresh this page after approval.
         </p>
@@ -81,12 +81,12 @@ export default async function PaymentPendingPage() {
             href="/subscription"
             className={cn(buttonVariants(), "w-full")}
           >
-            <CreditCard />
+            <Icon name="CreditCard" />
             Submit payment proof
           </Link>
           <form action={logout}>
             <Button type="submit" variant="outline" className="w-full">
-              <LogOut />
+              <Icon name="LogOut" />
               Sign out
             </Button>
           </form>

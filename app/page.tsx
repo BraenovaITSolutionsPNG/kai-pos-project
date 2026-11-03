@@ -1,21 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import {
-  ArrowRight,
-  BarChart3,
-  Boxes,
-  ChefHat,
-  ClipboardList,
-  CreditCard,
-  MonitorSmartphone,
-  ShieldCheck,
-  ShoppingCart,
-  Table,
-  Tags,
-  Users,
-  Wifi,
-} from "lucide-react";
+import { Icon } from "@/components/ui/icon";
 import { createClient } from "@/lib/supabase/server";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -42,42 +28,42 @@ export const dynamic = "force-dynamic";
 
 const features = [
   {
-    icon: ShoppingCart,
+    icon: "ShoppingCart",
     title: "Fast POS",
     text: "Touch-friendly sales screen with category tabs and one-tap checkout. Cash, EFTPOS, BSP, Kina Bank, ANZ, Westpac and more.",
   },
   {
-    icon: ClipboardList,
+    icon: "ClipboardList",
     title: "Orders",
     text: "Every sale recorded with itemised lines, payments and printable PGK receipts, so no more paper and calculators.",
   },
   {
-    icon: Table,
+    icon: "Table",
     title: "Tables & floor plan",
     text: "A colour-coded floor plan that shows which tables are free, occupied or reserved at a glance.",
   },
   {
-    icon: ChefHat,
+    icon: "ChefHat",
     title: "Kitchen display",
     text: "Orders flow to the kitchen as tickets that move New → Preparing → Ready, so nothing gets forgotten.",
   },
   {
-    icon: Boxes,
+    icon: "Boxes",
     title: "Inventory & recipes",
     text: "Track ingredient stock, set recipes and get low-stock alerts. Sales deduct stock automatically.",
   },
   {
-    icon: BarChart3,
+    icon: "BarChart3",
     title: "Reports",
     text: "Daily sales, top products, payment split and expenses, so you know what your cafe makes each day.",
   },
   {
-    icon: Users,
+    icon: "Users",
     title: "Staff & roles",
     text: "Owner, manager, cashier, kitchen and waiter accounts with role-based access to your system.",
   },
   {
-    icon: Tags,
+    icon: "Tags",
     title: "Menu management",
     text: "Products and categories in Kina pricing, with images and visibility toggles for the POS screen.",
   },
@@ -168,7 +154,7 @@ export default async function LandingPage() {
               className={cn(buttonVariants({ size: "sm" }))}
             >
               Get started
-              <ArrowRight />
+              <Icon name="ArrowRight" />
             </Link>
           </div>
         </div>
@@ -212,7 +198,7 @@ export default async function LandingPage() {
               variant="outline"
               className="mb-4 animate-fade-up gap-1.5 border-white/40 bg-white/10 text-white backdrop-blur"
             >
-              <MonitorSmartphone className="size-3.5" />
+              <Icon name="MonitorSmartphone" className="size-3.5" />
               {content.hero.badge}
             </Badge>
             <h1 className="animate-fade-up text-balance font-heading text-4xl font-semibold leading-[1.08] tracking-[-0.04em] text-white [animation-delay:100ms] [&_span]:text-amber-300 sm:text-5xl lg:text-6xl">
@@ -230,7 +216,7 @@ export default async function LandingPage() {
                 )}
               >
                 {content.hero.cta}
-                <ArrowRight className="transition-transform duration-300 group-hover:translate-x-1" />
+                <Icon name="ArrowRight" className="transition-transform duration-300 group-hover:translate-x-1" />
               </Link>
               <Link
                 href="#features"
@@ -244,15 +230,15 @@ export default async function LandingPage() {
             </p>
             <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-xs font-medium text-white/80 sm:text-sm">
               <span className="inline-flex items-center gap-2">
-                <CreditCard className="size-4 text-amber-300" />
+                <Icon name="CreditCard" className="size-4 text-amber-300" />
                 Kina-first payments
               </span>
               <span className="inline-flex items-center gap-2">
-                <MonitorSmartphone className="size-4 text-amber-300" />
+                <Icon name="MonitorSmartphone" className="size-4 text-amber-300" />
                 Phone, tablet or PC
               </span>
               <span className="inline-flex items-center gap-2">
-                <ShieldCheck className="size-4 text-amber-300" />
+                <Icon name="ShieldCheck" className="size-4 text-amber-300" />
                 Staff access by role
               </span>
             </div>
@@ -315,13 +301,13 @@ export default async function LandingPage() {
             </div>
             <div className="absolute -bottom-5 -left-6 hidden animate-float-soft rounded-xl border bg-card px-4 py-3 shadow-lg [animation-delay:800ms] sm:block">
               <div className="flex items-center gap-2 text-sm">
-                <Wifi className="size-4 text-green-500" />
+                <Icon name="Wifi" className="size-4 text-green-500" />
                 <span>Orders synced</span>
               </div>
             </div>
             <div className="absolute -top-4 -right-4 hidden animate-float-soft rounded-xl border bg-card px-4 py-3 shadow-lg sm:block">
               <div className="flex items-center gap-2 text-sm">
-                <ShieldCheck className="size-4 text-primary" />
+                <Icon name="ShieldCheck" className="size-4 text-primary" />
                 <span>Staff roles locked</span>
               </div>
             </div>
@@ -365,7 +351,7 @@ export default async function LandingPage() {
               className="group rounded-2xl border border-border/70 bg-card p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg"
             >
               <div className="mb-4 flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors duration-300 group-hover:bg-primary group-hover:text-primary-foreground">
-                <f.icon className="size-5" aria-hidden="true" />
+                <Icon name={f.icon} className="size-5" aria-hidden="true" />
               </div>
               <h3 className="font-heading font-semibold">{f.title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{f.text}</p>
@@ -403,7 +389,7 @@ export default async function LandingPage() {
               className={cn(buttonVariants({ size: "lg" }))}
             >
               Get started
-              <ArrowRight />
+              <Icon name="ArrowRight" />
             </Link>
           </div>
         </div>
@@ -441,7 +427,7 @@ export default async function LandingPage() {
               className={cn(buttonVariants({ size: "lg" }))}
             >
               Get started
-              <ArrowRight />
+              <Icon name="ArrowRight" />
             </Link>
             <Link
               href="/login"
@@ -476,11 +462,11 @@ export default async function LandingPage() {
           </div>
           <div className="flex flex-col items-center gap-3 text-sm text-muted-foreground sm:flex-row sm:gap-5">
             <span className="flex items-center gap-1.5">
-              <CreditCard className="size-4" />
+              <Icon name="CreditCard" className="size-4" />
               Billed in PGK
             </span>
             <span className="flex items-center gap-1.5">
-              <ShieldCheck className="size-4" />
+              <Icon name="ShieldCheck" className="size-4" />
               Your data, yours
             </span>
             <span>© {new Date().getFullYear()} BraeNova IT Solutions</span>
