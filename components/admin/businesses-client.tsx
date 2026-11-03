@@ -74,7 +74,6 @@ export function BusinessesClient({
     }
     setRows((prev) => prev.filter((b) => b.id !== target.id));
     toast.success("Business deleted");
-    router.refresh();
   }
 
   return (
