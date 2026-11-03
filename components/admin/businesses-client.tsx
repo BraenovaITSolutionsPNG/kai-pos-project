@@ -75,7 +75,7 @@ export function BusinessesClient({
     }
     setRows((prev) => prev.filter((b) => b.id !== target.id));
     toast.success("Business deleted");
-
+  }
 
   return (
     <div className="space-y-6">
