@@ -372,7 +372,10 @@ export function SubscriptionsClient({
     const target = cancelTarget;
     setBusyId(target.id);
     const supabase = createClient();
-    const { error } = await supabase.rpc("cancel_subscription", { subscription_id: target.id });
+    const { error } = await supabase
+      .from("businesses")
+      .update({ is_active: false, current_period_end: new Date().toISOString() })
+      .eq("id", target.id);
     setBusyId(null);
     setCancelTarget(null);
     if (error) {
