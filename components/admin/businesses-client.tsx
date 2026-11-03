@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Building2, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { deleteBusinessAction } from "@/app/admin/businesses/actions";
 import type { AdminBusinessRow } from "@/lib/queries";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -61,19 +62,11 @@ export function BusinessesClient({
     if (!deleteTarget) return;
     const target = deleteTarget;
     setBusyId(target.id);
-    const supabase = createClient();
-    const { error, count } = await supabase
-      .from("businesses")
-      .delete({ count: "exact" })
-      .eq("id", target.id);
+    const result = await deleteBusinessAction(target.id);
     setBusyId(null);
     setDeleteTarget(null);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    if (count === 0) {
-      toast.error("Delete blocked - you may not have admin permissions. Try logging out and back in.");
+    if (!result.ok) {
+      toast.error(result.error ?? "Failed to delete business");
       return;
     }
     setRows((prev) => prev.filter((b) => b.id !== target.id));
