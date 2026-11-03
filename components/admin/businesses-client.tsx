@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Building2, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { deleteBusinessAction } from "@/app/admin/businesses/actions";
 import type { AdminBusinessRow } from "@/lib/queries";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -62,16 +61,20 @@ export function BusinessesClient({
     if (!deleteTarget) return;
     const target = deleteTarget;
     setBusyId(target.id);
-    const result = await deleteBusinessAction(target.id);
+    const res = await fetch("/api/admin/delete-business", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: target.id }),
+    });
+    const result = await res.json();
     setBusyId(null);
     setDeleteTarget(null);
     if (!result.ok) {
-      toast.error(result.error ?? "Failed to delete business");
+      toast.error(`${result.error ?? "Failed to delete business"} (${result.debug ?? ""})`);
       return;
     }
     setRows((prev) => prev.filter((b) => b.id !== target.id));
     toast.success("Business deleted");
-  }
 
 
   return (
