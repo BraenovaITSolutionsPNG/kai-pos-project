@@ -70,7 +70,7 @@ export function BusinessesClient({
     setBusyId(null);
     setDeleteTarget(null);
     if (!result.ok) {
-      toast.error(`${result.error ?? "Failed to delete business"} (${result.debug ?? ""})`);
+      toast.error(result.error ?? "Failed to delete business");
       return;
     }
     setRows((prev) => prev.filter((b) => b.id !== target.id));

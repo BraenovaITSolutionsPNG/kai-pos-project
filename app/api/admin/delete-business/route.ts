@@ -13,11 +13,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "Not authenticated" }, { status: 401 });
   }
 
+  const { data: profile } = await supabase
+    .from("users")
+    .select("is_platform_admin")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile?.is_platform_admin) {
+    return NextResponse.json({ ok: false, error: "Not a platform admin" }, { status: 403 });
+  }
+
   const { error } = await supabase.rpc("delete_business", { business_id: id });
 
   if (error) {
-    return NextResponse.json({ ok: false, error: error.message, debug: `rpc err: ${error.code} ${error.details}` }, { status: 500 });
+    return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ ok: true, debug: "deleted via RPC" });
+  return NextResponse.json({ ok: true });
 }
