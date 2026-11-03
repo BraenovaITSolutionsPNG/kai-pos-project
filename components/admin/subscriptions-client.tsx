@@ -352,6 +352,7 @@ export function SubscriptionsClient({
   const [recordFor, setRecordFor] = useState<AdminSubscriptionRow | null>(null);
   const [editFor, setEditFor] = useState<AdminSubscriptionRow | null>(null);
   const [remindFor, setRemindFor] = useState<AdminSubscriptionRow | null>(null);
+  const [cancelTarget, setCancelTarget] = useState<AdminSubscriptionRow | null>(null);
 
   async function run(rpc: string, args: Record<string, unknown>) {
     setBusyId(String(args.subscription_id ?? args.payment_id ?? "x"));
@@ -363,6 +364,22 @@ export function SubscriptionsClient({
       return;
     }
     toast.success("Done");
+    router.refresh();
+  }
+
+  async function confirmCancel() {
+    if (!cancelTarget) return;
+    const target = cancelTarget;
+    setBusyId(target.id);
+    const supabase = createClient();
+    const { error } = await supabase.rpc("cancel_subscription", { subscription_id: target.id });
+    setBusyId(null);
+    setCancelTarget(null);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Subscription cancelled");
     router.refresh();
   }
 
@@ -462,10 +479,7 @@ export function SubscriptionsClient({
                           size="sm"
                           className="text-destructive"
                           disabled={busyId !== null}
-                          onClick={() => {
-                            if (!confirm("Cancel subscription for " + (sub.business_name || sub.owner_email || "this business") + "?")) return;
-                            void run("cancel_subscription", { subscription_id: sub.id });
-                          }}
+                          onClick={() => setCancelTarget(sub)}
                         >
                           <X />
                           Cancel
@@ -602,6 +616,44 @@ export function SubscriptionsClient({
       )}
       {remindFor && (
         <ReminderDialog sub={remindFor} onClose={() => setRemindFor(null)} />
+      )}
+      {cancelTarget && (
+        <Dialog
+          open={cancelTarget !== null}
+          onOpenChange={(open) => {
+            if (!open) setCancelTarget(null);
+          }}
+        >
+          <DialogContent showCloseButton={false}>
+            <DialogHeader>
+              <DialogTitle>Cancel subscription</DialogTitle>
+              <DialogDescription>
+                Cancel subscription for{" "}
+                {cancelTarget.business_name ||
+                  cancelTarget.owner_email ||
+                  "this business"}
+                ? This will deactivate the business and end the current billing
+                period. This cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setCancelTarget(null)}
+                disabled={busyId !== null}
+              >
+                Keep
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => void confirmCancel()}
+                disabled={busyId !== null}
+              >
+                {busyId !== null ? "Cancelling..." : "Cancel subscription"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );
