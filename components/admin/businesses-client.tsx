@@ -15,6 +15,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 
 export function BusinessesClient({
@@ -25,6 +33,7 @@ export function BusinessesClient({
   const router = useRouter();
   const [rows, setRows] = useState<AdminBusinessRow[]>(businesses);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<AdminBusinessRow | null>(null);
 
   async function updateBusiness(
     id: string,
@@ -48,23 +57,22 @@ export function BusinessesClient({
     router.refresh();
   }
 
-  async function deleteBusiness(id: string, name: string) {
-    if (
-      !confirm(
-        `Are you sure you want to delete "${name}"? This will permanently remove the business, all its restaurants, products, orders, and subscription payments. This cannot be undone.`
-      )
-    ) {
-      return;
-    }
-    setBusyId(id);
+  async function confirmDelete() {
+    if (!deleteTarget) return;
+    const target = deleteTarget;
+    setBusyId(target.id);
     const supabase = createClient();
-    const { error } = await supabase.from("businesses").delete().eq("id", id);
+    const { error } = await supabase
+      .from("businesses")
+      .delete()
+      .eq("id", target.id);
     setBusyId(null);
+    setDeleteTarget(null);
     if (error) {
       toast.error(error.message);
       return;
     }
-    setRows((prev) => prev.filter((b) => b.id !== id));
+    setRows((prev) => prev.filter((b) => b.id !== target.id));
     toast.success("Business deleted");
     router.refresh();
   }
@@ -144,7 +152,7 @@ export function BusinessesClient({
                         size="sm"
                         disabled={busyId === b.id}
                         className="text-destructive hover:text-destructive"
-                        onClick={() => void deleteBusiness(b.id, b.name)}
+                        onClick={() => setDeleteTarget(b)}
                         title="Delete business"
                       >
                         <Trash2 className="size-4" />
@@ -162,6 +170,41 @@ export function BusinessesClient({
         Suspended businesses can&apos;t sign in until reactivated. Deleting a
         business permanently removes it and all associated data.
       </p>
+
+      <Dialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+      >
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>Delete business</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete &quot;{deleteTarget?.name}&quot;?
+              This will permanently remove the business, all its restaurants,
+              products, orders, and subscription payments. This cannot be
+              undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteTarget(null)}
+              disabled={busyId !== null}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => void confirmDelete()}
+              disabled={busyId !== null}
+            >
+              {busyId !== null ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
