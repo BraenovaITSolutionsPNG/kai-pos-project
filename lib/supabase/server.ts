@@ -1,10 +1,14 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { isMySqlMode } from "@/lib/supabase/env";
+import { isMySqlMode, isSqliteMode } from "@/lib/supabase/env";
 import { createMysqlServerClient } from "@/lib/mysql/server-client";
+import { createSqliteServerClient } from "@/lib/sqlite/server-client";
 
 export async function createClient(): Promise<SupabaseClient> {
+  if (isSqliteMode()) {
+    return createSqliteServerClient() as unknown as SupabaseClient;
+  }
   if (isMySqlMode()) {
     return createMysqlServerClient() as unknown as SupabaseClient;
   }

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 declare module "lucide-react" {
   export type LucideIcon = React.ComponentType<Record<string, unknown>>;
   export const AlertCircle: React.ComponentType<Record<string, unknown>>;
@@ -100,8 +101,14 @@ declare module "lucide-react" {
   export const XIcon: React.ComponentType<Record<string, unknown>>;
 }
 
+declare module "better-sqlite3" {
+  const Database: any;
+  export default Database;
+  export type Database = any;
+}
+
 declare module "recharts" {
-  export type TooltipFormatter = (value: unknown, ...args: unknown[]) => unknown;
+  export type TooltipFormatter = (value: any, ...args: any[]) => any;
   export interface TooltipProps {
     formatter?: TooltipFormatter;
     [key: string]: unknown;

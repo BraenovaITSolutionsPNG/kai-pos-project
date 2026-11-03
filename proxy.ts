@@ -1,6 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { isMySqlMode } from "@/lib/supabase/env";
+import { isMySqlMode, isSqliteMode } from "@/lib/supabase/env";
 
 const MYSQL_SESSION_KEY = "kai_session";
 
@@ -21,8 +21,8 @@ export async function proxy(request: NextRequest) {
     path.startsWith("/menu") ||
     path.startsWith("/order");
 
-  // MySQL mode: session lives in a kai_session cookie.
-  if (isMySqlMode()) {
+  // MySQL/SQLite mode: session lives in a kai_session cookie.
+  if (isMySqlMode() || isSqliteMode()) {
     const hasSession = Boolean(request.cookies.get(MYSQL_SESSION_KEY)?.value);
     if (!hasSession && !isAuthPage && !isPublicPage) {
       const url = request.nextUrl.clone();

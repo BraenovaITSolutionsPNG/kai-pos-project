@@ -44,3 +44,9 @@ next-env.d.ts
 
 .vercel
 .env*
+
+# SQLite local database
+data/
+*.db
+*.db-wal
+*.db-shm

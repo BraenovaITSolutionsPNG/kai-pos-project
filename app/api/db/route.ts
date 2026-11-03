@@ -23,7 +23,7 @@ import {
   execUpdateSiteContent,
   authGetUser,
   type DbQueryPlan,
-} from "@/lib/mysql/executor";
+} from "@/lib/sqlite/executor";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
