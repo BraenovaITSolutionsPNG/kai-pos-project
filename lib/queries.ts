@@ -598,8 +598,8 @@ export const getPageViewStats = cache(async (): Promise<PageViewStats> => {
     supabase.from("page_views").select("visitor_id").not("visitor_id", "is", null).gte("created_at", today + "T00:00:00"),
   ]);
 
-  const uniqueVisitors = new Set((uniqueRes.data || []).map((r: any) => r.visitor_id)).size;
-  const todayUnique = new Set((todayUniqueRes.data || []).map((r: any) => r.visitor_id)).size;
+  const uniqueVisitors = new Set((uniqueRes.data || []).map((r: { visitor_id: string }) => r.visitor_id)).size;
+  const todayUnique = new Set((todayUniqueRes.data || []).map((r: { visitor_id: string }) => r.visitor_id)).size;
 
   return {
     total_views: totalRes.count || 0,
@@ -640,7 +640,7 @@ export const getAdminUsers = cache(async (): Promise<AdminUserRow[]> => {
       console.error("Direct users query error:", directError.message);
       return [];
     }
-    return (directData ?? []).map((u: any) => ({
+    return (directData ?? []).map((u: { id: string; email: string; full_name: string; is_platform_admin: boolean; created_at: string }) => ({
       id: u.id,
       email: u.email,
       full_name: u.full_name,

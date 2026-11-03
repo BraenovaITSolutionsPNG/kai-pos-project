@@ -119,7 +119,7 @@ export function OnlineOrderSettingsClient({
           </CardDescription>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground space-y-2">
-          <p>- Online orders are tagged with source "online" in the Orders page</p>
+          <p>- Online orders are tagged with source &quot;online&quot; in the Orders page</p>
           <p>- Delivery orders show delivery address and status tracking</p>
           <p>- Kitchen Display shows online orders alongside POS orders</p>
           <p>- Delivery status: Pending ? Preparing ? Out for Delivery ? Delivered</p>

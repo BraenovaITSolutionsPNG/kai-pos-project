@@ -18,7 +18,7 @@ export function YearEndCloseClient({
   const [fiscalYear, setFiscalYear] = useState(String(new Date().getFullYear()));
   const [confirm, setConfirm] = useState("");
   const [busy, setBusy] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
 
   if (userRole !== "owner") {
     return (

@@ -7,7 +7,7 @@ export function Icon({
   name,
   ...props
 }: { name: string } & SVGProps<SVGSVGElement>) {
-  const Icon = (Lucide as Record<string, React.ComponentType<any>>)[name];
+  const Icon = (Lucide as Record<string, React.ComponentType<Record<string, unknown>>>)[name];
   if (!Icon) return null;
   return <Icon {...props} />;
 }

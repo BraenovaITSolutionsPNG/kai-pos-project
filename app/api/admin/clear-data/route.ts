@@ -61,7 +61,7 @@ export async function POST(request: Request) {
   }
 
   const { data: nonAdminUsers } = await supabase.from("users").select("id").neq("is_platform_admin", true);
-  const nonAdminIds = (nonAdminUsers ?? []).map((u: any) => u.id);
+  const nonAdminIds = (nonAdminUsers ?? []).map((u: { id: string }) => u.id);
 
   for (const nonAdminId of nonAdminIds) {
     await supabase.auth.admin.deleteUser(nonAdminId).catch(() => {});

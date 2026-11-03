@@ -47,7 +47,7 @@ export default async function BillsPage() {
   }
 
   // Group by table
-  const tableMap = new Map<string, { label: string; orders: any[]; total: number }>();
+  const tableMap = new Map<string, { label: string; orders: any[]; total: number }>(); // eslint-disable-line @typescript-eslint/no-explicit-any
   orders?.forEach((order) => {
     const tableId = order.table_id ?? "unknown";
     const tableLabel = tableLabels.get(tableId) ?? `Table ${tableId.slice(0, 8)}`;

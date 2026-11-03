@@ -94,7 +94,7 @@ export function BillsClient({ tableBills, restaurantId }: BillsClientProps) {
       <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
         <Receipt className="h-16 w-16 mb-4 opacity-50" />
         <h3 className="font-semibold text-lg">No open self-service bills</h3>
-        <p className="text-sm mt-1">Customers haven't placed any QR orders yet, or all tables are settled.</p>
+        <p className="text-sm mt-1">Customers haven&apos;t placed any QR orders yet, or all tables are settled.</p>
       </div>
     );
   }

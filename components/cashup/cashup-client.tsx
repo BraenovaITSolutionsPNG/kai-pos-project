@@ -14,6 +14,7 @@ import {
   Users,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import Link from "next/link";
 import { formatKina, formatDateTime, formatDate, formatTime, paymentMethodLabel } from "@/lib/format";
 import type {
   ShiftWithStaff,
@@ -505,12 +506,12 @@ function ReconciliationTab({
                 <p className="text-sm text-muted-foreground mb-2">
                   Staff clock in through the POS to create shift records.
                 </p>
-                <a
+                <Link
                   href="/shifts"
                   className="text-primary hover:underline text-sm"
                 >
                   View or schedule shifts
-                </a>
+                </Link>
               </div>
             ) : (
               <Table>
