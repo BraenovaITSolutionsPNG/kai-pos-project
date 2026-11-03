@@ -127,11 +127,19 @@ declare
   v_min_points integer;
   v_new_balance integer;
 begin
-  select c.*, r.loyalty_kina_per_point, r.loyalty_min_points_redeem, r.id
-  into v_customer, v_kina_per_point, v_min_points, v_restaurant_id
+  select c.*
+  into v_customer
   from public.customers c
-  join public.restaurants r on r.id = c.restaurant_id
   where c.id = p_customer_id;
+
+  if not found then
+    return false;
+  end if;
+
+  select r.loyalty_kina_per_point, r.loyalty_min_points_redeem, r.id
+  into v_kina_per_point, v_min_points, v_restaurant_id
+  from public.restaurants r
+  where r.id = v_customer.restaurant_id;
 
   if not found then
     return false;
@@ -183,11 +191,19 @@ declare
   v_restaurant_id uuid;
   v_new_balance integer;
 begin
-  select c.*, r.id
-  into v_customer, v_restaurant_id
+  select c.*
+  into v_customer
   from public.customers c
-  join public.restaurants r on r.id = c.restaurant_id
   where c.id = p_customer_id;
+
+  if not found then
+    return false;
+  end if;
+
+  select r.id
+  into v_restaurant_id
+  from public.restaurants r
+  where r.id = v_customer.restaurant_id;
 
   if not found then
     return false;
