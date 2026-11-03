@@ -62,9 +62,9 @@ export function BusinessesClient({
     const target = deleteTarget;
     setBusyId(target.id);
     const supabase = createClient();
-    const { error } = await supabase
+    const { error, count } = await supabase
       .from("businesses")
-      .delete()
+      .delete({ count: "exact" })
       .eq("id", target.id);
     setBusyId(null);
     setDeleteTarget(null);
@@ -72,9 +72,14 @@ export function BusinessesClient({
       toast.error(error.message);
       return;
     }
+    if (count === 0) {
+      toast.error("Delete blocked - you may not have admin permissions. Try logging out and back in.");
+      return;
+    }
     setRows((prev) => prev.filter((b) => b.id !== target.id));
     toast.success("Business deleted");
   }
+
 
   return (
     <div className="space-y-6">
