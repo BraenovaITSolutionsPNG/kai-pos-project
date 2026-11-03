@@ -31,19 +31,7 @@ export function PaymentMethodsAdminClient() {
       .select("value")
       .eq("key", "payment_methods")
       .single();
-    if (data?.value) {
-      setMethods(data.value as PaymentMethod[]);
-    } else {
-      // Default methods
-      setMethods([
-        { name: "BSP", logo_url: null },
-        { name: "Kina Bank", logo_url: null },
-        { name: "ANZ", logo_url: null },
-        { name: "Westpac", logo_url: null },
-        { name: "EFTPOS", logo_url: null },
-        { name: "Cash", logo_url: null },
-      ]);
-    }
+    setMethods(data?.value ? (data.value as PaymentMethod[]) : []);
     setLoading(false);
   }, [supabase]);
 
@@ -150,6 +138,12 @@ export function PaymentMethodsAdminClient() {
           </div>
         </CardContent>
       </Card>
+
+      {methods.length === 0 && (
+        <p className="rounded-xl border border-dashed bg-card py-10 text-center text-sm text-muted-foreground">
+          No payment methods yet. Add one above.
+        </p>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {methods.map((m) => (

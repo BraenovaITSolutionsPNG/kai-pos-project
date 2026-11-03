@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { CircleDollarSign, ReceiptText, TrendingUp, Trophy } from "lucide-react";
 import {
   Card,
@@ -12,41 +12,16 @@ import {
 import { StatCard } from "@/components/dashboard/stat-card";
 import { SalesTrendChart } from "@/components/dashboard/sales-trend-chart";
 import { OrdersBarChart } from "@/components/dashboard/orders-bar-chart";
-import { createClient } from "@/lib/supabase/client";
-import { isDemoMode } from "@/lib/supabase/env";
-import {
-  computeDashboardStats,
-  type DashboardStats,
-} from "@/lib/stats";
+import type { DashboardStats } from "@/lib/stats";
 import { formatKina, paymentMethodLabel } from "@/lib/format";
-import type { Order, PaymentMethod } from "@/lib/types";
+import type { PaymentMethod } from "@/lib/types";
 
 export function DashboardView({
   initialStats,
 }: {
   initialStats: DashboardStats;
 }) {
-  const [stats, setStats] = useState<DashboardStats>(initialStats);
-
-  // In demo mode the browser holds the live data (including orders rung up
-  // this session), so recompute locally instead of trusting server seed data.
-  useEffect(() => {
-    if (!isDemoMode()) return;
-    let cancelled = false;
-    (async () => {
-      const supabase = createClient();
-      const { data: orders } = await supabase
-        .from("orders")
-        .select("*, order_items(*), payments(*)")
-        .order("created_at", { ascending: false });
-      if (!cancelled && orders) {
-        setStats(computeDashboardStats(orders as unknown as Order[]));
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const [stats] = useState<DashboardStats>(initialStats);
 
   const maxTop = Math.max(1, ...stats.topProducts.slice(0, 5).map((p) => p.qty));
 

@@ -8,7 +8,3 @@ export function isSupabaseConfigured(): boolean {
 export function isMySqlMode(): boolean {
   return process.env.NEXT_PUBLIC_DB_MODE === "mysql";
 }
-
-export function isDemoMode(): boolean {
-  return !isMySqlMode() && process.env.NEXT_PUBLIC_DEMO_MODE === "true";
-}

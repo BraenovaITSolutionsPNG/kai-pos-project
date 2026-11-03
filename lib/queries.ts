@@ -3,7 +3,7 @@ import "server-only";
 import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { isSupabaseConfigured, isDemoMode, isMySqlMode } from "@/lib/supabase/env";
+import { isSupabaseConfigured, isMySqlMode } from "@/lib/supabase/env";
 import { computeDashboardStats, type DashboardStats } from "@/lib/stats";
 import {
   authGetUser,
@@ -43,8 +43,7 @@ export interface SessionContext {
 }
 
 export const getSessionContext = cache(async (): Promise<SessionContext> => {
-  if (!isDemoMode() && !isMySqlMode() && !isSupabaseConfigured())
-    redirect("/login");
+  if (!isMySqlMode() && !isSupabaseConfigured()) redirect("/login");
 
   const supabase = await createClient();
 

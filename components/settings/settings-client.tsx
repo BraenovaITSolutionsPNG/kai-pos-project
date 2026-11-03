@@ -3,8 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { isDemoMode } from "@/lib/supabase/env";
-import { resetDemo } from "@/lib/demo/store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -61,12 +59,6 @@ export function SettingsClient({
     router.refresh();
   }
 
-  async function resetDemoData() {
-    resetDemo();
-    toast.success("Demo data reset");
-    router.refresh();
-  }
-
   return (
     <div className="space-y-6">
       <div>
@@ -77,14 +69,6 @@ export function SettingsClient({
           Business and restaurant configuration.
         </p>
       </div>
-
-      {isDemoMode() && (
-        <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          You’re in <strong>demo mode</strong>, changes are saved to this
-          browser only and reset when you sign up for real. Use the button below
-          to restore the sample menu and sales.
-        </div>
-      )}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
@@ -168,29 +152,6 @@ export function SettingsClient({
           </CardContent>
         </Card>
       </div>
-
-      {isDemoMode() && (
-        <Card className="border-dashed">
-          <CardHeader>
-            <CardTitle>Reset demo data</CardTitle>
-            <CardDescription>
-              Clear everything and restore the original sample menu and sales.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button
-              variant="outline"
-              onClick={() => {
-                if (window.confirm("Reset all demo data to the defaults?")) {
-                  void resetDemoData();
-                }
-              }}
-            >
-              Reset demo data
-            </Button>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }

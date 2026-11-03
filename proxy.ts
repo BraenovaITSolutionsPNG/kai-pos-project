@@ -1,8 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { isDemoMode, isMySqlMode } from "@/lib/supabase/env";
+import { isMySqlMode } from "@/lib/supabase/env";
 
-const DEMO_SESSION_KEY = "demo_session";
 const MYSQL_SESSION_KEY = "kai_session";
 
 export async function proxy(request: NextRequest) {
@@ -25,22 +24,6 @@ export async function proxy(request: NextRequest) {
   // MySQL mode: session lives in a kai_session cookie.
   if (isMySqlMode()) {
     const hasSession = Boolean(request.cookies.get(MYSQL_SESSION_KEY)?.value);
-    if (!hasSession && !isAuthPage && !isPublicPage) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/login";
-      return NextResponse.redirect(url);
-    }
-    if (hasSession && isAuthPage) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/dashboard";
-      return NextResponse.redirect(url);
-    }
-    return response;
-  }
-
-  // Demo mode: session lives in a plain cookie, no Supabase needed.
-  if (isDemoMode()) {
-    const hasSession = Boolean(request.cookies.get(DEMO_SESSION_KEY)?.value);
     if (!hasSession && !isAuthPage && !isPublicPage) {
       const url = request.nextUrl.clone();
       url.pathname = "/login";

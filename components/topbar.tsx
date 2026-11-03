@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Building2, FlaskConical, LogOut, ChevronDown, Menu } from "lucide-react";
+import { Building2, LogOut, ChevronDown, Menu } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,7 +13,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { isDemoMode } from "@/lib/supabase/env";
 import { logout } from "@/lib/auth-actions";
 
 function initials(name: string): string {
@@ -55,12 +54,6 @@ export function Topbar({
       <div className="flex min-w-0 items-center gap-2 text-sm">
         <Building2 className="size-4 shrink-0 text-muted-foreground" />
         <span className="truncate font-medium">{restaurantName}</span>
-        {isDemoMode() && (
-          <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800">
-            <FlaskConical className="size-3" />
-            Demo
-          </span>
-        )}
       </div>
 
       <div className="ml-auto flex items-center gap-2">

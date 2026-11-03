@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { isDemoMode } from "@/lib/supabase/env";
 import { OrdersFilter } from "@/components/orders/orders-filter";
 import { formatDateTime, formatKina, paymentMethodLabel } from "@/lib/format";
 import type { Order, PaymentMethod, StaffRole } from "@/lib/types";
@@ -62,29 +61,6 @@ export function OrdersClient({
     role === "waiter"
       ? orders.filter((o) => o.status === "ready")
       : orders;
-
-  // In demo mode the browser holds the live data (including orders rung up
-  // this session), so reload from it instead of trusting server seed data.
-  useEffect(() => {
-    if (!isDemoMode()) return;
-    let cancelled = false;
-    (async () => {
-      const supabase = createClient();
-       let query = supabase
-        .from("orders")
-        .select("*, order_items(*), payments(*), tables(label)")
-        .order("created_at", { ascending: false });
-      if (from) query = query.gte("created_at", `${from}T00:00:00`);
-      if (to) query = query.lte("created_at", `${to}T23:59:59`);
-      const { data } = await query;
-      if (!cancelled && data) {
-        setOrders(data as unknown as Order[]);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [from, to]);
 
   async function cancelOrder(order: Order) {
     setCancelling(true);

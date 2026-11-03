@@ -1,16 +1,12 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { isDemoMode, isMySqlMode } from "@/lib/supabase/env";
-import { createDemoServerClient } from "@/lib/supabase/demo-server";
+import { isMySqlMode } from "@/lib/supabase/env";
 import { createMysqlServerClient } from "@/lib/mysql/server-client";
 
 export async function createClient(): Promise<SupabaseClient> {
   if (isMySqlMode()) {
     return createMysqlServerClient() as unknown as SupabaseClient;
-  }
-  if (isDemoMode()) {
-    return (await createDemoServerClient()) as unknown as SupabaseClient;
   }
 
   const cookieStore = await cookies();

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
@@ -12,7 +12,6 @@ import {
   UtensilsCrossed,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { isDemoMode } from "@/lib/supabase/env";
 import { formatKina } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { CartItem, Category, DiningTable, PaymentMethod, Product } from "@/lib/types";
@@ -72,8 +71,8 @@ export function PosClient({
   createdBy: string;
 }) {
   const router = useRouter();
-  const [cats, setCats] = useState<Category[]>(categories);
-  const [prods, setProds] = useState<Product[]>(products);
+  const [cats] = useState<Category[]>(categories);
+  const [prods] = useState<Product[]>(products);
   const [activeCategory, setActiveCategory] = useState<string | null>(
     categories[0]?.id ?? null
   );
@@ -83,30 +82,6 @@ export function PosClient({
   const [payOpen, setPayOpen] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [receipt, setReceipt] = useState<ReceiptSnapshot | null>(null);
-
-  // Demo mode: reflect any changes made on other screens (localStorage store).
-  useEffect(() => {
-    if (!isDemoMode()) return;
-    let cancelled = false;
-    (async () => {
-      const supabase = createClient();
-      const { data: c } = await supabase
-        .from("categories")
-        .select("*")
-        .order("sort_order");
-      const { data: p } = await supabase
-        .from("products")
-        .select("*")
-        .order("sort_order");
-      if (!cancelled) {
-        if (c) setCats(c as unknown as Category[]);
-        if (p) setProds(p as unknown as Product[]);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   const filtered = useMemo(
     () =>

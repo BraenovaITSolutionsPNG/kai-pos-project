@@ -145,7 +145,7 @@ export function CategoriesClient({
     }
   }, []);
 
-  // Keep the list in sync with the demo store (or the DB) after mount.
+  // Refresh the list from the database after mount.
   useEffect(() => {
     // setState happens after an async fetch inside reload, not synchronously.
     // eslint-disable-next-line react-hooks/set-state-in-effect

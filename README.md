@@ -14,31 +14,6 @@ Phase 1 covers: authentication, restaurant auto-provisioning, Products & Categor
 
 ## Getting started
 
-### Try it instantly (demo mode)
-
-No database or Supabase account needed — the whole app runs in the browser with a pre-seeded sample café. Every change is saved to `localStorage`.
-
-1. Copy the template and enable demo mode:
-
-   ```bash
-   cp .env.example .env.local
-   ```
-
-   ```
-   NEXT_PUBLIC_DEMO_MODE=true
-   ```
-
-2. Run it:
-
-   ```bash
-   npm install
-   npm run dev        # http://localhost:3000
-   ```
-
-3. Sign up with any email + password. You'll land straight in the demo café — ring up sales on **POS**, edit the menu, and watch the **Dashboard** update. A **Demo** badge appears in the header, and **Settings → Reset demo data** restores the original sample data.
-
-> Demo mode works without any Supabase credentials. As soon as you provide `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` (and set `NEXT_PUBLIC_DEMO_MODE` to anything other than `true`), the app switches to the real database.
-
 ### With a Supabase database
 
 1. **Create a Supabase project** at [supabase.com](https://supabase.com).
@@ -65,7 +40,7 @@ No database or Supabase account needed — the whole app runs in the browser wit
 
 7. Sign up with your name + business name. Your first cafe, a starter menu and an owner account are created automatically — go straight to **POS**.
 
-> The app redirects unauthenticated visitors to `/login` and blocks access to dashboard routes until you add your Supabase credentials (or enable demo mode).
+> The app redirects unauthenticated visitors to `/login` and blocks access to dashboard routes until you add your Supabase credentials.
 
 ## Routes
 
