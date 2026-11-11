@@ -1,80 +1,237 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { createClient as createAdminClient } from "@supabase/supabase-js";
+import { createClient as createServerClient } from "@/lib/supabase/server";
+import { isSqliteMode, isMySqlMode } from "@/lib/supabase/env";
 
-const serviceUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+export async function POST() {
+  try {
+    // 1. Authenticate user from session cookies using server client
+    const serverClient = await createServerClient();
+    const {
+      data: { user },
+    } = await serverClient.auth.getUser();
 
-export async function POST(request: Request) {
-  if (!serviceUrl || !serviceKey) {
+    if (!user) {
+      return NextResponse.json(
+        { ok: false, error: "Not authenticated. Please sign in as platform admin." },
+        { status: 401 }
+      );
+    }
+
+    // Verify platform admin status
+    const { data: profile } = await serverClient
+      .from("users")
+      .select("is_platform_admin")
+      .eq("id", user.id)
+      .single();
+
+    if (!profile?.is_platform_admin) {
+      return NextResponse.json(
+        { ok: false, error: "Forbidden: Platform admin privileges required." },
+        { status: 403 }
+      );
+    }
+
+    // 2. Handle SQLite mode (local development)
+    if (isSqliteMode()) {
+      const { getDb } = await import("@/lib/sqlite/pool");
+      const db = getDb();
+      const tables = [
+        "order_items",
+        "payments",
+        "orders",
+        "cashups",
+        "expenses",
+        "inventory_transactions",
+        "notifications",
+        "order_counters",
+        "subscription_payments",
+        "customers",
+        "shifts",
+        "shift_schedules",
+        "recipes",
+        "ingredients",
+        "products",
+        "categories",
+        "tables",
+        "restaurants",
+        "staff",
+        "businesses",
+      ];
+
+      db.transaction(() => {
+        for (const table of tables) {
+          try {
+            db.prepare(`DELETE FROM ${table}`).run();
+          } catch {
+            // Table might not exist or already be empty
+          }
+        }
+        db.prepare(
+          "DELETE FROM users WHERE is_platform_admin != 1 OR is_platform_admin IS NULL"
+        ).run();
+        db.prepare(
+          "DELETE FROM sessions WHERE user_id NOT IN (SELECT id FROM users WHERE is_platform_admin = 1)"
+        ).run();
+      })();
+
+      return NextResponse.json({
+        ok: true,
+        cleared: tables.length,
+        message: "All test data cleared in SQLite database.",
+      });
+    }
+
+    // 3. Handle MySQL mode
+    if (isMySqlMode()) {
+      const { query } = await import("@/lib/mysql/pool");
+      const tables = [
+        "order_items",
+        "payments",
+        "orders",
+        "cashups",
+        "expenses",
+        "inventory_transactions",
+        "notifications",
+        "order_counters",
+        "subscription_payments",
+        "customers",
+        "shifts",
+        "shift_schedules",
+        "recipes",
+        "ingredients",
+        "products",
+        "categories",
+        "tables",
+        "restaurants",
+        "staff",
+        "businesses",
+      ];
+
+      for (const table of tables) {
+        try {
+          await query(`DELETE FROM ${table}`);
+        } catch {
+          // Table might not exist or already be empty
+        }
+      }
+      await query("DELETE FROM users WHERE is_platform_admin != 1 OR is_platform_admin IS NULL");
+
+      return NextResponse.json({
+        ok: true,
+        cleared: tables.length,
+        message: "All test data cleared in MySQL database.",
+      });
+    }
+
+    // 4. Handle Supabase mode (production on Vercel)
+    // First, try executing the RPC function `clear_platform_test_data` using the user's authenticated session.
+    // This allows clearing test data using only NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.
+    const { error: rpcError } = await serverClient.rpc("clear_platform_test_data");
+
+    if (!rpcError) {
+      return NextResponse.json({
+        ok: true,
+        message: "Successfully reset all test data via Supabase RPC.",
+      });
+    }
+
+    // If RPC is not created yet, fall back to SUPABASE_SERVICE_ROLE_KEY if present
+    const serviceUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!serviceUrl || !serviceKey) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error:
+            "To reset data from this button, run the SQL script in your Supabase Dashboard SQL Editor (which creates the secure RPC function), or add SUPABASE_SERVICE_ROLE_KEY to your Vercel Environment Variables.",
+        },
+        { status: 500 }
+      );
+    }
+
+    const adminClient = createAdminClient(serviceUrl, serviceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    });
+
+    const tables = [
+      "order_items",
+      "payments",
+      "orders",
+      "cashups",
+      "expenses",
+      "inventory_transactions",
+      "notifications",
+      "order_counters",
+      "subscription_payments",
+      "customers",
+      "shifts",
+      "shift_schedules",
+      "recipes",
+      "ingredients",
+      "products",
+      "categories",
+      "tables",
+      "reservations",
+      "restaurants",
+      "staff",
+      "businesses",
+    ];
+
+    for (const table of tables) {
+      const filterCol = table === "order_counters" ? "restaurant_id" : "id";
+      const { error } = await adminClient
+        .from(table)
+        .delete()
+        .neq(filterCol, "00000000-0000-0000-0000-000000000000");
+
+      if (error) {
+        console.warn(`[clear-data] Non-fatal error clearing ${table}:`, error.message);
+      }
+    }
+
+    // Preserve platform admins; delete all non-admin users
+    const { data: adminUsers } = await adminClient
+      .from("users")
+      .select("id, email")
+      .eq("is_platform_admin", true);
+
+    const adminUserIds = new Set((adminUsers ?? []).map((u: { id: string }) => u.id));
+
+    const { data: allUsers } = await adminClient.from("users").select("id");
+    const nonAdminIds = (allUsers ?? [])
+      .map((u: { id: string }) => u.id)
+      .filter((id: string) => !adminUserIds.has(id));
+
+    for (const nonAdminId of nonAdminIds) {
+      await adminClient.auth.admin.deleteUser(nonAdminId).catch((err: unknown) => {
+        console.warn(`[clear-data] Failed to delete auth user ${nonAdminId}:`, err);
+      });
+    }
+
+    for (const nonAdminId of nonAdminIds) {
+      await adminClient.from("users").delete().eq("id", nonAdminId);
+    }
+
+    return NextResponse.json({
+      ok: true,
+      cleared: tables.length,
+      nonAdminUsersRemoved: nonAdminIds.length,
+      adminUsersKept: (adminUsers ?? []).length,
+      message: "Successfully reset all test data while preserving platform admin accounts.",
+    });
+  } catch (error) {
+    console.error("[clear-data] Error resetting data:", error);
     return NextResponse.json(
-      { ok: false, error: "SUPABASE_SERVICE_ROLE_KEY not configured" },
-      { status: 500 },
+      {
+        ok: false,
+        error: error instanceof Error ? error.message : "Internal server error",
+      },
+      { status: 500 }
     );
   }
-
-  const supabase = createClient(serviceUrl, serviceKey);
-
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ ok: false, error: "Not authenticated" }, { status: 401 });
-  }
-
-  const { data: profile } = await supabase
-    .from("users")
-    .select("is_platform_admin")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile?.is_platform_admin) {
-    return NextResponse.json({ ok: false, error: "Not a platform admin" }, { status: 403 });
-  }
-
-  const tables = [
-    "order_items",
-    "payments",
-    "orders",
-    "cashups",
-    "expenses",
-    "inventory_transactions",
-    "notifications",
-    "order_counters",
-    "subscription_payments",
-    "customers",
-    "shifts",
-    "shift_schedules",
-    "recipes",
-    "ingredients",
-    "products",
-    "categories",
-    "tables",
-    "restaurants",
-    "staff",
-    "businesses",
-    "site_content",
-  ];
-
-  for (const table of tables) {
-    const { error } = await supabase.from(table).delete().neq("id", "00000000-0000-0000-0000-000000000000");
-    if (error) {
-      return NextResponse.json({ ok: false, error: `Failed to clear ${table}: ${error.message}` }, { status: 500 });
-    }
-  }
-
-  const { data: nonAdminUsers } = await supabase.from("users").select("id").neq("is_platform_admin", true);
-  const nonAdminIds = (nonAdminUsers ?? []).map((u: { id: string }) => u.id);
-
-  for (const nonAdminId of nonAdminIds) {
-    await supabase.auth.admin.deleteUser(nonAdminId).catch(() => {});
-  }
-
-  await supabase.from("users").delete().neq("is_platform_admin", true);
-
-  const { data: adminUsers } = await supabase.from("users").select("id").eq("is_platform_admin", true);
-
-  return NextResponse.json({
-    ok: true,
-    cleared: tables.length,
-    nonAdminUsersRemoved: nonAdminIds.length,
-    adminUsersKept: (adminUsers ?? []).length,
-  });
 }
