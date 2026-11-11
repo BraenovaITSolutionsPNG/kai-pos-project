@@ -13,7 +13,7 @@ export async function POST() {
 
     if (!user) {
       return NextResponse.json(
-        { ok: false, error: "Not authenticated. Please sign in as platform admin." },
+        { ok: false, error: "Not authenticated. Please sign in as a platform admin." },
         { status: 401 }
       );
     }
@@ -127,16 +127,21 @@ export async function POST() {
     // 4. Handle Supabase mode (production on Vercel)
     // First, try executing the RPC function `clear_platform_test_data` using the user's authenticated session.
     // This allows clearing test data using only NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.
-    const { error: rpcError } = await serverClient.rpc("clear_platform_test_data");
+    const { data: rpcData, error: rpcError } = await serverClient.rpc("clear_platform_test_data");
 
     if (!rpcError) {
       return NextResponse.json({
         ok: true,
-        message: "Successfully reset all test data via Supabase RPC.",
+        message:
+          typeof rpcData === "object" && rpcData?.message
+            ? rpcData.message
+            : "Successfully reset all test data via Supabase RPC.",
       });
     }
 
-    // If RPC is not created yet, fall back to SUPABASE_SERVICE_ROLE_KEY if present
+    console.error("[clear-data] Supabase RPC error:", rpcError);
+
+    // If RPC is not created yet or failed, fall back to SUPABASE_SERVICE_ROLE_KEY if present
     const serviceUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -144,8 +149,9 @@ export async function POST() {
       return NextResponse.json(
         {
           ok: false,
-          error:
-            "To reset data from this button, run the SQL script in your Supabase Dashboard SQL Editor (which creates the secure RPC function), or add SUPABASE_SERVICE_ROLE_KEY to your Vercel Environment Variables.",
+          error: `Supabase RPC error: ${rpcError.message}${
+            rpcError.details ? ` (${rpcError.details})` : ""
+          }. Tip: If you just added the function in the SQL editor, run "NOTIFY pgrst, 'reload schema';" in Supabase to refresh the cache.`,
         },
         { status: 500 }
       );
