@@ -38,7 +38,10 @@ export async function POST(request: Request) {
 
     if (!serviceUrl || !serviceKey) {
       return NextResponse.json(
-        { ok: false, error: `delete_business RPC error: ${error.message}. Tip: run migration-046 in Supabase SQL Editor and NOTIFY pgrst, 'reload schema';` },
+        {
+          ok: false,
+          error: `delete_business RPC error: ${error.message}. Tip: run migration-046 in Supabase SQL Editor and NOTIFY pgrst, 'reload schema';`,
+        },
         { status: 500 }
       );
     }
@@ -47,13 +50,18 @@ export async function POST(request: Request) {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    const { error: adminError } = await adminClient
+    const { data: deleted, error: adminError } = await adminClient
       .from("businesses")
       .delete()
-      .eq("id", id);
+      .eq("id", id)
+      .select("id");
 
     if (adminError) {
       return NextResponse.json({ ok: false, error: adminError.message }, { status: 500 });
+    }
+
+    if (!deleted || deleted.length === 0) {
+      return NextResponse.json({ ok: false, error: "Business not found or already deleted" }, { status: 404 });
     }
 
     return NextResponse.json({ ok: true });
