@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Building2, Trash2 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
 import type { AdminBusinessRow } from "@/lib/queries";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -40,14 +39,15 @@ export function BusinessesClient({
     payload: { plan?: AdminBusinessRow["plan"]; is_active?: boolean }
   ) {
     setBusyId(id);
-    const supabase = createClient();
-    const { error } = await supabase
-      .from("businesses")
-      .update(payload)
-      .eq("id", id);
+    const res = await fetch("/api/admin/update-business", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, is_active: payload.is_active }),
+    });
+    const result = await res.json();
     setBusyId(null);
-    if (error) {
-      toast.error(error.message);
+    if (!result.ok) {
+      toast.error(result.error ?? "Failed to update business");
       return;
     }
     setRows((prev) =>
