@@ -54,9 +54,11 @@ export async function POST() {
         "products",
         "categories",
         "tables",
+        "reservations",
         "restaurants",
         "staff",
         "businesses",
+        "site_content",
       ];
 
       db.transaction(() => {
@@ -103,9 +105,11 @@ export async function POST() {
         "products",
         "categories",
         "tables",
+        "reservations",
         "restaurants",
         "staff",
         "businesses",
+        "site_content",
       ];
 
       for (const table of tables) {
@@ -186,6 +190,7 @@ export async function POST() {
       "restaurants",
       "staff",
       "businesses",
+      "site_content",
     ];
 
     for (const table of tables) {
